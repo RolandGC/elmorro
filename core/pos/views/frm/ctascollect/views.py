@@ -1,5 +1,6 @@
 import json
 from decimal import Decimal
+from datetime import date, datetime
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import transaction
 from django.db.models import Q
@@ -85,13 +86,33 @@ class CtasCollectCreateView(PermissionMixin, CreateView):
                                                     ).exclude(state=False)[0:10]:
                     item = i.toJSON()
                     item['text'] = i.__str__()
+                    
+                    # Verificar si la deuda está vencida (hoy o después)
+                    is_overdue = date.today() >= i.end_date
+                    item['is_overdue'] = is_overdue
+                    item['days_overdue'] = (date.today() - i.end_date).days if is_overdue else 0
+                    
                     data.append(item)
             elif action == 'add':
                 with transaction.atomic():
+                    ctascollect = CtasCollect.objects.get(pk=int(request.POST['ctascollect']))
+                    payment_date = request.POST['date_joined']
+                    payment_valor = Decimal(request.POST['valor'])
+                    
+                    # Verificar si la deuda está vencida (hoy o después)
+                    payment_date_obj = datetime.strptime(payment_date, '%Y-%m-%d').date()
+                    is_overdue = payment_date_obj >= ctascollect.end_date
+                    
+                    if is_overdue:
+                        # Si está vencida o es el día de vencimiento, obligar a pagar el saldo completo
+                        if payment_valor < ctascollect.saldo:
+                            data['error'] = f'La deuda vence el {ctascollect.end_date.strftime("%d/%m/%Y")}. Debe pagar el saldo completo de S/. {ctascollect.saldo:.2f}'
+                            return HttpResponse(json.dumps(data, cls=self.DjangoEncoder), content_type='application/json')
+                    
                     payment = PaymentsCtaCollect()
-                    payment.ctascollect_id = int(request.POST['ctascollect'])
-                    payment.date_joined = request.POST['date_joined']
-                    payment.valor = Decimal(request.POST['valor'])  # Convertir a Decimal
+                    payment.ctascollect_id = ctascollect.id
+                    payment.date_joined = payment_date
+                    payment.valor = payment_valor
                     payment.desc = request.POST['desc']
                     if len(payment.desc) == 0:
                         payment.desc = 'Sin detalles'
