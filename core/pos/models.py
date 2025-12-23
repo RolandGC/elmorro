@@ -408,6 +408,18 @@ class CtasCollect(models.Model):
         return '{} / {} / S/.{}'.format(self.sale.client.user.full_name, self.date_joined.strftime('%Y-%m-%d'),
                                       format(self.debt, '.2f'))
 
+    def is_overdue(self):
+        """Verifica si la deuda está vencida (hoy o después)"""
+        from datetime import date
+        return date.today() >= self.end_date
+
+    def days_overdue(self):
+        """Retorna cuántos días está vencida la deuda"""
+        if self.is_overdue():
+            from datetime import date
+            return (date.today() - self.end_date).days
+        return 0
+
     def validate_debt(self):
         try:
             saldo = self.paymentsctacollect_set.aggregate(
@@ -425,6 +437,8 @@ class CtasCollect(models.Model):
         item['end_date'] = self.end_date.strftime('%Y-%m-%d')
         item['debt'] = format(self.debt, '.2f')
         item['saldo'] = format(self.saldo, '.2f')
+        item['is_overdue'] = self.is_overdue()
+        item['days_overdue'] = self.days_overdue()
         return item
 
     class Meta:

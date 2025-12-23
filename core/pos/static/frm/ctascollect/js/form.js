@@ -1,6 +1,8 @@
 var fv;
 var input_datejoined;
 var select_ctascollect;
+var input_valor;
+var ctascollect_data = null;
 
 document.addEventListener('DOMContentLoaded', function (e) {
     const form = document.getElementById('frmForm');
@@ -38,6 +40,9 @@ document.addEventListener('DOMContentLoaded', function (e) {
                 },
                 valor: {
                     validators: {
+                        notEmpty: {
+                            message: 'El valor es obligatorio'
+                        },
                         numeric: {
                             message: 'El valor no es un número',
                             thousandsSeparator: '',
@@ -77,6 +82,18 @@ document.addEventListener('DOMContentLoaded', function (e) {
             }
         })
         .on('core.form.valid', function () {
+            // Validación adicional para deudas vencidas
+            if (ctascollect_data && ctascollect_data.is_overdue) {
+                var valor_ingresado = parseFloat(input_valor.val());
+                var saldo = parseFloat(ctascollect_data.saldo);
+                
+                if (valor_ingresado < saldo) {
+                    message_error('La deuda está vencida desde el ' + ctascollect_data.end_date + '. Debe pagar el saldo completo de S/. ' + saldo.toFixed(2));
+                    fv.disableSubmitButton(true);
+                    return false;
+                }
+            }
+            
             var parameters = {};
             $.each($(fv.form).serializeArray(), function (key, item) {
                 parameters[item.name] = item.value;
@@ -99,6 +116,7 @@ $(function () {
 
     input_datejoined = $('input[name="date_joined"]');
     select_ctascollect = $('select[name="ctascollect"]');
+    input_valor = $('input[name="valor"]');
 
     $('.select2').select2({
         theme: 'bootstrap4',
@@ -135,12 +153,33 @@ $(function () {
         .on('select2:select', function (e) {
             fv.revalidateField('ctascollect');
             var data = e.params.data;
-            $('.deuda').html('Deuda: S/. ' + parseFloat(data.saldo).toFixed(2));
+            ctascollect_data = data;  // Guardar datos de la cuenta
+            
+            // Mostrar advertencia si está vencida
+            let deuda_html = '<strong>Deuda: S/. ' + parseFloat(data.saldo).toFixed(2) + '</strong>';
+            
+            if (data.is_overdue) {
+                deuda_html = '<div class="alert alert-danger alert-dismissible fade show" style="padding: 10px 15px; margin-bottom: 10px;">';
+                deuda_html += '<strong>⚠️ DEUDA VENCIDA</strong><br>';
+                deuda_html += '<strong style="font-size: 16px;">S/. ' + parseFloat(data.saldo).toFixed(2) + '</strong><br>';
+                deuda_html += '<small>Fecha límite: <strong>' + data.end_date + '</strong></small><br>';
+                deuda_html += '<small>(Vencida hace ' + data.days_overdue + ' días)</small><br>';
+                deuda_html += '<strong style="color: #721c24; font-size: 13px;">👉 DEBE PAGAR EL SALDO COMPLETO</strong>';
+                deuda_html += '</div>';
+            } else {
+                deuda_html = '<div class="alert alert-info alert-dismissible fade show" style="padding: 10px 15px; margin-bottom: 10px;">';
+                deuda_html += '<strong>Saldo Pendiente</strong><br>';
+                deuda_html += '<strong style="font-size: 16px;">S/. ' + parseFloat(data.saldo).toFixed(2) + '</strong>';
+                deuda_html += '</div>';
+            }
+            
+            $('.deuda').html(deuda_html);
             $('input[name="valor"]').trigger("touchspin.updatesettings", {max: parseFloat(data.saldo)});
         })
         .on('select2:clear', function (e) {
             fv.revalidateField('|');
             $('.deuda').html('');
+            ctascollect_data = null;
         });
 
     $('input[name="valor"]').TouchSpin({
@@ -154,6 +193,21 @@ $(function () {
         verticalbuttons: true,
     }).on('change touchspin.on.min touchspin.on.max', function () {
         fv.revalidateField('valor');
+        
+        // Validación en tiempo real para deudas vencidas
+        if (ctascollect_data && ctascollect_data.is_overdue) {
+            var valor_ingresado = parseFloat($(this).val());
+            var saldo = parseFloat(ctascollect_data.saldo);
+            
+            if (valor_ingresado < saldo) {
+                fv.enableSubmitButton(false);
+                $('.invalid-feedback').text('Debe pagar el saldo completo: S/. ' + saldo.toFixed(2));
+                $(this).addClass('is-invalid');
+            } else {
+                fv.enableSubmitButton(true);
+                $(this).removeClass('is-invalid');
+            }
+        }
     }).keypress(function (e) {
         return validate_decimals($(this), e);
     });

@@ -62,7 +62,21 @@ function getData(all) {
                 targets: [2, 3],
                 class: 'text-center',
                 render: function (data, type, row) {
-                    return data;
+                    // Verificar si está vencida (hoy o después)
+                    var today = new Date().toISOString().split('T')[0];
+                    var end_date = row.end_date;
+                    var is_overdue = today >= end_date;
+                    
+                    var html = data;
+                    if (is_overdue && data === row.end_date) {
+                        var days_overdue = Math.floor((new Date(today) - new Date(end_date)) / (1000 * 60 * 60 * 24));
+                        if (days_overdue === 0) {
+                            html = data + ' <span class="badge badge-danger">Vence HOY</span>';
+                        } else {
+                            html = data + ' <span class="badge badge-danger">Vencida hace ' + days_overdue + ' días</span>';
+                        }
+                    }
+                    return html;
                 }
             },
             {
@@ -78,8 +92,16 @@ function getData(all) {
                 orderable: false,
                 class: 'text-center',
                 render: function (data, type, row) {
+                    // Verificar si está vencida (hoy o después)
+                    var today = new Date().toISOString().split('T')[0];
+                    var end_date = row.end_date;
+                    var is_overdue = today >= end_date;
+                    
                     if (data) {
-                        return '<span class="badge badge-danger">Adeuda</span>';
+                        if (is_overdue) {
+                            return '<span class="badge badge-danger">Adeuda VENCIDA</span>';
+                        }
+                        return '<span class="badge badge-warning">Adeuda</span>';
                     }
                     return '<span class="badge badge-success">Pagado</span>';
                 }
