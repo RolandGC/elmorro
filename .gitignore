@@ -9,6 +9,7 @@ __pycache__/
 staticfiles/*
 
 *.sqlite3
+db/*.sqlite3
 
 
 .idea
