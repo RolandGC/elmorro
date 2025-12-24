@@ -327,7 +327,7 @@ class ClientForm(ModelForm):
         'class': 'form-control',
         'autocomplete': 'off',
         'placeholder': 'Ingrese sus nombres completos'
-    }), label='Nombre completo', max_length=50)
+    }), label='Nombre completo o Razón Social', max_length=50)
 
     dni = forms.CharField(widget=forms.TextInput(attrs={
         'class': 'form-control',
