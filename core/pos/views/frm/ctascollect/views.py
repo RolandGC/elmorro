@@ -171,6 +171,7 @@ class CtasCollectPrintVoucherView(LoginRequiredMixin, SingleObjectMixin, View):
             context = {
                 'ctascollect': ctascollect,
                 'company': Company.objects.first(),
+                'height': 150,
             }
             html_string = template.render(context)
             html = HTML(string=html_string, base_url=request.build_absolute_uri('/'))

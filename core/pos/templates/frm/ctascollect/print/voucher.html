@@ -7,6 +7,7 @@
     <style>
         @page {
             width: 58mm;
+            height: {{ height }}mm;
             margin: 0;
         }
 
@@ -14,16 +15,17 @@
             font-family: "Roboto", "Lucida Grande", Verdana, Arial, sans-serif;
             padding: 0;
             margin: 0;
-            font-size: 11px;
+            font-size: 8px;
             color: black !important;
         }
 
         p {
-            font-size: 8px;
+            font-size: 5px;
         }
 
         .content {
             width: 58mm;
+            height: {{ height }}mm;
             padding: 10px;
         }
 
@@ -36,7 +38,7 @@
 
         .name-company {
             margin-top: 10px;
-            font-size: 13px;
+            font-size: 9px;
             font-weight: bold;
             text-transform: uppercase;
             margin-bottom: 0;
@@ -44,7 +46,7 @@
         }
 
         .desc-company {
-            font-size: 7px;
+            font-size: 5px;
             margin-top: 0;
             margin-bottom: 5px;
         }
@@ -55,7 +57,7 @@
         }
 
         .ruc {
-            font-size: 12px;
+            font-size: 10px;
             font-weight: bold;
             text-transform: uppercase;
             text-align: center;
@@ -72,6 +74,29 @@
             color: black;
         }
 
+        .img-logo {
+            margin-top: 5px;
+            width: 100px;
+            height: 60px;
+            margin-bottom: 5px;
+        }
+
+        .signatures {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            padding: 18px 0 0 0;
+            font-size: 5px;
+            margin-top: 10px;
+            gap: 10px;
+        }
+
+        .signatures .signature {
+            flex: 1;
+            text-align: center;
+            padding-top: 25px;
+        }
+
         .text-center {
             text-align: center;
         }
@@ -82,10 +107,6 @@
 
         .float-left {
             float: left;
-        }
-
-        b {
-            font-weight: bold;
         }
 
     </style>
@@ -139,9 +160,23 @@
         </tr>
         </tbody>
     </table>
-    <p class="text-center border-dotted p-1">
+    <div class="signatures">
+        <div class="signature">
+            -------------------<br>
+            Firma del cliente<br>
+            DNI
+        </div>
+        <div class="signature">
+            -------------------<br>
+            Firma del encargado<br>
+            DNI
+        </div>
+    </div>
+    <p class="text-center border-dotted p-1" style="margin-top: 30px;">
         !Gracias por su preferencia!<br>
-        Documento válido como comprobante
+        "Brindando atención eficiente y<br>
+        de calidad."
+
     </p>
 </div>
 </body>
