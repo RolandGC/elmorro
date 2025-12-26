@@ -27,8 +27,11 @@ class CtasCollectListView(PermissionMixin, FormView):
                 search = CtasCollect.objects.all()
                 start_date = request.POST.get('start_date')
                 end_date = request.POST.get('end_date')
+                user_id = request.POST.get('user_id')
                 if start_date and end_date:
                     search = search.filter(date_joined__range=[start_date, end_date])
+                if user_id:
+                    search = search.filter(user_id=user_id)
                 for ctascollect in search:
                     data.append(ctascollect.toJSON())
             elif action == 'search_pays':
@@ -58,6 +61,8 @@ class CtasCollectListView(PermissionMixin, FormView):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Listado de Cuentas por Cobrar'
         context['create_url'] = reverse_lazy('ctascollect_create')
+        # Mostrar todos los usuarios activos que hayan realizado cobros
+        context['users'] = User.objects.filter(is_active=True, ctascollect__isnull=False).distinct().order_by('full_name')
         return context
 
 

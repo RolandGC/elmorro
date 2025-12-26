@@ -432,8 +432,9 @@ class CtasCollect(models.Model):
             pass
 
     def toJSON(self):
-        item = model_to_dict(self)
+        item = model_to_dict(self, exclude=['user', 'sale'])
         item['sale'] = self.sale.toJSON()
+        item['user'] = self.user.toJSON() if self.user else None
         item['date_joined'] = self.date_joined.strftime('%Y-%m-%d')
         item['end_date'] = self.end_date.strftime('%Y-%m-%d')
         item['debt'] = format(self.debt, '.2f')
