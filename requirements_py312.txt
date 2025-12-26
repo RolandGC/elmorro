@@ -24,7 +24,7 @@ et-xmlfile==1.1.0
 jdcal==1.4.1
 
 # PDF - WeasyPrint y dependencias
-WeasyPrint==60.1
+WeasyPrint==52.5
 CairoSVG==2.7.1
 cairocffi==1.6.1
 cffi==1.16.0

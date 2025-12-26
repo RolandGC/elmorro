@@ -1,4 +1,5 @@
 import os
+import logging
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponse, HttpResponseRedirect
@@ -9,6 +10,8 @@ from weasyprint import HTML, CSS
 
 from config import settings
 from core.pos.models import Sale, Company
+
+logger = logging.getLogger(__name__)
 
 
 class SalePrintVoucherView(LoginRequiredMixin, View):
@@ -42,6 +45,6 @@ class SalePrintVoucherView(LoginRequiredMixin, View):
             response = HttpResponse(pdf_file, content_type='application/pdf')
             # response['Content-Disposition'] = 'filename="generate_html.pdf"'
             return response
-        except:
-            pass
+        except Exception as e:
+            logger.error(f"Error generating PDF: {str(e)}", exc_info=True)
         return HttpResponseRedirect(self.get_success_url())
