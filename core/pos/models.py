@@ -398,6 +398,7 @@ class SaleDetail(models.Model):
 
 class CtasCollect(models.Model):
     sale = models.ForeignKey(Sale, on_delete=models.PROTECT)
+    user = models.ForeignKey(User, on_delete=models.PROTECT, null=True, blank=True, help_text="Usuario que realizó el cobro")
     date_joined = models.DateField(default=datetime.now)
     end_date = models.DateField(default=datetime.now)
     debt = models.DecimalField(max_digits=9, decimal_places=2, default=0.00)
@@ -431,8 +432,9 @@ class CtasCollect(models.Model):
             pass
 
     def toJSON(self):
-        item = model_to_dict(self)
+        item = model_to_dict(self, exclude=['user', 'sale'])
         item['sale'] = self.sale.toJSON()
+        item['user'] = self.user.toJSON() if self.user else None
         item['date_joined'] = self.date_joined.strftime('%Y-%m-%d')
         item['end_date'] = self.end_date.strftime('%Y-%m-%d')
         item['debt'] = format(self.debt, '.2f')

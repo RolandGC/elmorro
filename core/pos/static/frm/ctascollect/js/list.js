@@ -7,6 +7,7 @@ function getData(all) {
         'action': 'search',
         'start_date': input_daterange.data('daterangepicker').startDate.format('YYYY-MM-DD'),
         'end_date': input_daterange.data('daterangepicker').endDate.format('YYYY-MM-DD'),
+        'user_id': $('#id_user_filter').val(),
     };
 
     if (all) {
@@ -30,6 +31,7 @@ function getData(all) {
         columns: [
             {data: "sale.nro"},
             {data: "sale.client"},
+            {data: "user"},
             {data: "date_joined"},
             {data: "end_date"},
             {data: "debt"},
@@ -59,7 +61,17 @@ function getData(all) {
                 }
             },
             {
-                targets: [2, 3],
+                targets: [2],
+                class: 'text-center',
+                render: function (data, type, row) {
+                    if (!$.isEmptyObject(row.user)) {
+                        return row.user.full_name;
+                    }
+                    return '';
+                }
+            },
+            {
+                targets: [3, 4],
                 class: 'text-center',
                 render: function (data, type, row) {
                     // Verificar si está vencida (hoy o después)
@@ -80,7 +92,7 @@ function getData(all) {
                 }
             },
             {
-                targets: [4, 5],
+                targets: [5, 6],
                 orderable: false,
                 class: 'text-center',
                 render: function (data, type, row) {
@@ -134,6 +146,10 @@ $(function () {
     getData(false);
 
     $('.btnSearch').on('click', function () {
+        getData(false);
+    });
+
+    $('.btnSearchByUser').on('click', function () {
         getData(false);
     });
 

@@ -10,6 +10,7 @@
 {% block columns %}
     <th>Nro</th>
     <th>Cliente</th>
+    <th>Empleado</th>
     <th>Fecha de compra</th>
     <th>Fecha de plazo</th>
     <th>Deuda</th>
@@ -31,6 +32,24 @@
                         </button>
                         <button class="btn btn-warning btnSearchAll" type="button">
                             <i class="fas fa-calendar-check"></i> Ver todas
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="form-group">
+                <label>Filtrar por Empleado:</label>
+                <div class="input-group mb-3">
+                    <select class="form-control" id="id_user_filter">
+                        <option value="">-- Todos los empleados --</option>
+                        {% for user in users %}
+                            <option value="{{ user.id }}">{{ user.full_name }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="input-group-append">
+                        <button class="btn btn-info btnSearchByUser" type="button">
+                            <i class="fas fa-filter"></i> Filtrar
                         </button>
                     </div>
                 </div>
