@@ -128,6 +128,7 @@ class SaleAdminCreateView(PermissionMixin, CreateView):
                         sale.save()
                         ctascollect = CtasCollect()
                         ctascollect.sale_id = sale.id
+                        ctascollect.user_id = request.user.id
                         ctascollect.date_joined = sale.date_joined
                         ctascollect.end_date = sale.end_credit
                         ctascollect.debt = sale.total

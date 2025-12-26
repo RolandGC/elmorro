@@ -398,6 +398,7 @@ class SaleDetail(models.Model):
 
 class CtasCollect(models.Model):
     sale = models.ForeignKey(Sale, on_delete=models.PROTECT)
+    user = models.ForeignKey(User, on_delete=models.PROTECT, null=True, blank=True, help_text="Usuario que realizó el cobro")
     date_joined = models.DateField(default=datetime.now)
     end_date = models.DateField(default=datetime.now)
     debt = models.DecimalField(max_digits=9, decimal_places=2, default=0.00)
