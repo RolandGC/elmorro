@@ -60,6 +60,7 @@ urlpatterns = [
     path('frm/ctas/collect/', CtasCollectListView.as_view(), name='ctascollect_list'),
     path('frm/ctas/collect/add/', CtasCollectCreateView.as_view(), name='ctascollect_create'),
     path('frm/ctas/collect/delete/<int:pk>/', CtasCollectDeleteView.as_view(), name='ctascollect_delete'),
+    path('frm/ctas/collect/print/voucher/<int:pk>/', CtasCollectPrintVoucherView.as_view(), name='ctascollect_print_voucher'),
     # box
 
     path('frm/box/', BoxListView.as_view(), name='box_list'),

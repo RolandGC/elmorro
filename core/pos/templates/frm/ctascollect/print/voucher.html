@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Voucher Cuenta por Cobrar</title>
+    <style>
+        @page {
+            width: 58mm;
+            margin: 0;
+        }
+
+        body {
+            font-family: "Roboto", "Lucida Grande", Verdana, Arial, sans-serif;
+            padding: 0;
+            margin: 0;
+            font-size: 11px;
+            color: black !important;
+        }
+
+        p {
+            font-size: 8px;
+        }
+
+        .content {
+            width: 58mm;
+            padding: 10px;
+        }
+
+        .client {
+            font-size: 8px;
+            margin-top: 0;
+            padding-top: 0;
+            margin-bottom: 5px;
+        }
+
+        .name-company {
+            margin-top: 10px;
+            font-size: 13px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 0;
+            text-align: center;
+        }
+
+        .desc-company {
+            font-size: 7px;
+            margin-top: 0;
+            margin-bottom: 5px;
+        }
+
+        .border-dotted {
+            border-top-style: dotted;
+            border-bottom-style: dotted;
+        }
+
+        .ruc {
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            text-align: center;
+            margin-bottom: 5px;
+        }
+
+        .table {
+            font-size: 8px;
+            color: black;
+        }
+
+        .table td, .table th {
+            padding: 0;
+            color: black;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .float-left {
+            float: left;
+        }
+
+        b {
+            font-weight: bold;
+        }
+
+    </style>
+</head>
+<body>
+<div class="content">
+    <h1 class="name-company">{{ company.name }}</h1>
+    <p class="text-center desc-company">
+        {{ company.address }}<br>
+        RUC: {{ company.ruc }}<br>
+        Teléfono: {{ company.phone }}<br>
+    </p>
+    <p class="ruc border-dotted">
+        VOUCHER CTA COBRAR
+    </p>
+    <p class="client">
+        <b>Nro Venta:</b> #{{ ctascollect.sale.nro }}<br>
+        <b>Nro Cuenta:</b> #{{ ctascollect.id }}<br>
+        <b>Fecha Emisión:</b> {{ ctascollect.date_joined|date:'d/m/Y' }}<br>
+        <b>Vencimiento:</b> {{ ctascollect.end_date|date:'d/m/Y' }}<br>
+        <b>Cliente:</b> {% if ctascollect.sale.client %}{{ ctascollect.sale.client.user.full_name }}{% else %}Consumidor Final{% endif %}<br>
+        {% if ctascollect.sale.client %}<b>DNI:</b> {{ ctascollect.sale.client.user.dni }}<br>{% endif %}
+        <b>Vendedor:</b> {% if ctascollect.sale.employee %}{{ ctascollect.sale.employee.full_name }}{% else %}-{% endif %}<br>
+        <b>Encargado:</b> {% if ctascollect.user %}{{ ctascollect.user.full_name }}{% else %}Sin asignar{% endif %}<br>
+    </p>
+    <table class="table table-borderless table-sm" style="margin-bottom: 0">
+        <thead>
+        <tr style="border-bottom: 1px double black;">
+            <th style="width: 50%;"><b>Concepto</b></th>
+            <th style="width: 50%;" class="text-right"><b>Monto</b></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>Deuda Original</td>
+            <td class="text-right">S/. {{ ctascollect.debt }}</td>
+        </tr>
+        <tr>
+            <td>Saldo Pendiente</td>
+            <td class="text-right">S/. {{ ctascollect.saldo }}</td>
+        </tr>
+        <tr style="border-bottom: 1px double black;">
+            <td><b>Estado</b></td>
+            <td class="text-right">
+                {% if ctascollect.state %}
+                    <b style="color: red;">DEUDA</b>
+                {% else %}
+                    <b style="color: green;">PAGADO</b>
+                {% endif %}
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <p class="text-center border-dotted p-1">
+        !Gracias por su preferencia!<br>
+        Documento válido como comprobante
+    </p>
+</div>
+</body>
+</html>

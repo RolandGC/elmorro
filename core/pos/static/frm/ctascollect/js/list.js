@@ -46,6 +46,7 @@ function getData(all) {
                 class: 'text-center',
                 render: function (data, type, row) {
                     var buttons = '<a rel="payments" class="btn bg-blue btn-xs btn-flat"><i class="fas fa-dollar-sign"></i></a> ';
+                    buttons += '<a href="/pos/frm/ctas/collect/print/voucher/' + row.id + '/" target="_blank" class="btn btn-primary btn-xs btn-flat"><i class="fas fa-print"></i></a> ';
                     buttons += '<a href="/pos/frm/ctas/collect/delete/' + row.id + '/" class="btn btn-danger btn-xs btn-flat"><i class="fas fa-trash"></i></a>';
                     return buttons;
                 }

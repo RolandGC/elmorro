@@ -6,7 +6,11 @@ from django.db import transaction
 from django.db.models import Q
 from django.http import HttpResponse
 from django.urls import reverse_lazy
-from django.views.generic import DeleteView, CreateView, FormView
+from django.views.generic import DeleteView, CreateView, FormView, View
+from django.views.generic.detail import SingleObjectMixin
+from django.template.loader import get_template
+from weasyprint import HTML, CSS
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 from core.pos.forms import *
 from core.reports.forms import ReportForm
@@ -155,3 +159,24 @@ class CtasCollectDeleteView(PermissionMixin, DeleteView):
         context['title'] = 'Notificación de eliminación'
         context['list_url'] = self.success_url
         return context
+
+
+class CtasCollectPrintVoucherView(LoginRequiredMixin, SingleObjectMixin, View):
+    model = CtasCollect
+
+    def get(self, request, *args, **kwargs):
+        try:
+            ctascollect = self.get_object()
+            template = get_template('frm/ctascollect/print/voucher.html')
+            context = {
+                'ctascollect': ctascollect,
+                'company': Company.objects.first(),
+            }
+            html_string = template.render(context)
+            html = HTML(string=html_string, base_url=request.build_absolute_uri('/'))
+            pdf = html.write_pdf()
+            response = HttpResponse(pdf, content_type='application/pdf')
+            response['Content-Disposition'] = f'inline; filename="voucher_cta_{ctascollect.id}.pdf"'
+            return response
+        except Exception as e:
+            return HttpResponse(f'Error: {str(e)}', status=500)
