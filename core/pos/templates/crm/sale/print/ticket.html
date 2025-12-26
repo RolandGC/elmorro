@@ -80,6 +80,18 @@
             height: 60px;
             margin-bottom: 5px;
         }
+        .signatures {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 4px 0;
+            font-size: 5px;
+        }
+
+        .signatures .signature {
+            width: 45%;
+            text-align: center;
+        }
 
     </style>
 </head>
@@ -172,6 +184,18 @@
             Total de productos {{ sale.saledetail_set.all.count }}
         </p>
     {% endif %}
+    <div class="signatures">
+        <div class="signature">
+            -------------------<br>
+            Firma del cliente<br>
+            DNI
+        </div>
+        <div class="signature">
+            -------------------<br>
+            Firma del vendedor<br>
+            DNI
+        </div>
+    </div>
     <p class="text-center border-dotted p-1">
         !Gracias por su preferencia!<br>
         "Brindando atención eficiente y<br>
