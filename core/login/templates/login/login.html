@@ -8,19 +8,19 @@
     <div class="login-box">
         <div class="login-box-body">
             <div class="card">
-                <div class="card-body login-card-body">
+                <div class="card-body login-card-body" style="background-color: #183240;">
                     <div class="contact-image">
                         <img src="../media/logo/logo-morro.png" class="img-fluid">
                     </div>
-                    <p class="login-box-msg">Inicio de Sesión</p>
+                    <p class="login-box-msg text-white">Inicio de Sesión</p>
                     <form method="post" id="frmLogin">
                         {% csrf_token %}
                         <input type="hidden" name="next" value="{{ next }}">
-                        <div class="form-group">
-                            <label>Usuario:</label>
+                        <div class="form-group text-white">
+                            <label >Usuario:</label>
                             {{ form.username }}
                         </div>
-                        <div class="form-group">
+                        <div class="form-group text-white">
                             <label>Contraseña:</label>
                             <div class="input-group my-group">
                                 {{ form.password }}
@@ -33,7 +33,7 @@
                         </div>
                         <div class="row">
                             <div class="col-lg-12">
-                                <button type="submit" class="btn btn-primary btn-block btn-flat">
+                                <button type="submit" style="background-color: #dcb040;" class="btn btn-primary btn-block btn-flat">
                                     <i class="fas fa-sign-in-alt"></i> Ingresar
                                 </button>
                             </div>

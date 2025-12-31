@@ -11,6 +11,9 @@
     margin-top: 10px;
     margin-bottom: 15px;
 }
+.login-box{
+    background-color: #9e2121;
+}
 
 @media (max-width: 768px) {
     .login-box, .register-box {
