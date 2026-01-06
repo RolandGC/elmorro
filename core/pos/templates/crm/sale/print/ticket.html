@@ -30,7 +30,7 @@
         }
 
         .client {
-            font-size: 5px;
+            font-size: 7px;
             margin-top: 0;
             padding-top: 0;
             margin-bottom: 5px;
@@ -57,7 +57,7 @@
         }
 
         .ruc {
-            font-size: 10px;
+            font-size: 8px;
             font-weight: bold;
             text-transform: uppercase;
             text-align: center;
@@ -106,12 +106,13 @@
         Web: {{ company.website }}<br>
     </p>
     <p class="ruc border-dotted">
-        RUC N°: {{ company.ruc }}
+        Acuse de recibo: Serie 001 - 001
     </p>
     <p class="client">
-        <b>Cajero:</b> {{ sale.employee.full_name }}<br>
+        <b></b>
+        <b>Vendedor:</b> {{ sale.employee.full_name }}<br>
         <b>Cliente:</b> {{ sale.client.user.full_name }}<br>
-        <b>Número de cedula:</b> {{ sale.client.user.dni }}<br>
+        <b>Número de DNI:</b> {{ sale.client.user.dni }}<br>
         <b>Fecha de venta:</b> {{ sale.date_joined|date:'c' }}<br>
         <b>Forma de pago:</b> {{ sale.get_payment_condition_display }}<br>
         {% if sale.payment_condition == 'contado' %}
@@ -168,6 +169,7 @@
         </tr>
         </tbody>
     </table>
+    <p>Comentario: {{ sale.comment }}</p>
     {% if sale.payment_condition == 'contado' %}
         <p class="text-uppercase font-weight-bold text-center">
             ****** estimado cliente no olvide que ******

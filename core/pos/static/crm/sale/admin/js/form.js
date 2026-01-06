@@ -541,6 +541,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
             parameters.append('initial', input_initial.val());
             parameters.append('dscto', $('input[name="dscto"]').val());
             parameters.append('amount_debited', input_amountdebited.val());
+            parameters.append('comment', $('textarea[name="comment"]').val());
             console.log(parameters)
             if (vents.details.products.length === 0) {
                 message_error('Debe tener al menos un item en el detalle de la venta');

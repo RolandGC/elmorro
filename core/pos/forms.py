@@ -437,6 +437,10 @@ class SaleForm(ModelForm):
                 'autocomplete': 'off',
                 'readonly': True
             }),
+            'comment': forms.Textarea(attrs={
+                'rows': 4,
+                'placeholder': 'Escribe un comentario...'
+            }),
         }
 
     amount = forms.CharField(widget=forms.TextInput(attrs={

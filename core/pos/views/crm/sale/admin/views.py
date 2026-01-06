@@ -100,6 +100,7 @@ class SaleAdminCreateView(PermissionMixin, CreateView):
                     sale.igv = float(Company.objects.first().igv) / 100
                     # sale.dscto = float(request.POST['dscto']) / 100
                     sale.dscto = float(request.POST['dscto'])
+                    sale.comment = request.POST.get('comment', '')
                     sale.save()
 
                     for i in json.loads(request.POST['products']):
