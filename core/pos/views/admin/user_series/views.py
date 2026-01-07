@@ -50,19 +50,40 @@ class UserSeriesCreateView(PermissionMixin, CreateView):
     def post(self, request, *args, **kwargs):
         action = request.POST.get('action')
         data = {}
-        try:
-            if action == 'add':
-                form = UserSeriesForm(request.POST)
-                if form.is_valid():
-                    instance = form.save()
+        
+        if action == 'add':
+            form = UserSeriesForm(request.POST)
+            if form.is_valid():
+                instance = form.save()
+                # Si es AJAX, devolver JSON
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                     data = instance.toJSON()
+                    return HttpResponse(json.dumps(data), content_type='application/json')
                 else:
-                    data['error'] = form.errors
+                    # Si es POST normal, redirigir
+                    return super().form_valid(form)
             else:
-                data['error'] = 'Acción inválida'
-        except Exception as e:
-            data['error'] = str(e)
-        return HttpResponse(json.dumps(data), content_type='application/json')
+                # Convertir errores del formulario a diccionario
+                errors = {}
+                for field, field_errors in form.errors.items():
+                    errors[field] = [str(error) for error in field_errors]
+                
+                # Si es AJAX, devolver JSON con errores
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    data['error'] = errors
+                    return HttpResponse(json.dumps(data), content_type='application/json')
+                else:
+                    # Si es POST normal, renderizar template con errores
+                    context = {
+                        'form': form,
+                        'list_url': self.success_url,
+                        'title': 'Asignar Serie a Vendedor',
+                        'action': 'add'
+                    }
+                    return self.render_to_response(context)
+        else:
+            data['error'] = 'Acción inválida'
+            return HttpResponse(json.dumps(data), content_type='application/json')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -82,20 +103,42 @@ class UserSeriesUpdateView(PermissionMixin, UpdateView):
     def post(self, request, *args, **kwargs):
         action = request.POST.get('action')
         data = {}
-        try:
-            if action == 'edit':
-                user_series = self.get_object()
-                form = UserSeriesForm(request.POST, instance=user_series)
-                if form.is_valid():
-                    instance = form.save()
+        
+        if action == 'edit':
+            user_series = self.get_object()
+            form = UserSeriesForm(request.POST, instance=user_series)
+            if form.is_valid():
+                instance = form.save()
+                # Si es AJAX, devolver JSON
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                     data = instance.toJSON()
+                    return HttpResponse(json.dumps(data), content_type='application/json')
                 else:
-                    data['error'] = form.errors
+                    # Si es POST normal, redirigir
+                    return super().form_valid(form)
             else:
-                data['error'] = 'Acción inválida'
-        except Exception as e:
-            data['error'] = str(e)
-        return HttpResponse(json.dumps(data), content_type='application/json')
+                # Convertir errores del formulario a diccionario
+                errors = {}
+                for field, field_errors in form.errors.items():
+                    errors[field] = [str(error) for error in field_errors]
+                
+                # Si es AJAX, devolver JSON con errores
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    data['error'] = errors
+                    return HttpResponse(json.dumps(data), content_type='application/json')
+                else:
+                    # Si es POST normal, renderizar template con errores
+                    context = {
+                        'form': form,
+                        'list_url': self.success_url,
+                        'title': 'Editar Asignación de Serie',
+                        'action': 'edit',
+                        'object': user_series
+                    }
+                    return self.render_to_response(context)
+        else:
+            data['error'] = 'Acción inválida'
+            return HttpResponse(json.dumps(data), content_type='application/json')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

@@ -57,7 +57,29 @@ $(function () {
                     },
                     success: function (request, status, xhr) {
                         if (request.hasOwnProperty('error')) {
-                            Swal.fire('Error', request.error, 'error');
+                            var errorObj = request.error;
+                            
+                            // Si el error es un diccionario (errores de campos específicos)
+                            if (typeof errorObj === 'object' && !Array.isArray(errorObj)) {
+                                var errorMessage = '';
+                                
+                                // Procesar errores globales (__all__)
+                                if (errorObj.__all__) {
+                                    errorMessage += errorObj.__all__.join('<br>') + '<br>';
+                                }
+                                
+                                // Procesar errores de campos específicos
+                                for (var field in errorObj) {
+                                    if (field !== '__all__') {
+                                        errorMessage += errorObj[field].join('<br>') + '<br>';
+                                    }
+                                }
+                                
+                                Swal.fire('Error', errorMessage, 'error');
+                            } else {
+                                // Si es un string simple
+                                Swal.fire('Error', errorObj, 'error');
+                            }
                         } else {
                             location.href = '/pos/admin/user_series/';
                         }

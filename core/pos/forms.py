@@ -1,5 +1,6 @@
 from django.forms import ModelForm
 from django import forms
+from django.contrib.auth.models import Group
 
 from .models import *
 
@@ -20,6 +21,13 @@ class SeriesForm(ModelForm):
 class UserSeriesForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # Filtrar solo usuarios del grupo "Vendedor"
+        try:
+            vendor_group = Group.objects.get(name='Vendedor')
+            self.fields['user'].queryset = vendor_group.user_set.all()
+        except Group.DoesNotExist:
+            self.fields['user'].queryset = User.objects.none()
+        
         self.fields['user'].widget.attrs['autofocus'] = True
 
     class Meta:
