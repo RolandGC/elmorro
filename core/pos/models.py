@@ -17,6 +17,22 @@ from config import settings
 from core.pos.choices import payment_condition, payment_method, voucher, unit
 from core.user.models import User
 
+class Series(models.Model):
+    name = models.CharField(max_length=50, unique=True, verbose_name='Nombre')
+
+    def __str__(self):
+        return self.name
+
+    def toJSON(self):
+        item = model_to_dict(self)
+        return item
+
+    class Meta:
+        verbose_name = 'Serie de Facturación'
+        verbose_name_plural = 'Series de Facturación'
+        ordering = ['-id']
+
+
 class Company(models.Model):
     name = models.CharField(max_length=50, verbose_name='Nombre')
     ruc = models.CharField(max_length=13, verbose_name='Ruc')

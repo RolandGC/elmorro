@@ -7,6 +7,7 @@ from core.pos.views.crm.sale.client.views import SaleClientListView
 from core.pos.views.frm.ctascollect.views import *
 from core.pos.views.frm.debtspay.views import *
 from core.pos.views.frm.box.views import *
+from core.pos.views.frm.series.views import *
 from core.pos.views.scm.product.views import *
 from core.pos.views.scm.provider.views import *
 from core.pos.views.scm.category.views import *
@@ -62,11 +63,15 @@ urlpatterns = [
     path('frm/ctas/collect/delete/<int:pk>/', CtasCollectDeleteView.as_view(), name='ctascollect_delete'),
     path('frm/ctas/collect/print/voucher/<int:pk>/', CtasCollectPrintVoucherView.as_view(), name='ctascollect_print_voucher'),
     # box
-
     path('frm/box/', BoxListView.as_view(), name='box_list'),
     path('frm/box/add/', BoxCreateView.as_view(), name='box_create'),
     path('frm/box/update/<int:pk>/', BoxUpdateView.as_view(), name='box_update'),
     path('frm/box/delete/<int:pk>/',BoxDeleteView.as_view(), name='box_delete'),
+    # series
+    path('frm/series/', SeriesListView.as_view(), name='series_list'),
+    path('frm/series/add/', SeriesCreateView.as_view(), name='series_create'),
+    path('frm/series/update/<int:pk>/', SeriesUpdateView.as_view(), name='series_update'),
+    path('frm/series/delete/<int:pk>/', SeriesDeleteView.as_view(), name='series_delete'),
     # promotions
     path('crm/promotions/', PromotionsListView.as_view(), name='promotions_list'),
     path('crm/promotions/add/', PromotionsCreateView.as_view(), name='promotions_create'),
