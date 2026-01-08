@@ -292,6 +292,20 @@ for p in Permission.objects.filter(content_type__model=Box._meta.label.split('.'
     module.permits.add(p)
 print('insertado {}'.format(module.name))
 
+module = Module()
+module.moduletype_id = 3
+module.name = 'Invoice Series'
+module.url = '/pos/frm/series/'
+module.is_active = True
+module.is_vertical = True
+module.is_visible = True
+module.icon = 'fas fa-receipt'
+module.description = 'Permite administrar las series de facturación'
+module.save()
+for p in Permission.objects.filter(content_type__model=Series._meta.label.split('.')[1].lower()):
+    module.permits.add(p)
+print('insertado {}'.format(module.name))
+
 type = ModuleType()
 type.name = 'Facturación'
 type.icon = 'fa fa-receipt'
