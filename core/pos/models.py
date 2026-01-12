@@ -33,6 +33,34 @@ class Series(models.Model):
         ordering = ['-id']
 
 
+class UserSeries(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, verbose_name='Usuario Vendedor')
+    series = models.OneToOneField(Series, on_delete=models.CASCADE, verbose_name='Serie Asignada')
+    date_assigned = models.DateTimeField(auto_now_add=True, verbose_name='Fecha de Asignación')
+
+    def __str__(self):
+        return f'{self.user.full_name} - {self.series.name}'
+
+    def toJSON(self):
+        item = model_to_dict(self, exclude=['date_assigned'])
+        item['user'] = self.user.toJSON()
+        item['series'] = self.series.toJSON()
+        item['date_assigned'] = self.date_assigned.strftime('%Y-%m-%d %H:%M')
+        return item
+
+    class Meta:
+        verbose_name = 'Asignación de Serie a Vendedor'
+        verbose_name_plural = 'Asignaciones de Series a Vendedores'
+        default_permissions = ()
+        permissions = (
+            ('view_userseries', 'Can view Asignaciones de Series'),
+            ('add_userseries', 'Can add Asignaciones de Series'),
+            ('change_userseries', 'Can change Asignaciones de Series'),
+            ('delete_userseries', 'Can delete Asignaciones de Series'),
+        )
+        ordering = ['-id']
+
+
 class Company(models.Model):
     name = models.CharField(max_length=50, verbose_name='Nombre')
     ruc = models.CharField(max_length=13, verbose_name='Ruc')

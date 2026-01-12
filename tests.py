@@ -306,6 +306,20 @@ for p in Permission.objects.filter(content_type__model=Series._meta.label.split(
     module.permits.add(p)
 print('insertado {}'.format(module.name))
 
+module = Module()
+module.moduletype_id = 3
+module.name = 'Administración de Series'
+module.url = '/pos/admin/user_series/'
+module.is_active = True
+module.is_vertical = True
+module.is_visible = True
+module.icon = 'fas fa-user-tie'
+module.description = 'Permite asignar series a vendedores'
+module.save()
+for p in Permission.objects.filter(content_type__model=UserSeries._meta.label.split('.')[1].lower()):
+    module.permits.add(p)
+print('insertado {}'.format(module.name))
+
 type = ModuleType()
 type.name = 'Facturación'
 type.icon = 'fa fa-receipt'

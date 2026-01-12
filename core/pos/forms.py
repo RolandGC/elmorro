@@ -1,5 +1,6 @@
 from django.forms import ModelForm
 from django import forms
+from django.contrib.auth.models import Group
 
 from .models import *
 
@@ -16,6 +17,41 @@ class SeriesForm(ModelForm):
             'name': forms.TextInput(attrs={'placeholder': 'Ingrese el nombre de la serie'}),
         }
 
+
+class UserSeriesForm(ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Filtrar solo usuarios del grupo "Vendedor"
+        try:
+            vendor_group = Group.objects.get(name='Vendedor')
+            self.fields['user'].queryset = vendor_group.user_set.all()
+        except Group.DoesNotExist:
+            self.fields['user'].queryset = User.objects.none()
+        
+        self.fields['user'].widget.attrs['autofocus'] = True
+
+    class Meta:
+        model = UserSeries
+        fields = ('user', 'series')
+        widgets = {
+            'user': forms.Select(attrs={'class': 'form-control select2'}),
+            'series': forms.Select(attrs={'class': 'form-control select2'}),
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        user = cleaned_data.get('user')
+        series = cleaned_data.get('series')
+        
+        if user and series:
+            # Verificar que el usuario no tenga otra serie asignada
+            if UserSeries.objects.exclude(pk=self.instance.pk).filter(user=user).exists():
+                raise forms.ValidationError('Este usuario ya tiene una serie asignada.')
+            # Verificar que la serie no esté asignada a otro usuario
+            if UserSeries.objects.exclude(pk=self.instance.pk).filter(series=series).exists():
+                raise forms.ValidationError('Esta serie ya está asignada a otro usuario.')
+        
+        return cleaned_data
 
 
 class ProviderForm(ModelForm):
