@@ -94,6 +94,24 @@ class SaleAdminCreateView(PermissionMixin, CreateView):
                     sale = Sale()
                     sale.employee_id = request.user.id
                     sale.client_id = int(request.POST['client'])
+                    # parse date_joined (supports 'YYYY-MM-DDTHH:MM', 'YYYY-MM-DD HH:MM' and 'DD/MM/YYYY HH:MM')
+                    dj = request.POST.get('date_joined', '').strip()
+                    if dj:
+                        parsed = None
+                        try:
+                            parsed = datetime.strptime(dj, '%Y-%m-%dT%H:%M')
+                        except:
+                            try:
+                                parsed = datetime.strptime(dj, '%Y-%m-%d %H:%M')
+                            except:
+                                try:
+                                    parsed = datetime.strptime(dj, '%d/%m/%Y %H:%M')
+                                except:
+                                    parsed = None
+                        if parsed:
+                            if timezone.is_naive(parsed):
+                                parsed = timezone.make_aware(parsed)
+                            sale.date_joined = parsed
                     sale.payment_method = request.POST['payment_method']
                     sale.payment_condition = request.POST['payment_condition']
                     sale.type_voucher = request.POST['type_voucher']
@@ -101,6 +119,9 @@ class SaleAdminCreateView(PermissionMixin, CreateView):
                     # sale.dscto = float(request.POST['dscto']) / 100
                     sale.dscto = float(request.POST['dscto'])
                     sale.comment = request.POST.get('comment', '')
+                    # if date_joined was not provided or could not be parsed, use current datetime
+                    if not getattr(sale, 'date_joined', None):
+                        sale.date_joined = timezone.now()
                     sale.save()
 
                     for i in json.loads(request.POST['products']):

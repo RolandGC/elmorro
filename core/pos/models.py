@@ -285,7 +285,7 @@ class Sale(models.Model):
     payment_condition = models.CharField(choices=payment_condition, max_length=50, default='contado')
     payment_method = models.CharField(choices=payment_method, max_length=50, default='efectivo')
     type_voucher = models.CharField(choices=voucher, max_length=50, default='ticket')
-    date_joined = models.DateField(default=datetime.now)
+    date_joined = models.DateTimeField(default=datetime.now)
     end_credit = models.DateField(default=datetime.now)
     subtotal = models.DecimalField(max_digits=9, decimal_places=2, default=0.00)
     dscto = models.DecimalField(max_digits=9, decimal_places=2, default=0.00)
@@ -323,7 +323,10 @@ class Sale(models.Model):
         item = model_to_dict(self, exclude=[''])
         item['nro'] = format(self.id, '06d')
         item['card_number'] = self.card_number_format()
-        item['date_joined'] = self.date_joined.strftime('%Y-%m-%d')
+        try:
+            item['date_joined'] = self.date_joined.strftime('%d/%m/%Y %H:%M')
+        except:
+            item['date_joined'] = ''
         item['end_credit'] = self.end_credit.strftime('%Y-%m-%d')
         item['employee'] = {} if self.employee is None else self.employee.toJSON()
         item['client'] = {} if self.client is None else self.client.toJSON()

@@ -541,6 +541,10 @@ document.addEventListener('DOMContentLoaded', function (e) {
             parameters.append('initial', input_initial.val());
             parameters.append('dscto', $('input[name="dscto"]').val());
             parameters.append('amount_debited', input_amountdebited.val());
+            // attach date_joined (supports datetime-local input)
+            var date_joined_val = $('input[name="date_joined"]').val() || $('#date_joined').val() || $('#id_date_joined').val() || '';
+            parameters.append('date_joined', date_joined_val);
+            console.log('date_joined sent:', date_joined_val);
             parameters.append('comment', $('textarea[name="comment"]').val());
             console.log(parameters)
             if (vents.details.products.length === 0) {
