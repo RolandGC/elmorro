@@ -74,10 +74,10 @@ urlpatterns = [
     path('frm/series/update/<int:pk>/', SeriesUpdateView.as_view(), name='series_update'),
     path('frm/series/delete/<int:pk>/', SeriesDeleteView.as_view(), name='series_delete'),
     # user_series (administración de series)
-    path('admin/user_series/', UserSeriesListView.as_view(), name='user_series_list'),
-    path('admin/user_series/add/', UserSeriesCreateView.as_view(), name='user_series_create'),
-    path('admin/user_series/update/<int:pk>/', UserSeriesUpdateView.as_view(), name='user_series_update'),
-    path('admin/user_series/delete/<int:pk>/', UserSeriesDeleteView.as_view(), name='user_series_delete'),
+    path('frm/user_series/', UserSeriesListView.as_view(), name='user_series_list'),
+    path('frm/user_series/add/', UserSeriesCreateView.as_view(), name='user_series_create'),
+    path('frm/user_series/update/<int:pk>/', UserSeriesUpdateView.as_view(), name='user_series_update'),
+    path('frm/user_series/delete/<int:pk>/', UserSeriesDeleteView.as_view(), name='user_series_delete'),
     # promotions
     path('crm/promotions/', PromotionsListView.as_view(), name='promotions_list'),
     path('crm/promotions/add/', PromotionsCreateView.as_view(), name='promotions_create'),

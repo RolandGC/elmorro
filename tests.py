@@ -309,7 +309,7 @@ print('insertado {}'.format(module.name))
 module = Module()
 module.moduletype_id = 3
 module.name = 'Administración de Series'
-module.url = '/pos/admin/user_series/'
+module.url = '/pos/frm/user_series/'
 module.is_active = True
 module.is_vertical = True
 module.is_visible = True
