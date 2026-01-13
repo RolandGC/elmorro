@@ -370,6 +370,7 @@ class Sale(models.Model):
         item['total_igv'] = format(self.total_igv, '.2f')
         item['total'] = format(self.total, '.2f')
         item['cash'] = format(self.cash, '.2f')
+        item['initial'] = format(self.initial, '.2f')
         item['change'] = format(self.change, '.2f')
         item['amount_debited'] = format(self.amount_debited, '.2f')
         # Obtener la cantidad total de productos vendidos en esta venta
@@ -465,14 +466,17 @@ class SaleDetail(models.Model):
         return self.product.name
 
     def toJSON(self):
-        item = model_to_dict(self, exclude=['sale'])
-        item['product'] = self.product.toJSON()
-        item['price'] = format(self.price, '.2f')
-        item['dscto'] = format(self.dscto, '.2f')
-        item['total_dscto'] = format(self.total_dscto, '.2f')
-        item['subtotal'] = format(self.subtotal, '.2f')
-        item['total'] = format(self.total, '.2f')
-        return item
+        return {
+            'id': self.id,
+            'product': self.product.toJSON(),
+            'hours_sale': self.hours_sale.strftime('%H:%M:%S'),
+            'cant': self.cant,
+            'price': format(self.price, '.2f'),
+            'subtotal': format(self.subtotal, '.2f'),
+            'dscto': format(self.dscto, '.2f'),
+            'total_dscto': format(self.total_dscto, '.2f'),
+            'total': format(self.total, '.2f'),
+        }
 
     class Meta:
         verbose_name = 'Detalle de Venta'

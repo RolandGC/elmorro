@@ -1,218 +1,215 @@
 <!DOCTYPE html>
-{% load static %}
-{% load tz %}
+{% load static %} {% load tz %}
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>Title</title>
     <style>
-        @page {
-            width: 58mm;
-            height: {{ height }}mm;
-            margin: 0;
-        }
+      @page {
+          width: 58mm;
+          height: {{ height }}mm;
+          margin: 0;
+      }
 
-        body {
-            font-family: "Roboto", "Lucida Grande", Verdana, Arial, sans-serif;
-            padding: 0;
-            margin: 0;
-            font-size: 8px;
-            color: black !important;
-        }
+      body {
+          font-family: "Roboto", "Lucida Grande", Verdana, Arial, sans-serif;
+          padding: 0;
+          margin: 0;
+          font-size: 8px;
+          color: black !important;
+      }
 
-        p {
-            font-size: 5px;
-        }
+      p {
+          font-size: 5px;
+      }
 
-        .content {
-            width: 58mm;
-            height: {{ height }}mm;
-            padding: 10px;
-        }
+      .content {
+          width: 58mm;
+          height: {{ height }}mm;
+          padding: 10px;
+      }
 
-        .client {
-            font-size: 7px;
-            margin-top: 0;
-            padding-top: 0;
-            margin-bottom: 5px;
-        }
+      .client {
+          font-size: 7px;
+          margin-top: 0;
+          padding-top: 0;
+          margin-bottom: 5px;
+      }
 
-        .name-company {
-            margin-top: 10px;
-            font-size: 9px;
-            font-weight: bold;
-            text-transform: uppercase;
-            margin-bottom: 0;
-            text-align: center;
-        }
+      .name-company {
+          margin-top: 10px;
+          font-size: 9px;
+          font-weight: bold;
+          text-transform: uppercase;
+          margin-bottom: 0;
+          text-align: center;
+      }
 
-        .desc-company {
-            font-size: 5px;
-            margin-top: 0;
-            margin-bottom: 5px;
-        }
+      .desc-company {
+          font-size: 5px;
+          margin-top: 0;
+          margin-bottom: 5px;
+      }
 
-        .border-dotted {
-            border-top-style: dotted;
-            border-bottom-style: dotted;
-        }
+      .border-dotted {
+          border-top-style: dotted;
+          border-bottom-style: dotted;
+      }
 
-        .ruc {
-            font-size: 8px;
-            font-weight: bold;
-            text-transform: uppercase;
-            text-align: center;
-            margin-bottom: 5px;
-        }
+      .ruc {
+          font-size: 8px;
+          font-weight: bold;
+          text-transform: uppercase;
+          text-align: center;
+          margin-bottom: 5px;
+      }
 
-        .table {
-            font-size: 5px;
-            color: black;
-        }
+      .table {
+          font-size: 5px;
+          color: black;
+      }
 
-        .table td, .table th {
-            padding: 0;
-            color: black;
-        }
+      .table td, .table th {
+          padding: 0;
+          color: black;
+      }
 
-        .img-logo {
-            margin-top: 5px;
-            width: 100px;
-            height: 60px;
-            margin-bottom: 5px;
-        }
-        .signatures {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            padding: 4px 0;
-            font-size: 5px;
-        }
+      .img-logo {
+          margin-top: 5px;
+          width: 100px;
+          height: 60px;
+          margin-bottom: 5px;
+      }
+      .signatures {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          padding: 4px 0;
+          font-size: 5px;
+      }
 
-        .signatures .signature {
-            width: 45%;
-            text-align: center;
-        }
-
+      .signatures .signature {
+          width: 45%;
+          text-align: center;
+      }
     </style>
-</head>
-<body>
-<div class="content">
-    <img src="{{ company.get_image }}" class="img-fluid d-block mx-auto img-logo">
-    <h1 class="name-company">{{ company.name }}</h1>
-    <p class="text-center desc-company">
-        {{ company.address }}<br>
-        Celular: {{ company.mobile }}<br>
-        Teléfono: {{ company.phone }}<br>
-        Web: {{ company.website }}<br>
-    </p>
-    <p class="ruc border-dotted">
-        Acuse de recibo: Serie 001 - 001
-    </p>
-    <p class="client">
+  </head>
+  <body>
+    <div class="content">
+      <img
+        src="{{ company.get_image }}"
+        class="img-fluid d-block mx-auto img-logo"
+      />
+      <h1 class="name-company">{{ company.name }}</h1>
+      <p class="text-center desc-company">
+        {{ company.address }}<br />
+        Celular: {{ company.mobile }}<br />
+        Teléfono: {{ company.phone }}<br />
+        Web: {{ company.website }}<br />
+      </p>
+      <p class="ruc border-dotted">Acuse de recibo: Serie {{sale.serie}}</p>
+      <p class="client">
         <b></b>
-        <b>Vendedor:</b> {{ sale.employee.full_name }}<br>
-        <b>Cliente:</b> {{ sale.client.user.full_name }}<br>
-        <b>Número de DNI:</b> {{ sale.client.user.dni }}<br>
+        <b>Vendedor:</b> {{ sale.employee.full_name }}<br />
+        <b>Cliente:</b> {{ sale.client.user.full_name }}<br />
+        <b>Número de DNI:</b> {{ sale.client.user.dni }}<br />
         <b>Hora y fecha de pago:</b>
-        {% if sale.date_joined %}
-            {{ sale.date_joined|localtime|date:"H:i" }} del {{ sale.date_joined|localtime|date:"d/m/Y" }}<br>
-        {% else %}
-            -<br>
+        {% if sale.date_joined %} {{ sale.date_joined|localtime|date:"H:i" }}
+        del {{ sale.date_joined|localtime|date:"d/m/Y" }}<br />
+        {% else %} -<br />
         {% endif %}
-        <b>Forma de pago:</b> {{ sale.get_payment_condition_display }}<br>
+        <b>Forma de pago:</b> {{ sale.get_payment_condition_display }}<br />
         {% if sale.payment_condition == 'contado' %}
-            <b>Método de pago:</b> {{ sale.get_payment_method_display }}<br>
-            {% if sale.payment_method in 'yape,plin,transferencia,deposito' and sale.operation_number %}
-                <b>Nro de Operación:</b> {{ sale.operation_number }}<br>
-            {% endif %}
-        {% else %}
-            <b>Fecha limite de credito:</b> {{ sale.end_credit|date:'c' }}<br>
+        <b>Método de pago:</b> {{ sale.get_payment_method_display }}<br />
+        {% if sale.payment_method in 'yape,plin,transferencia,deposito' and
+        sale.operation_number %}
+        <b>Nro de Operación:</b> {{ sale.operation_number }}<br />
+        {% endif %} {% else %}
+        <b>Fecha limite de credito:</b> {{ sale.end_credit|date:'c' }}<br />
         {% endif %}
-    </p>
-    <table class="table table-borderless table-sm" style="margin-bottom: 0">
+      </p>
+      <table class="table table-borderless table-sm" style="margin-bottom: 0">
         <thead>
-        <tr style="border-bottom: 1px double black;">
-            <th style="width: 15%;">Cantidad</th>
-            <th style="width: 40%;">Producto</th>
-            <th style="width: 15%;">P.Unitario</th>
-            <th style="width: 15%;">Dscto</th>
-            <th style="width: 15%;" class="text-right">Subtotal</th>
-        </tr>
+          <tr style="border-bottom: 1px double black">
+            <th style="width: 15%">Cantidad</th>
+            <th style="width: 40%">Producto</th>
+            <th style="width: 15%">P.Unitario</th>
+            <th style="width: 15%">Dscto</th>
+            <th style="width: 15%" class="text-right">Subtotal</th>
+          </tr>
         </thead>
         <tbody>
-        {% for det in sale.saledetail_set.all %}
-            <tr>
-                <td>{{ det.cant }}</td>
-                <td>{{ det.product.name }}</td>
-                <td>{{ det.price }}</td>
-                <td>{{ det.total_dscto }}</td>
-                <td class="text-right">{{ det.total }}</td>
-            </tr>
-        {% endfor %}
+          {% for det in sale.saledetail_set.all %}
+          <tr>
+            <td>{{ det.cant }}</td>
+            <td>{{ det.product.name }}</td>
+            <td>{{ det.price }}</td>
+            <td>{{ det.total_dscto }}</td>
+            <td class="text-right">{{ det.total }}</td>
+          </tr>
+          {% endfor %}
         </tbody>
-    </table>
-    <table class="table table-borderless table-sm" style="margin-top: 0">
+      </table>
+      <table class="table table-borderless table-sm" style="margin-top: 0">
         <thead>
-        <tr>
-            <th style="width: 50%;"></th>
-            <th style="width: 50%;"></th>
-        </tr>
+          <tr>
+            <th style="width: 50%"></th>
+            <th style="width: 50%"></th>
+          </tr>
         </thead>
         <tbody>
-        <tr>
+          <tr>
             <td class="float-left"><b>Subtotal</b></td>
             <td class="text-right">{{ sale.subtotal }}</td>
-        </tr>
-        <tr>
+          </tr>
+          <tr>
             <td class="float-left"><b>Igv {{ sale.igv }}%</b></td>
             <td class="text-right">{{ sale.total_igv }}</td>
-        </tr>
-        <tr>
+          </tr>
+          <tr>
             <td class="float-left"><b>Descuento {{ sale.dscto }}%</b></td>
             <td class="text-right">{{ sale.total_dscto }}</td>
-        </tr>
-        <tr>
+          </tr>
+          <tr>
             <td class="float-left"><b>Total a pagar</b></td>
             <td class="text-right">{{ sale.total }}</td>
-        </tr>
+          </tr>
         </tbody>
-    </table>
-    <p><b>Comentario:</b> {{ sale.comment }}</p>
-    {% if sale.payment_condition == 'contado' %}
-        <p class="text-uppercase font-weight-bold text-center">
-            ****** estimado cliente no olvide que ******
-            <br>
-            {% if sale.payment_method == 'efectivo' %}
-                Usted va a pagar en efectivo un total de {{ sale.cash }}<br>
-                Por lo tanto debe recibir un vuelto de {{ sale.change }}<br>
-            {% elif sale.payment_method == 'tarjeta_debito_credito' %}
-                Se le va a descontar de su tarjeta un monto de {{ sale.amount_debited }}<br>
-            {% elif sale.payment_method == 'efectivo_tarjeta' %}
-                Usted va a pagar en efectivo un total de {{ sale.cash }}<br>
-                Y se le va a descontar de su tarjeta un monto de {{ sale.amount_debited }}<br>
-            {% endif %}
-            Total de productos {{ sale.saledetail_set.all.count }}
-        </p>
-    {% endif %}
-    <div class="signatures">
+      </table>
+      <p><b>Comentario:</b> {{ sale.comment }}</p>
+      {% if sale.payment_condition == 'contado' %}
+      <p class="text-uppercase font-weight-bold text-center">
+        ****** estimado cliente no olvide que ******
+        <br />
+        {% if sale.payment_method == 'efectivo' %} Usted va a pagar en efectivo
+        un total de {{ sale.cash }}<br />
+        Por lo tanto debe recibir un vuelto de {{ sale.change }}<br />
+        {% elif sale.payment_method == 'tarjeta_debito_credito' %} Se le va a
+        descontar de su tarjeta un monto de {{ sale.amount_debited }}<br />
+        {% elif sale.payment_method == 'efectivo_tarjeta' %} Usted va a pagar en
+        efectivo un total de {{ sale.cash }}<br />
+        Y se le va a descontar de su tarjeta un monto de {{ sale.amount_debited
+        }}<br />
+        {% endif %} Total de productos {{ sale.saledetail_set.all.count }}
+      </p>
+      {% endif %}
+      <div class="signatures">
         <div class="signature">
-            ---------------------<br>
-            Firma del cliente<br>
-            DNI
+          ---------------------<br />
+          Firma del cliente<br />
+          DNI
         </div>
         <div class="signature">
-            ---------------------<br>
-            Firma del vendedor<br>
-            DNI
+          ---------------------<br />
+          Firma del vendedor<br />
+          DNI
         </div>
-    </div>
-    <p class="text-center border-dotted p-1">
-        !Gracias por su preferencia!<br>
-        "Brindando atención eficiente y<br>
+      </div>
+      <p class="text-center border-dotted p-1">
+        !Gracias por su preferencia!<br />
+        "Brindando atención eficiente y<br />
         de calidad."
-
-    </p>
-</div>
-</body>
+      </p>
+    </div>
+  </body>
 </html>
