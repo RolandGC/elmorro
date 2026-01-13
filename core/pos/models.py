@@ -328,6 +328,7 @@ class Sale(models.Model):
     card_number = models.CharField(max_length=30, null=True, blank=True)
     titular = models.CharField(max_length=30, null=True, blank=True)
     amount_debited = models.DecimalField(max_digits=9, decimal_places=2, default=0.00)
+    operation_number = models.CharField(max_length=50, null=True, blank=True, verbose_name='Nro de Operación (Yape/Plin)')
     comment = models.TextField(max_length=600, null=True, blank=True, verbose_name='Comentario')
 
     def __str__(self):

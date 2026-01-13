@@ -486,6 +486,11 @@ class SaleForm(ModelForm):
                 'autocomplete': 'off',
                 'readonly': True
             }),
+            'operation_number': forms.TextInput(attrs={
+                'class': 'form-control',
+                'autocomplete': 'off',
+                'placeholder': 'Ingrese el número de operación'
+            }),
             'comment': forms.Textarea(attrs={
                 'rows': 4,
                 'placeholder': 'Escribe un comentario...'
