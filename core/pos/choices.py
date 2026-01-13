@@ -5,10 +5,10 @@ payment_condition = (
 
 payment_method = (
     ('efectivo', 'Efectivo'),
-    ('plin', 'Plin'),
     ('yape', 'Yape'),
-    ('tarjeta_debito_credito', 'Tarjeta de Debito / Credito'),
-    ('efectivo_tarjeta', 'Efectivo y Tarjeta'),
+    ('plin', 'Plin'),
+    ('transferencia', 'Transferencia'),
+    ('deposito', 'Depósito'),
 )
 
 voucher = (

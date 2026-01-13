@@ -114,7 +114,7 @@
         <b>Vendedor:</b> {{ sale.employee.full_name }}<br>
         <b>Cliente:</b> {{ sale.client.user.full_name }}<br>
         <b>Número de DNI:</b> {{ sale.client.user.dni }}<br>
-        <b>Fecha de venta:</b>
+        <b>Hora y fecha de pago:</b>
         {% if sale.date_joined %}
             {{ sale.date_joined|localtime|date:"H:i" }} del {{ sale.date_joined|localtime|date:"d/m/Y" }}<br>
         {% else %}
@@ -123,6 +123,9 @@
         <b>Forma de pago:</b> {{ sale.get_payment_condition_display }}<br>
         {% if sale.payment_condition == 'contado' %}
             <b>Método de pago:</b> {{ sale.get_payment_method_display }}<br>
+            {% if sale.payment_method in 'yape,plin,transferencia,deposito' and sale.operation_number %}
+                <b>Nro de Operación:</b> {{ sale.operation_number }}<br>
+            {% endif %}
         {% else %}
             <b>Fecha limite de credito:</b> {{ sale.end_credit|date:'c' }}<br>
         {% endif %}
@@ -175,7 +178,7 @@
         </tr>
         </tbody>
     </table>
-    <p>Comentario: {{ sale.comment }}</p>
+    <p><b>Comentario:</b> {{ sale.comment }}</p>
     {% if sale.payment_condition == 'contado' %}
         <p class="text-uppercase font-weight-bold text-center">
             ****** estimado cliente no olvide que ******
@@ -194,12 +197,12 @@
     {% endif %}
     <div class="signatures">
         <div class="signature">
-            -------------------<br>
+            ---------------------<br>
             Firma del cliente<br>
             DNI
         </div>
         <div class="signature">
-            -------------------<br>
+            ---------------------<br>
             Firma del vendedor<br>
             DNI
         </div>

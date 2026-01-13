@@ -545,6 +545,8 @@ document.addEventListener('DOMContentLoaded', function (e) {
             var date_joined_val = $('input[name="date_joined"]').val() || $('#date_joined').val() || $('#id_date_joined').val() || '';
             parameters.append('date_joined', date_joined_val);
             console.log('date_joined sent:', date_joined_val);
+            // attach operation_number for Yape/Plin/Transferencia/Depósito
+            parameters.append('operation_number', $('input[name="operation_number"]').val() || '');
             parameters.append('comment', $('textarea[name="comment"]').val());
             console.log(parameters)
             if (vents.details.products.length === 0) {
@@ -942,11 +944,24 @@ $(function () {
         });
 
     select_paymentmethod.on('change', function () {
-        var id = $(this).val();
+        updateOperationNumberVisibility();
+    }).on('select2:select', function () {
+        updateOperationNumberVisibility();
+    });
+
+    function updateOperationNumberVisibility() {
+        var id = select_paymentmethod.val();
         var isCredit = select_paymentcondition.val() === "credito";
         hideRowsVents([{'pos': 0, 'enable': false}, {'pos': 1, 'enable': false}, {'pos': 2, 'enable': isCredit}]);
         input_cash.val(input_cash.val());
         input_amountdebited.val('0.00');
+        
+        // Show/hide operation number field for Yape, Plin, Transferencia and Depósito
+        if (id === 'yape' || id === 'plin' || id === 'transferencia' || id === 'deposito') {
+            $('#rowOperationNumber').show();
+        } else {
+            $('#rowOperationNumber').hide();
+        }
 
         switch (id) {
             case "efectivo":
@@ -958,26 +973,20 @@ $(function () {
                 hideRowsVents([{'pos': 0, 'enable': true}]);
                 
                 break;
-            case "tarjeta_debito_credito":
+            case "yape":
+            case "plin":
+            case "transferencia":
+            case "deposito":
                 fvSale.disableValidator('change');
-                fvSale.enableValidator('card_number');
-                fvSale.enableValidator('titular');
-                fvSale.enableValidator('amount_debited');
-                input_amountdebited.val(vents.details.total.toFixed(2));
-                input_titular.val('');
-                hideRowsVents([{'pos': 1, 'enable': true}]);
-                break;
-            case "efectivo_tarjeta":
-                input_change.val('0.00');
-                fvSale.enableValidator('change');
-                fvSale.enableValidator('card_number');
-                fvSale.enableValidator('titular');
-                fvSale.enableValidator('amount_debited');
-                input_cash.trigger("touchspin.updatesettings", {max: vents.details.total});
-                hideRowsVents([{'pos': 0, 'enable': false}, {'pos': 1, 'enable': true}]);
+                fvSale.disableValidator('card_number');
+                fvSale.disableValidator('titular');
+                fvSale.disableValidator('amount_debited');
                 break;
         }
-    });
+    }
+    
+    // Initial visibility check when page loads
+    updateOperationNumberVisibility();
     input_initial.on('change', function() {
         console.log('Change event detected for input_initial');
     });

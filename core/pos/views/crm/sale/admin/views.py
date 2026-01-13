@@ -172,16 +172,11 @@ class SaleAdminCreateView(PermissionMixin, CreateView):
                             sale.cash = float(request.POST['cash'])
                             sale.change = float(sale.cash) - sale.total
                             sale.save()
-                        elif sale.payment_method == 'tarjeta_debito_credito':
-                            sale.card_number = request.POST['card_number']
-                            sale.titular = request.POST['titular']
-                            sale.amount_debited = float(request.POST['amount_debited'])
+                        elif sale.payment_method in ['yape', 'plin']:
+                            sale.operation_number = request.POST.get('operation_number', '')
                             sale.save()
-                        elif sale.payment_method == 'efectivo_tarjeta':
-                            sale.cash = float(request.POST['cash'])
-                            sale.card_number = request.POST['card_number']
-                            sale.titular = request.POST['titular']
-                            sale.amount_debited = float(request.POST['amount_debited'])
+                        elif sale.payment_method in ['transferencia', 'deposito']:
+                            sale.operation_number = request.POST.get('operation_number', '')
                             sale.save()
 
                     data = {'id': sale.id}
