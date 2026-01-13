@@ -315,6 +315,7 @@ class Sale(models.Model):
     type_voucher = models.CharField(choices=voucher, max_length=50, default='ticket')
     date_joined = models.DateTimeField(default=datetime.now)
     end_credit = models.DateField(default=datetime.now)
+    serie = models.CharField(max_length=50, null=True, blank=True, verbose_name='Serie de Facturación')
     subtotal = models.DecimalField(max_digits=9, decimal_places=2, default=0.00)
     dscto = models.DecimalField(max_digits=9, decimal_places=2, default=0.00)
     total_dscto = models.DecimalField(max_digits=9, decimal_places=2, default=0.00)
@@ -390,6 +391,41 @@ class Sale(models.Model):
         self.total_dscto = self.subtotal * float(self.dscto)
         self.total = float(self.subtotal) - float(self.total_dscto)
         self.save()
+
+    def calculate_serie(self):
+        """
+        Calcula automáticamente el número de serie de la venta basado en:
+        - La serie asignada al empleado (usuario) que realiza la venta
+        - El contador secuencial de ventas para esa serie
+        Formato: {NombreSerie}-{número_4_dígitos}
+        Ejemplo: PH-500-0001
+        """
+        if self.employee:
+            try:
+                user_series = UserSeries.objects.get(user=self.employee)
+                series_name = user_series.series.name
+                
+                # Contar cuántas ventas previas tiene este usuario con esta serie
+                # Usamos pk__lt para contar solo ventas guardadas anteriormente
+                sales_count = Sale.objects.filter(
+                    employee=self.employee,
+                    serie__startswith=f'{series_name}-'
+                ).count()
+                
+                # El siguiente número secuencial
+                next_number = sales_count + 1
+                self.serie = f'{series_name}-{next_number:04d}'
+            except UserSeries.DoesNotExist:
+                # Si el usuario no tiene serie asignada, dejamos el campo vacío
+                self.serie = None
+        else:
+            self.serie = None
+
+    def save(self, *args, **kwargs):
+        """Sobrescribir save para calcular la serie automáticamente"""
+        if not self.serie:
+            self.calculate_serie()
+        super(Sale, self).save(*args, **kwargs)
 
     def delete(self, using=None, keep_parents=False):
         try:
