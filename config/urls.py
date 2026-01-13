@@ -14,6 +14,7 @@ urlpatterns = [
     path('login/', include('core.login.urls')),
     path('user/', include('core.user.urls')),
     path('pos/', include('core.pos.urls')),
+    
     path('reports/', include('core.reports.urls')),
 ]
 
