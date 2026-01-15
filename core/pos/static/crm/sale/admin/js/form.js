@@ -444,6 +444,14 @@ document.addEventListener('DOMContentLoaded', function (e) {
                         },
                     }
                 },
+                operation_number: {
+                    validators: {
+                        notEmpty: {
+                            enabled: false,
+                            message: 'Ingrese el número de operación'
+                        },
+                    }
+                },
                 type_voucher: {
                     validators: {
                         notEmpty: {
@@ -969,8 +977,10 @@ $(function () {
         // Show/hide operation number field for Yape, Plin, Transferencia and Depósito
         if (id === 'yape' || id === 'plin' || id === 'transferencia' || id === 'deposito') {
             $('#rowOperationNumber').show();
+            fvSale.enableValidator('operation_number');
         } else {
             $('#rowOperationNumber').hide();
+            fvSale.disableValidator('operation_number');
         }
 
         // Show/hide payment bank field only for Transferencia and Depósito
