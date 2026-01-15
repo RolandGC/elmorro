@@ -61,6 +61,29 @@ class UserSeries(models.Model):
         ordering = ['-id']
 
 
+class PaymentBank(models.Model):
+    name = models.CharField(max_length=100, unique=True, verbose_name='Nombre del Banco')
+
+    def __str__(self):
+        return self.name
+
+    def toJSON(self):
+        item = model_to_dict(self)
+        return item
+
+    class Meta:
+        verbose_name = 'Banco de Pago'
+        verbose_name_plural = 'Bancos de Pago'
+        default_permissions = ()
+        permissions = (
+            ('view_paymentbank', 'Can view Bancos de Pago'),
+            ('add_paymentbank', 'Can add Bancos de Pago'),
+            ('change_paymentbank', 'Can change Bancos de Pago'),
+            ('delete_paymentbank', 'Can delete Bancos de Pago'),
+        )
+        ordering = ['-id']
+
+
 class Company(models.Model):
     name = models.CharField(max_length=50, verbose_name='Nombre')
     ruc = models.CharField(max_length=13, verbose_name='Ruc')

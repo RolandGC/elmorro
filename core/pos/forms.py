@@ -627,3 +627,27 @@ class DevolutionForm(ModelForm):
         'class': 'form-control select2',
         'style': 'width: 100%;'
     }))
+
+
+class PaymentBankForm(ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['name'].widget.attrs['autofocus'] = True
+
+    class Meta:
+        model = PaymentBank
+        fields = '__all__'
+        widgets = {
+            'name': forms.TextInput(attrs={'placeholder': 'Ingrese el nombre del banco'}),
+        }
+
+    def save(self, commit=True):
+        data = {}
+        try:
+            if self.is_valid():
+                super().save()
+            else:
+                data['error'] = self.errors
+        except Exception as e:
+            data['error'] = str(e)
+        return data

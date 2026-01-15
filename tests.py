@@ -393,6 +393,20 @@ for p in Permission.objects.filter(content_type__model=Devolution._meta.label.sp
     module.permits.add(p)
 print('insertado {}'.format(module.name))
 
+module = Module()
+module.moduletype_id = 4
+module.name = 'Bancos de Pago'
+module.url = '/pos/frm/paymentbank/'
+module.is_active = True
+module.is_vertical = True
+module.is_visible = True
+module.icon = 'fas fa-university'
+module.description = 'Permite administrar los bancos de pago'
+module.save()
+for p in Permission.objects.filter(content_type__model=PaymentBank._meta.label.split('.')[1].lower()):
+    module.permits.add(p)
+print('insertado {}'.format(module.name))
+
 type = ModuleType()
 type.name = 'Reportes'
 type.icon = 'fa fa-list-alt'
