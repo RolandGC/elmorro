@@ -619,23 +619,23 @@ print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 admin_group, created = Group.objects.get_or_create(name='Administrador')
 print('Grupo {}: {}'.format(admin_group.name, '(creado)' if created else '(actualizado)'))
 
-if created:
-    for m in Module.objects.filter().exclude(url__in=['/pos/crm/client/update/profile/', '/pos/crm/sale/client/']):
-        gm, _ = GroupModule.objects.get_or_create(module=m, group=admin_group)
-        for perm in m.permits.all():
-            admin_group.permissions.add(perm)
-            _, _ = GroupPermission.objects.get_or_create(
-                module_id=m.id,
-                group_id=admin_group.id,
-                permission_id=perm.id
-            )
+# Siempre agregar módulos al grupo administrador (para nuevos módulos)
+for m in Module.objects.filter().exclude(url__in=['/pos/crm/client/update/profile/', '/pos/crm/sale/client/']):
+    gm, _ = GroupModule.objects.get_or_create(module=m, group=admin_group)
+    for perm in m.permits.all():
+        admin_group.permissions.add(perm)
+        _, _ = GroupPermission.objects.get_or_create(
+            module_id=m.id,
+            group_id=admin_group.id,
+            permission_id=perm.id
+        )
 
 client_group, created = Group.objects.get_or_create(name='Cliente')
 print('Grupo {}: {}'.format(client_group.name, '(creado)' if created else '(actualizado)'))
 
-if created:
-    for m in Module.objects.filter(url__in=['/pos/crm/client/update/profile/', '/pos/crm/sale/client/', '/user/update/password/']):
-        gm, _ = GroupModule.objects.get_or_create(module=m, group=client_group)
+# Siempre agregar módulos al grupo cliente (para nuevos módulos)
+for m in Module.objects.filter(url__in=['/pos/crm/client/update/profile/', '/pos/crm/sale/client/', '/user/update/password/']):
+    gm, _ = GroupModule.objects.get_or_create(module=m, group=client_group)
 
 # ===================== USUARIO ADMINISTRADOR =====================
 
