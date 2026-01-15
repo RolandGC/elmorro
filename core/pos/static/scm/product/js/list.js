@@ -21,9 +21,6 @@ function getData() {
             {data: "codebar"},
             {data: "category.name"},
             {data: "name"},
-            // {data: "color"},
-            {data: "publico"},
-            {data: "desc"},
             {data: "stock"},
             {data: "pvp"},
             {data: "price_min_sale"},
@@ -33,32 +30,14 @@ function getData() {
         ],
         columnDefs: [
             {
-                targets: [8],
-                class: 'text-center',
-                render: function (data, type, row) {
-                    return `${row.date_into}`;
-                }
-            },
-            {
-                targets: [4],
-                class: 'text-center p-1',
-                render: function (data, type, row) {
-                    return `
-                        <div class="text-center" style="width: 170px;">
-                            ${data}
-                        </div>
-                    `
-                }
-            },
-            {
-                targets: [0,1,2,3,8],
+                targets: [0,1,2],
                 class: 'text-center p-1',
                 render: function (data, type, row) {
                     return data;
                 }
             },
             {
-                targets: [5],
+                targets: [3],
                 class: 'text-center',
                 render: function (data, type, row) {
                     
@@ -72,21 +51,20 @@ function getData() {
                 }
             },
             {
-                targets: [6, 7],
+                targets: [4, 5],
                 class: 'text-center',
                 render: function (data, type, row) {
                     
                     return 'S/.' + parseFloat(data).toFixed(2);
                 }
             },
-            // image
-            // {
-            //     targets: [9],
-            //     class: 'text-center',
-            //     render: function (data, type, row) {
-            //         return '<img src="' + row.image + '" class="img-fluid d-block mx-auto" style="width: 20px; height: 20px;">';
-            //     }
-            // },
+            {
+                targets: [6],
+                class: 'text-center',
+                render: function (data, type, row) {
+                    return `${row.date_into}`;
+                }
+            },
             // id
             {
                 targets: [-1],

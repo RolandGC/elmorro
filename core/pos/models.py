@@ -166,9 +166,6 @@ class Product(models.Model):
     codebar = models.CharField(max_length=20, null=True, blank=True, verbose_name='Código')
     category = models.ForeignKey(Category, on_delete=models.PROTECT, verbose_name='Categoría')
     name = models.CharField(max_length=150, verbose_name='Nombre')
-    color = models.CharField(max_length=150, verbose_name='Color',null=True,blank=True)
-    publico = models.CharField(max_length=150, verbose_name='Público objetivo',null=True,blank=True)
-    desc = models.CharField(max_length=150, null=True, blank=True, verbose_name='Descripcion')
     price = models.DecimalField(max_digits=9, decimal_places=2, default=0.00, verbose_name='Precio de Compra')
     price_min_sale = models.DecimalField(max_digits=9, decimal_places=2, default=0.00, verbose_name='Precio mínimo de venta', null=True, blank=True)
     pvp = models.DecimalField(max_digits=9, decimal_places=2, default=0.00, verbose_name='Precio de Venta')
@@ -177,7 +174,7 @@ class Product(models.Model):
     image = models.ImageField(upload_to='product/%Y/%m/%d', verbose_name='Imagen', null=True, blank=True)
 
     def __str__(self):
-        return '{} / {} / {} / {}'.format(self.name, self.desc, self.category.name, self.codebar)
+        return '{} / {} / {}'.format(self.name, self.category.name, self.codebar)
 
     def remove_image(self):
         try:
@@ -189,20 +186,20 @@ class Product(models.Model):
             self.image = None
 
     def toJSON(self):
-        item = model_to_dict(self)
-        item['codebar'] = self.codebar
-        item['desc'] = self.desc
-        item['category'] = self.category.toJSON()
-        item['price'] = format(self.price, '.2f')
-        item['price_promotion'] = format(self.get_price_promotion(), '.2f')
-        item['price_current'] = format(self.get_price_current(), '.2f')
-        item['pvp'] = format(self.pvp, '.2f')
-        item['price_min_sale'] = format(self.price_min_sale, '.2f')
-        
-        item['date_into'] = self.date_into.strftime('%d/%m/%Y')
-
-        item['image'] = self.get_image()
-        item['stock'] = self.stock
+        item = {
+            'id': self.id,
+            'codebar': self.codebar,
+            'name': self.name,
+            'category': self.category.toJSON(),
+            'price': format(self.price, '.2f'),
+            'price_promotion': format(self.get_price_promotion(), '.2f'),
+            'price_current': format(self.get_price_current(), '.2f'),
+            'pvp': format(self.pvp, '.2f'),
+            'price_min_sale': format(self.price_min_sale, '.2f'),
+            'date_into': self.date_into.strftime('%d/%m/%Y'),
+            'image': self.get_image(),
+            'stock': self.stock,
+        }
         return item
 
     def get_price_promotion(self):

@@ -117,9 +117,6 @@ class ProductForm(ModelForm):
         fields = '__all__'
         widgets = {
             'name': forms.TextInput(attrs={'placeholder': 'Ingrese un nombre'}),
-            'color': forms.TextInput(attrs={'placeholder': 'Ingrese el Color'}),
-            'publico': forms.TextInput(attrs={'placeholder': 'Ingrese el Público Objetivo'}),
-            'desc': forms.Textarea(attrs={'placeholder': 'Ingrese una descripción', 'rows': '2', 'cols': '2'}),
             'codebar': forms.TextInput(attrs={'placeholder': 'Ingrese código'}),
             #'unit': forms.Select(attrs={'class': 'form-control select2', 'style': 'width: 100%;'}),
             'date_into': forms.DateInput(format='%Y-%m-%d', attrs={

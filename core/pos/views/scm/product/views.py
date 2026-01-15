@@ -43,32 +43,29 @@ class ProductListView(PermissionMixin, TemplateView):
                             category_name = excel.cell(row=row, column=2).value
                             name = str(excel.cell(row=row, column=3).value)
                             
-                            color = description = excel.cell(row=row, column=4).value
-                            publico = description = excel.cell(row=row, column=5).value
-                            description = excel.cell(row=row, column=6).value
-                            stock = excel.cell(row=row, column=7).value
+                            stock = excel.cell(row=row, column=4).value
                             if stock is not None:
                                 stock = int(stock)
                             else:
                                 stock = 0
-                            price = excel.cell(row=row, column=8).value
+                            price = excel.cell(row=row, column=5).value
                             if price is not None:
                                 price = float(price)
                             else:
                                 price = 0.0
-                            pvp = excel.cell(row=row, column=9).value
+                            pvp = excel.cell(row=row, column=6).value
                             if pvp is not None:
                                 pvp = float(pvp)
                             else:
                                 pvp = 0.0
                                 
-                            price_min_sale = excel.cell(row=row, column=10).value
+                            price_min_sale = excel.cell(row=row, column=7).value
                             if price_min_sale is not None:
                                 price_min_sale = float(price_min_sale)
                             else:
                                 price_min_sale = 0.0
                                 
-                            date_into = excel.cell(row=row, column=11).value
+                            date_into = excel.cell(row=row, column=8).value
                             if isinstance(date_into, str):
                                 try:
                                     # Convertir la cadena de fecha al formato adecuado
@@ -88,9 +85,6 @@ class ProductListView(PermissionMixin, TemplateView):
                                 existing_product = Product.objects.filter(codebar=bar).first()
                                 print(existing_product)
                                 if existing_product:
-                                    existing_product.color = color
-                                    existing_product.publico = publico
-                                    existing_product.desc = description
                                     existing_product.category = category
                                     existing_product.price = price
                                     existing_product.pvp = pvp
@@ -101,9 +95,6 @@ class ProductListView(PermissionMixin, TemplateView):
                                     print('se va a crear')
                                     product = Product.objects.create(
                                         name=name,
-                                        color=color,
-                                        publico=publico,
-                                        desc=description,
                                         codebar=bar,
                                         category=category, 
                                         price=price,
@@ -160,9 +151,6 @@ class ProductCreateView(PermissionMixin, CreateView):
             if action == 'add':
                 product = Product()
                 product.name = request.POST['name']
-                product.color = request.POST['color']
-                product.publico = request.POST['publico']
-                product.desc = request.POST['desc']
                 product.codebar = request.POST['codebar']
                 #product.unit = request.POST['unit']
                 product.category_id = request.POST['category']
@@ -225,9 +213,6 @@ class ProductUpdateView(PermissionMixin, UpdateView):
             if action == 'edit':
                 product = self.object
                 product.name = request.POST['name']
-                product.color = request.POST['color']
-                product.publico = request.POST['publico']
-                product.desc = request.POST['desc']
                 product.codebar = request.POST['codebar']
                 product.category_id = request.POST['category']
                 product.date_into = request.POST['date_into']
@@ -298,7 +283,7 @@ class ProductStockAdjustmentView(ModuleMixin, TemplateView):
                     search = search[0:10]
                 for p in search:
                     item = p.toJSON()
-                    item['value'] = '{} / {} / {} / {}'.format(p.name, p.category, p.desc, p.codebar)
+                    item['value'] = '{} / {} / {}'.format(p.name, p.category, p.codebar)
                     data.append(item)
             elif action == 'create':
                 with transaction.atomic():
@@ -326,9 +311,6 @@ class ProductExportExcelView(LoginRequiredMixin, View):
                 'C.Barra': 15,
                 'Categoria': 25,
                 'Productos': 25,
-                'color':25,
-                'publico':25,
-                'Descripción': 25,
                 'Stock': 15,
                 'Precio de Compra': 20,
                 'Precio venta': 20,
@@ -352,14 +334,11 @@ class ProductExportExcelView(LoginRequiredMixin, View):
                 worksheet.write(row, 0, product.codebar, row_format)
                 worksheet.write(row, 1, product.category.name, row_format)
                 worksheet.write(row, 2, product.name, row_format)
-                worksheet.write(row, 3, product.color, row_format)
-                worksheet.write(row, 4, product.publico, row_format)
-                worksheet.write(row, 5, product.desc, row_format)
-                worksheet.write(row, 6, product.stock, row_format)
-                worksheet.write(row, 7, format(product.price, '.2f'), row_format)
-                worksheet.write(row, 8, format(product.pvp, '.2f'), row_format)
-                worksheet.write(row, 9, format(product.price_min_sale, '.2f'), row_format)
-                worksheet.write(row, 10, product.date_into.strftime('%d/%m/%Y'), row_format)
+                worksheet.write(row, 3, product.stock, row_format)
+                worksheet.write(row, 4, format(product.price, '.2f'), row_format)
+                worksheet.write(row, 5, format(product.pvp, '.2f'), row_format)
+                worksheet.write(row, 6, format(product.price_min_sale, '.2f'), row_format)
+                worksheet.write(row, 7, product.date_into.strftime('%d/%m/%Y'), row_format)
                 row += 1
             workbook.close()
             output.seek(0)
