@@ -7,6 +7,7 @@ var select_client;
 var input_birthdate;
 var select_paymentcondition;
 var select_paymentmethod;
+var select_paymentbank;
 var input_cash;
 let input_initial;
 var input_cardnumber;
@@ -435,6 +436,14 @@ document.addEventListener('DOMContentLoaded', function (e) {
                         },
                     }
                 },
+                payment_bank: {
+                    validators: {
+                        notEmpty: {
+                            enabled: false,
+                            message: 'Seleccione un banco'
+                        },
+                    }
+                },
                 type_voucher: {
                     validators: {
                         notEmpty: {
@@ -621,6 +630,7 @@ $(function () {
     input_initial = $('input[name="initial"]');
     select_paymentcondition = $('select[name="payment_condition"]');
     select_paymentmethod = $('select[name="payment_method"]');
+    select_paymentbank = $('select[name="payment_bank"]');
     input_cardnumber = $('input[name="card_number"]');
     input_amountdebited = $('input[name="amount_debited"]');
     input_cash = $('input[name="cash"]');
@@ -961,6 +971,15 @@ $(function () {
             $('#rowOperationNumber').show();
         } else {
             $('#rowOperationNumber').hide();
+        }
+
+        // Show/hide payment bank field only for Transferencia and Depósito
+        if (id === 'transferencia' || id === 'deposito') {
+            $('#rowPaymentBank').show();
+            fvSale.enableValidator('payment_bank');
+        } else {
+            $('#rowPaymentBank').hide();
+            fvSale.disableValidator('payment_bank');
         }
 
         switch (id) {

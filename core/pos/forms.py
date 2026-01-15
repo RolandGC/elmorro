@@ -491,6 +491,10 @@ class SaleForm(ModelForm):
                 'autocomplete': 'off',
                 'placeholder': 'Ingrese el número de operación'
             }),
+            'payment_bank': forms.Select(attrs={
+                'class': 'form-control select2',
+                'style': 'width: 100%;'
+            }),
             'comment': forms.Textarea(attrs={
                 'rows': 4,
                 'placeholder': 'Escribe un comentario...'

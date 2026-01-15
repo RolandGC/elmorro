@@ -352,6 +352,7 @@ class Sale(models.Model):
     titular = models.CharField(max_length=30, null=True, blank=True)
     amount_debited = models.DecimalField(max_digits=9, decimal_places=2, default=0.00)
     operation_number = models.CharField(max_length=50, null=True, blank=True, verbose_name='Nro de Operación (Yape/Plin)')
+    payment_bank = models.ForeignKey('PaymentBank', on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Banco de Depósito/Transferencia')
     comment = models.TextField(max_length=600, null=True, blank=True, verbose_name='Comentario')
 
     def __str__(self):
@@ -385,6 +386,7 @@ class Sale(models.Model):
         item['client'] = {} if self.client is None else self.client.toJSON()
         item['payment_condition'] = {'id': self.payment_condition, 'name': self.get_payment_condition_display()}
         item['payment_method'] = {'id': self.payment_method, 'name': self.get_payment_method_display()}
+        item['payment_bank'] = {} if self.payment_bank is None else self.payment_bank.toJSON()
         item['type_voucher'] = {'id': self.type_voucher, 'name': self.get_type_voucher_display()}
         item['subtotal'] = format(self.subtotal, '.2f')
         item['dscto'] = format(self.dscto, '.2f')
