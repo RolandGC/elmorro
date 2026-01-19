@@ -61,6 +61,29 @@ class UserSeries(models.Model):
         ordering = ['-id']
 
 
+class PaymentBank(models.Model):
+    name = models.CharField(max_length=100, unique=True, verbose_name='Nombre del Banco')
+
+    def __str__(self):
+        return self.name
+
+    def toJSON(self):
+        item = model_to_dict(self)
+        return item
+
+    class Meta:
+        verbose_name = 'Banco de Pago'
+        verbose_name_plural = 'Bancos de Pago'
+        default_permissions = ()
+        permissions = (
+            ('view_paymentbank', 'Can view Bancos de Pago'),
+            ('add_paymentbank', 'Can add Bancos de Pago'),
+            ('change_paymentbank', 'Can change Bancos de Pago'),
+            ('delete_paymentbank', 'Can delete Bancos de Pago'),
+        )
+        ordering = ['-id']
+
+
 class Company(models.Model):
     name = models.CharField(max_length=50, verbose_name='Nombre')
     ruc = models.CharField(max_length=13, verbose_name='Ruc')
@@ -143,9 +166,6 @@ class Product(models.Model):
     codebar = models.CharField(max_length=20, null=True, blank=True, verbose_name='Código')
     category = models.ForeignKey(Category, on_delete=models.PROTECT, verbose_name='Categoría')
     name = models.CharField(max_length=150, verbose_name='Nombre')
-    color = models.CharField(max_length=150, verbose_name='Color',null=True,blank=True)
-    publico = models.CharField(max_length=150, verbose_name='Público objetivo',null=True,blank=True)
-    desc = models.CharField(max_length=150, null=True, blank=True, verbose_name='Descripcion')
     price = models.DecimalField(max_digits=9, decimal_places=2, default=0.00, verbose_name='Precio de Compra')
     price_min_sale = models.DecimalField(max_digits=9, decimal_places=2, default=0.00, verbose_name='Precio mínimo de venta', null=True, blank=True)
     pvp = models.DecimalField(max_digits=9, decimal_places=2, default=0.00, verbose_name='Precio de Venta')
@@ -154,7 +174,7 @@ class Product(models.Model):
     image = models.ImageField(upload_to='product/%Y/%m/%d', verbose_name='Imagen', null=True, blank=True)
 
     def __str__(self):
-        return '{} / {} / {} / {}'.format(self.name, self.desc, self.category.name, self.codebar)
+        return '{} / {} / {}'.format(self.name, self.category.name, self.codebar)
 
     def remove_image(self):
         try:
@@ -166,20 +186,20 @@ class Product(models.Model):
             self.image = None
 
     def toJSON(self):
-        item = model_to_dict(self)
-        item['codebar'] = self.codebar
-        item['desc'] = self.desc
-        item['category'] = self.category.toJSON()
-        item['price'] = format(self.price, '.2f')
-        item['price_promotion'] = format(self.get_price_promotion(), '.2f')
-        item['price_current'] = format(self.get_price_current(), '.2f')
-        item['pvp'] = format(self.pvp, '.2f')
-        item['price_min_sale'] = format(self.price_min_sale, '.2f')
-        
-        item['date_into'] = self.date_into.strftime('%d/%m/%Y')
-
-        item['image'] = self.get_image()
-        item['stock'] = self.stock
+        item = {
+            'id': self.id,
+            'codebar': self.codebar,
+            'name': self.name,
+            'category': self.category.toJSON(),
+            'price': format(self.price, '.2f'),
+            'price_promotion': format(self.get_price_promotion(), '.2f'),
+            'price_current': format(self.get_price_current(), '.2f'),
+            'pvp': format(self.pvp, '.2f'),
+            'price_min_sale': format(self.price_min_sale, '.2f'),
+            'date_into': self.date_into.strftime('%d/%m/%Y'),
+            'image': self.get_image(),
+            'stock': self.stock,
+        }
         return item
 
     def get_price_promotion(self):
@@ -330,6 +350,7 @@ class Sale(models.Model):
     amount_debited = models.DecimalField(max_digits=9, decimal_places=2, default=0.00)
     operation_number = models.CharField(max_length=50, null=True, blank=True, verbose_name='Nro de Operación (Yape/Plin)')
     operation_date = models.DateField(default=date.today, null=True, blank=True, verbose_name='Fecha de Operación')
+    payment_bank = models.ForeignKey('PaymentBank', on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Banco de Depósito/Transferencia')
     comment = models.TextField(max_length=600, null=True, blank=True, verbose_name='Comentario')
 
     def __str__(self):
@@ -363,6 +384,7 @@ class Sale(models.Model):
         item['client'] = {} if self.client is None else self.client.toJSON()
         item['payment_condition'] = {'id': self.payment_condition, 'name': self.get_payment_condition_display()}
         item['payment_method'] = {'id': self.payment_method, 'name': self.get_payment_method_display()}
+        item['payment_bank'] = {} if self.payment_bank is None else self.payment_bank.toJSON()
         item['type_voucher'] = {'id': self.type_voucher, 'name': self.get_type_voucher_display()}
         item['subtotal'] = format(self.subtotal, '.2f')
         item['dscto'] = format(self.dscto, '.2f')

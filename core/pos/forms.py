@@ -118,9 +118,6 @@ class ProductForm(ModelForm):
         fields = '__all__'
         widgets = {
             'name': forms.TextInput(attrs={'placeholder': 'Ingrese un nombre'}),
-            'color': forms.TextInput(attrs={'placeholder': 'Ingrese el Color'}),
-            'publico': forms.TextInput(attrs={'placeholder': 'Ingrese el Público Objetivo'}),
-            'desc': forms.Textarea(attrs={'placeholder': 'Ingrese una descripción', 'rows': '2', 'cols': '2'}),
             'codebar': forms.TextInput(attrs={'placeholder': 'Ingrese código'}),
             #'unit': forms.Select(attrs={'class': 'form-control select2', 'style': 'width: 100%;'}),
             'date_into': forms.DateInput(format='%Y-%m-%d', attrs={
@@ -501,6 +498,10 @@ class SaleForm(ModelForm):
                 'autocomplete': 'off',
                 'placeholder': 'Ingrese el número de operación'
             }),
+            'payment_bank': forms.Select(attrs={
+                'class': 'form-control select2',
+                'style': 'width: 100%;'
+            }),
             'comment': forms.Textarea(attrs={
                 'rows': 4,
                 'placeholder': 'Escribe un comentario...'
@@ -637,3 +638,27 @@ class DevolutionForm(ModelForm):
         'class': 'form-control select2',
         'style': 'width: 100%;'
     }))
+
+
+class PaymentBankForm(ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['name'].widget.attrs['autofocus'] = True
+
+    class Meta:
+        model = PaymentBank
+        fields = '__all__'
+        widgets = {
+            'name': forms.TextInput(attrs={'placeholder': 'Ingrese el nombre del banco'}),
+        }
+
+    def save(self, commit=True):
+        data = {}
+        try:
+            if self.is_valid():
+                super().save()
+            else:
+                data['error'] = self.errors
+        except Exception as e:
+            data['error'] = str(e)
+        return data

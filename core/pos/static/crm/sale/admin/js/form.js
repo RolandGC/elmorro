@@ -7,6 +7,7 @@ var select_client;
 var input_birthdate;
 var select_paymentcondition;
 var select_paymentmethod;
+var select_paymentbank;
 var input_cash;
 let input_initial;
 var input_cardnumber;
@@ -435,6 +436,34 @@ document.addEventListener('DOMContentLoaded', function (e) {
                         },
                     }
                 },
+                payment_bank: {
+                    validators: {
+                        notEmpty: {
+                            enabled: false,
+                            message: 'Seleccione un banco'
+                        },
+                    }
+                },
+                operation_number: {
+                    validators: {
+                        notEmpty: {
+                            enabled: false,
+                            message: 'Ingrese el número de operación'
+                        },
+                    }
+                },
+                operation_date: {
+                    validators: {
+                        notEmpty: {
+                            enabled: false,
+                            message: 'La fecha de operación es obligatoria'
+                        },
+                        date: {
+                            format: 'YYYY-MM-DD',
+                            message: 'La fecha no es válida'
+                        }
+                    }
+                },
                 type_voucher: {
                     validators: {
                         notEmpty: {
@@ -621,6 +650,7 @@ $(function () {
     input_initial = $('input[name="initial"]');
     select_paymentcondition = $('select[name="payment_condition"]');
     select_paymentmethod = $('select[name="payment_method"]');
+    select_paymentbank = $('select[name="payment_bank"]');
     input_cardnumber = $('input[name="card_number"]');
     input_amountdebited = $('input[name="amount_debited"]');
     input_cash = $('input[name="cash"]');
@@ -959,10 +989,23 @@ $(function () {
         // Show/hide operation number and operation date fields for Yape, Plin, Transferencia and Depósito
         if (id === 'yape' || id === 'plin' || id === 'transferencia' || id === 'deposito') {
             $('#rowOperationNumber').show();
+            fvSale.enableValidator('operation_number');
             $('#rowOperationDate').show();
+            fvSale.enableValidator('operation_date');
         } else {
             $('#rowOperationNumber').hide();
+            fvSale.disableValidator('operation_number');
             $('#rowOperationDate').hide();
+            fvSale.disableValidator('operation_date');
+        }
+
+        // Show/hide payment bank field only for Transferencia and Depósito
+        if (id === 'transferencia' || id === 'deposito') {
+            $('#rowPaymentBank').show();
+            fvSale.enableValidator('payment_bank');
+        } else {
+            $('#rowPaymentBank').hide();
+            fvSale.disableValidator('payment_bank');
         }
 
         switch (id) {

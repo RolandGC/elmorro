@@ -18,6 +18,7 @@ from core.pos.views.crm.client.views import *
 from core.pos.views.crm.sale.print.views import *
 from core.pos.views.crm.devolution.views import *
 from core.pos.views.admin.user_series.views import *
+from core.pos.views.frm.paymentbank.views import *
 
 urlpatterns = [
     # company
@@ -99,4 +100,9 @@ urlpatterns = [
     path('crm/devolution/', DevolutionListView.as_view(), name='devolution_list'),
     path('crm/devolution/add/', DevolutionCreateView.as_view(), name='devolution_create'),
     path('crm/devolution/delete/<int:pk>/', DevolutionDeleteView.as_view(), name='devolution_delete'),
+    # paymentbank
+    path('frm/paymentbank/', PaymentBankListView.as_view(), name='paymentbank_list'),
+    path('frm/paymentbank/add/', PaymentBankCreateView.as_view(), name='paymentbank_create'),
+    path('frm/paymentbank/update/<int:pk>/', PaymentBankUpdateView.as_view(), name='paymentbank_update'),
+    path('frm/paymentbank/delete/<int:pk>/', PaymentBankDeleteView.as_view(), name='paymentbank_delete'),
 ]

@@ -115,6 +115,10 @@ class SaleAdminCreateView(PermissionMixin, CreateView):
                     sale.payment_method = request.POST['payment_method']
                     sale.payment_condition = request.POST['payment_condition']
                     sale.type_voucher = request.POST['type_voucher']
+                    # Guardar el banco de pago si se selecciona
+                    payment_bank_id = request.POST.get('payment_bank', '').strip()
+                    if payment_bank_id:
+                        sale.payment_bank_id = int(payment_bank_id)
                     sale.igv = float(Company.objects.first().igv) / 100
                     # sale.dscto = float(request.POST['dscto']) / 100
                     sale.dscto = float(request.POST['dscto'])
