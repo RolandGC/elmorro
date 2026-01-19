@@ -431,6 +431,13 @@ class SaleForm(ModelForm):
                 'data-toggle': 'datetimepicker',
                 'data-target': '#end_credit'
             }),
+            'operation_date': forms.DateInput(format='%Y-%m-%d', attrs={
+                'class': 'form-control',
+                'id': 'operation_date',
+                'type': 'date',
+                'data-toggle': 'datetimepicker',
+                'data-target': '#operation_date'
+            }),
             'subtotal': forms.TextInput(attrs={
                 'class': 'form-control form-control-sm',
                 'disabled': True

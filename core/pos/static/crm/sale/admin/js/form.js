@@ -452,6 +452,18 @@ document.addEventListener('DOMContentLoaded', function (e) {
                         },
                     }
                 },
+                operation_date: {
+                    validators: {
+                        notEmpty: {
+                            enabled: false,
+                            message: 'La fecha de operación es obligatoria'
+                        },
+                        date: {
+                            format: 'YYYY-MM-DD',
+                            message: 'La fecha no es válida'
+                        }
+                    }
+                },
                 type_voucher: {
                     validators: {
                         notEmpty: {
@@ -978,9 +990,13 @@ $(function () {
         if (id === 'yape' || id === 'plin' || id === 'transferencia' || id === 'deposito') {
             $('#rowOperationNumber').show();
             fvSale.enableValidator('operation_number');
+            $('#rowOperationDate').show();
+            fvSale.enableValidator('operation_date');
         } else {
             $('#rowOperationNumber').hide();
             fvSale.disableValidator('operation_number');
+            $('#rowOperationDate').hide();
+            fvSale.disableValidator('operation_date');
         }
 
         // Show/hide payment bank field only for Transferencia and Depósito
