@@ -174,9 +174,15 @@ class SaleAdminCreateView(PermissionMixin, CreateView):
                             sale.save()
                         elif sale.payment_method in ['yape', 'plin']:
                             sale.operation_number = request.POST.get('operation_number', '')
+                            operation_date = request.POST.get('operation_date', '')
+                            if operation_date:
+                                sale.operation_date = operation_date
                             sale.save()
                         elif sale.payment_method in ['transferencia', 'deposito']:
                             sale.operation_number = request.POST.get('operation_number', '')
+                            operation_date = request.POST.get('operation_date', '')
+                            if operation_date:
+                                sale.operation_date = operation_date
                             sale.save()
 
                     data = {'id': sale.id}

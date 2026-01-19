@@ -114,7 +114,7 @@
         <b>Vendedor:</b> {{ sale.employee.full_name }}<br>
         <b>Cliente:</b> {{ sale.client.user.full_name }}<br>
         <b>Número de DNI:</b> {{ sale.client.user.dni }}<br>
-        <b>Hora y fecha de pago:</b>
+        <b>Hora y fecha de registro:</b>
         {% if sale.date_joined %}
             {{ sale.date_joined|localtime|date:"H:i" }} del {{ sale.date_joined|localtime|date:"d/m/Y" }}<br>
         {% else %}
@@ -125,6 +125,7 @@
             <b>Método de pago:</b> {{ sale.get_payment_method_display }}<br>
             {% if sale.payment_method in 'yape,plin,transferencia,deposito' and sale.operation_number %}
                 <b>Nro de Operación:</b> {{ sale.operation_number }}<br>
+                <b>Fecha de Operación:</b> {{ sale.operation_date }}<br>
             {% endif %}
         {% else %}
             <b>Fecha limite de credito:</b> {{ sale.end_credit|date:'c' }}<br>

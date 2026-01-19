@@ -956,11 +956,13 @@ $(function () {
         input_cash.val(input_cash.val());
         input_amountdebited.val('0.00');
         
-        // Show/hide operation number field for Yape, Plin, Transferencia and Depósito
+        // Show/hide operation number and operation date fields for Yape, Plin, Transferencia and Depósito
         if (id === 'yape' || id === 'plin' || id === 'transferencia' || id === 'deposito') {
             $('#rowOperationNumber').show();
+            $('#rowOperationDate').show();
         } else {
             $('#rowOperationNumber').hide();
+            $('#rowOperationDate').hide();
         }
 
         switch (id) {

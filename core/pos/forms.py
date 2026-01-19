@@ -1,6 +1,7 @@
 from django.forms import ModelForm
 from django import forms
 from django.contrib.auth.models import Group
+from datetime import datetime, date
 
 from .models import *
 
@@ -411,6 +412,8 @@ class SaleForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['client'].queryset = Client.objects.none()
+        # Establecer la fecha actual como valor inicial para operation_date
+        self.fields['operation_date'].initial = date.today()
         # self.initial['client'] = '2'
 
     class Meta:
@@ -433,6 +436,13 @@ class SaleForm(ModelForm):
                 'value': datetime.now().strftime('%Y-%m-%d'),
                 'data-toggle': 'datetimepicker',
                 'data-target': '#end_credit'
+            }),
+            'operation_date': forms.DateInput(format='%Y-%m-%d', attrs={
+                'class': 'form-control',
+                'id': 'operation_date',
+                'type': 'date',
+                'data-toggle': 'datetimepicker',
+                'data-target': '#operation_date'
             }),
             'subtotal': forms.TextInput(attrs={
                 'class': 'form-control form-control-sm',
