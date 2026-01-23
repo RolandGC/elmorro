@@ -19,6 +19,7 @@ from core.pos.views.crm.sale.print.views import *
 from core.pos.views.crm.devolution.views import *
 from core.pos.views.admin.user_series.views import *
 from core.pos.views.frm.paymentbank.views import *
+from core.pos.views.frm.user_sales_report.views import UserSalesReportView
 
 urlpatterns = [
     # company
@@ -105,4 +106,6 @@ urlpatterns = [
     path('frm/paymentbank/add/', PaymentBankCreateView.as_view(), name='paymentbank_create'),
     path('frm/paymentbank/update/<int:pk>/', PaymentBankUpdateView.as_view(), name='paymentbank_update'),
     path('frm/paymentbank/delete/<int:pk>/', PaymentBankDeleteView.as_view(), name='paymentbank_delete'),
+    # user sales report
+    path('frm/user/sales/report/', UserSalesReportView.as_view(), name='user_sales_report'),
 ]

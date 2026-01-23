@@ -1,0 +1,179 @@
+{% extends 'list.html' %}
+{% load static %}
+
+{% block head_list %}
+    <link rel="stylesheet" href="{% static 'lib/select2-4.0.13/css/select2.min.css' %}">
+    <link rel="stylesheet" href="{% static 'lib/select2-4.0.13/css/select2-bootstrap4.min.css' %}">
+    <script src="{% static 'lib/select2-4.0.13/js/select2.min.js' %}"></script>
+    <script src="{% static 'lib/select2-4.0.13/js/i18n/es.js' %}"></script>
+    <script src="{% static 'frm/user_sales_report/js/list.js' %}" type="text/javascript"></script>
+    <style>
+        .select2-container--bootstrap4 .select2-selection--single {
+            background-color: #fff;
+            border: 1px solid #ced4da;
+            color: #495057;
+        }
+        .select2-container--bootstrap4.select2-container--open .select2-selection--single {
+            border-color: #80bdff;
+            box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+        }
+        .select2-dropdown {
+            background-color: #fff;
+            border: 1px solid #ced4da;
+        }
+        .select2-results__option {
+            padding: 6px 12px;
+            color: #000;
+        }
+        .select2-results__option--highlighted {
+            background-color: #007bff;
+            color: #fff;
+        }
+    </style>
+{% endblock %}
+
+{% block content_list %}
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card card-outline card-primary">
+                <div class="card-header">
+                    <h3 class="card-title">Filtros de búsqueda</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-3">
+                            <div class="form-group">
+                                <label>Seleccionar Usuario:</label>
+                                <select id="selectUser" class="form-control select2" style="width: 100%;">
+                                    <option value="">-- Seleccionar --</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-lg-3">
+                            <div class="form-group">
+                                <label>Fecha Desde:</label>
+                                <input type="date" id="dateFrom" class="form-control">
+                            </div>
+                        </div>
+                        <div class="col-lg-3">
+                            <div class="form-group">
+                                <label>Fecha Hasta:</label>
+                                <input type="date" id="dateTo" class="form-control">
+                            </div>
+                        </div>
+                        <div class="col-lg-3">
+                            <div class="form-group">
+                                <label>&nbsp;</label>
+                                <div class="btn-group btn-block" role="group">
+                                    <button type="button" id="btnSearch" class="btn btn-success btn-block">
+                                        <i class="fas fa-search"></i> Buscar
+                                    </button>
+                                    <button type="button" id="btnSummary" class="btn btn-info btn-block">
+                                        <i class="fas fa-chart-bar"></i> Resumen
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resumen General -->
+    <div class="row" id="summaryContainer" style="display: none;">
+        <div class="col-lg-12">
+            <div class="card card-outline card-success">
+                <div class="card-header">
+                    <h3 class="card-title">Resumen de Ventas por Usuario</h3>
+                </div>
+                <div class="card-body table-responsive">
+                    <table class="table table-bordered table-striped table-hover" id="tblSummary">
+                        <thead>
+                            <tr class="bg-primary">
+                                <th class="text-center">Vendedor</th>
+                                <th class="text-center">Transacciones</th>
+                                <th class="text-center">Efectivo</th>
+                                <th class="text-center">Yape</th>
+                                <th class="text-center">Plin</th>
+                                <th class="text-center">Transferencia</th>
+                                <th class="text-center">Depósito</th>
+                                <th class="text-center">Total Vendido</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detalle de Ventas por Usuario -->
+    <div class="row" id="detailContainer" style="display: none;">
+        <div class="col-lg-12">
+            <div class="card card-outline card-info">
+                <div class="card-header">
+                    <h3 class="card-title" id="userTitle">Detalle de Ventas</h3>
+                </div>
+                <div class="card-body">
+                    <!-- Resumen por método de pago -->
+                    <div class="row" id="methodsContainer" style="margin-bottom: 20px;">
+                    </div>
+                    <hr>
+                    <!-- Tabla de ventas -->
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped table-hover" id="tblSales">
+                            <thead>
+                                <tr class="bg-info">
+                                    <th class="text-center">Nro Venta</th>
+                                    <th class="text-center">Fecha</th>
+                                    <th class="text-center">Tipo Voucher</th>
+                                    <th class="text-center">Cliente</th>
+                                    <th class="text-center">Cantidad</th>
+                                    <th class="text-center">Subtotal</th>
+                                    <th class="text-center">Descuento</th>
+                                    <th class="text-center">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .card-payment-method {
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+            margin-bottom: 15px;
+        }
+        .card-payment-method .card-header {
+            padding: 10px 15px;
+        }
+        .card-payment-method .card-body {
+            padding: 10px 15px;
+        }
+        .payment-method-title {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        .payment-method-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: #666;
+        }
+        .payment-method-total {
+            color: #27ae60;
+            font-weight: 600;
+        }
+    </style>
+{% endblock %}
+
+{% block columns %}
+{% endblock %}
+
+{% block rows %}
+{% endblock %}

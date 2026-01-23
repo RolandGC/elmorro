@@ -379,6 +379,20 @@ for p in Permission.objects.filter(content_type__model=UserSeries._meta.label.sp
     module.permits.add(p)
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
+module, created = Module.objects.get_or_create(
+    moduletype_id=type_administrativo.id,
+    url='/pos/frm/user/sales/report/',
+    defaults={
+        'name': 'Reporte de Ventas por Usuario',
+        'is_active': True,
+        'is_vertical': True,
+        'is_visible': True,
+        'icon': 'fas fa-chart-line',
+        'description': 'Permite ver los reportes de ventas detallados por usuario y método de pago'
+    }
+)
+print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
+
 # ===================== FACTURACION MODULES =====================
 
 module, created = Module.objects.get_or_create(
