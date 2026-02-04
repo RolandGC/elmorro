@@ -7,49 +7,56 @@
     <title>Title</title>
     <style>
         @page {
-            width: 62mm;
-            height: {{ height }}mm;
+            width: 58mm;
+            height: auto;
             margin: 0;
+            padding: 0;
         }
 
         body {
             font-family: "Roboto", "Lucida Grande", Verdana, Arial, sans-serif;
             padding: 0;
             margin: 0;
-            font-size: 8px;
+            font-size: 7px;
             color: black !important;
+            page-break-after: avoid;
         }
 
         p {
             font-size: 10px;
+            margin: 2px 0;
+            padding: 0;
         }
 
         .content {
             width: 58mm;
-            height: {{ height }}mm;
-            padding: 10px;
+            padding: 5px;
+            page-break-inside: avoid;
         }
 
         .client {
-            font-size: 10px;
+            font-size: 9px;
             margin-top: 0;
             padding-top: 0;
-            margin-bottom: 5px;
+            margin-bottom: 2px;
+            line-height: 1.2;
         }
 
         .name-company {
-            margin-top: 10px;
+            margin-top: 5px;
             font-size: 14px;
             font-weight: bold;
             text-transform: uppercase;
             margin-bottom: 0;
             text-align: center;
+            line-height: 1;
         }
 
         .desc-company {
             font-size: 9px;
             margin-top: 0;
-            margin-bottom: 5px;
+            margin-bottom: 2px;
+            line-height: 1.1;
         }
 
         .border-dotted {
@@ -62,36 +69,41 @@
             font-weight: bold;
             text-transform: uppercase;
             text-align: center;
-            margin-bottom: 5px;
+            margin-bottom: 2px;
         }
 
         .table {
-            font-size: 10px;
+            font-size: 9px;
             color: black;
+            margin: 0;
+            border-collapse: collapse;
         }
 
         .table td, .table th {
-            padding: 0;
+            padding: 1px 0;
             color: black;
+            line-height: 1;
         }
 
         .img-logo {
-            margin-top: 5px;
-            width: 100px;
-            height: 60px;
-            margin-bottom: 5px;
+            margin-top: 2px;
+            width: 80px;
+            height: 45px;
+            margin-bottom: 3px;
         }
         .signatures {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            padding: 4px 0;
+            padding: 2px 0;
             font-size: 9px;
+            margin-top: 2px;
         }
 
         .signatures .signature {
             width: 45%;
             text-align: center;
+            line-height: 1.2;
         }
 
     </style>
@@ -109,6 +121,7 @@
     <p class="ruc border-dotted">
         Acuse de recibo: Serie {{sale.serie}}
     </p>
+    <br>
     <p class="client">
         <b></b>
         <b>Vendedor:</b> {{ sale.employee.full_name }}<br>
@@ -130,6 +143,7 @@
         {% else %}
             <b>Fecha limite de credito:</b> {{ sale.end_credit|date:'c' }}<br>
         {% endif %}
+        <br>
     </p>
     <table class="table table-borderless table-sm" style="margin-bottom: 0">
         <thead>
@@ -143,7 +157,7 @@
         </thead>
         <tbody>
         {% for det in sale.saledetail_set.all %}
-            <tr>
+            <tr style="line-height: 1.1;">
                 <td>{{ det.cant }}</td>
                 <td>{{ det.product.name }}</td>
                 <td>{{ det.price }}</td>
@@ -161,11 +175,11 @@
         </tr>
         </thead>
         <tbody>
-        <tr>
+        <tr style="line-height: 1;">
             <td class="float-left"><b>Subtotal</b></td>
             <td class="text-right">{{ sale.subtotal }}</td>
         </tr>
-        <tr>
+        <tr style="line-height: 1;">
             <td class="float-left"><b>Igv {{ sale.igv }}%</b></td>
             <td class="text-right">{{ sale.total_igv }}</td>
         </tr>
@@ -173,15 +187,16 @@
             {#<td class="float-left"><b>Descuento {{ sale.dscto }}%</b></td>#}
             {#<td class="text-right">{{ sale.total_dscto }}</td>#}
         {#</tr>#}
-        <tr>
+        <tr style="line-height: 1;">
             <td class="float-left"><b>Total a pagar</b></td>
             <td class="text-right">{{ sale.total }}</td>
         </tr>
         </tbody>
     </table>
+    <br>
     <p><b>Comentario:</b> {{ sale.comment }}</p>
     {% if sale.payment_condition == 'contado' %}
-        <p class="text-uppercase font-weight-bold text-center">
+        <p class="text-uppercase font-weight-bold text-center" style="font-size: 6px; margin: 1px 0; line-height: 1.1;">
             {#*** Estimado cliente no olvide que ***#}
             <br>
             {% if sale.payment_method == 'efectivoss' %}
@@ -196,6 +211,8 @@
             {#Total de productos {{ sale.saledetail_set.all.count }}#}
         </p>
     {% endif %}
+    <br>
+    <br>
     <div class="signatures">
         <div class="signature">
             ---------------------<br>
@@ -208,11 +225,10 @@
             DNI
         </div>
     </div>
-    <p class="text-center border-dotted p-1">
+    <p class="text-center border-dotted p-1" style="font-size: 9px; margin: 2px 0; padding: 1px; line-height: 1.1;">
         !Gracias por su preferencia!<br>
         "Brindando atención eficiente y<br>
         de calidad."
-
     </p>
 </div>
 </body>
