@@ -7,7 +7,7 @@
     <title>Title</title>
     <style>
         @page {
-            width: 58mm;
+            width: 62mm;
             height: {{ height }}mm;
             margin: 0;
         }
@@ -21,7 +21,7 @@
         }
 
         p {
-            font-size: 5px;
+            font-size: 10px;
         }
 
         .content {
@@ -31,7 +31,7 @@
         }
 
         .client {
-            font-size: 7px;
+            font-size: 10px;
             margin-top: 0;
             padding-top: 0;
             margin-bottom: 5px;
@@ -39,7 +39,7 @@
 
         .name-company {
             margin-top: 10px;
-            font-size: 9px;
+            font-size: 14px;
             font-weight: bold;
             text-transform: uppercase;
             margin-bottom: 0;
@@ -47,7 +47,7 @@
         }
 
         .desc-company {
-            font-size: 5px;
+            font-size: 9px;
             margin-top: 0;
             margin-bottom: 5px;
         }
@@ -58,7 +58,7 @@
         }
 
         .ruc {
-            font-size: 8px;
+            font-size: 10px;
             font-weight: bold;
             text-transform: uppercase;
             text-align: center;
@@ -66,7 +66,7 @@
         }
 
         .table {
-            font-size: 5px;
+            font-size: 10px;
             color: black;
         }
 
@@ -86,7 +86,7 @@
             justify-content: space-between;
             align-items: flex-start;
             padding: 4px 0;
-            font-size: 5px;
+            font-size: 9px;
         }
 
         .signatures .signature {
@@ -103,7 +103,7 @@
     <p class="text-center desc-company">
         {{ company.address }}<br>
         Celular: {{ company.mobile }}<br>
-        Teléfono: {{ company.phone }}<br>
+        {# Teléfono: {{ company.phone }}<br> #}
         Web: {{ company.website }}<br>
     </p>
     <p class="ruc border-dotted">
@@ -134,10 +134,10 @@
     <table class="table table-borderless table-sm" style="margin-bottom: 0">
         <thead>
         <tr style="border-bottom: 1px double black;">
-            <th style="width: 15%;">Cantidad</th>
+            <th style="width: 15%;">Cant.</th>
             <th style="width: 40%;">Producto</th>
-            <th style="width: 15%;">P.Unitario</th>
-            <th style="width: 15%;">Dscto</th>
+            <th style="width: 15%;">P.Unid</th>
+            {#<th style="width: 15%;">Dscto</th>#}
             <th style="width: 15%;" class="text-right">Subtotal</th>
         </tr>
         </thead>
@@ -147,7 +147,7 @@
                 <td>{{ det.cant }}</td>
                 <td>{{ det.product.name }}</td>
                 <td>{{ det.price }}</td>
-                <td>{{ det.total_dscto }}</td>
+                {#<td>{{ det.total_dscto }}</td>#}
                 <td class="text-right">{{ det.total }}</td>
             </tr>
         {% endfor %}
@@ -169,10 +169,10 @@
             <td class="float-left"><b>Igv {{ sale.igv }}%</b></td>
             <td class="text-right">{{ sale.total_igv }}</td>
         </tr>
-        <tr>
-            <td class="float-left"><b>Descuento {{ sale.dscto }}%</b></td>
-            <td class="text-right">{{ sale.total_dscto }}</td>
-        </tr>
+        {#<tr>#}
+            {#<td class="float-left"><b>Descuento {{ sale.dscto }}%</b></td>#}
+            {#<td class="text-right">{{ sale.total_dscto }}</td>#}
+        {#</tr>#}
         <tr>
             <td class="float-left"><b>Total a pagar</b></td>
             <td class="text-right">{{ sale.total }}</td>
@@ -182,18 +182,18 @@
     <p><b>Comentario:</b> {{ sale.comment }}</p>
     {% if sale.payment_condition == 'contado' %}
         <p class="text-uppercase font-weight-bold text-center">
-            ****** estimado cliente no olvide que ******
+            {#*** Estimado cliente no olvide que ***#}
             <br>
-            {% if sale.payment_method == 'efectivo' %}
-                Usted va a pagar en efectivo un total de {{ sale.cash }}<br>
+            {% if sale.payment_method == 'efectivoss' %}
+                Usted va a pagar un total de {{ sale.cash }}<br>
                 Por lo tanto debe recibir un vuelto de {{ sale.change }}<br>
-            {% elif sale.payment_method == 'tarjeta_debito_credito' %}
+            {% elif sale.payment_method == 'plinn' %}
                 Se le va a descontar de su tarjeta un monto de {{ sale.amount_debited }}<br>
             {% elif sale.payment_method == 'efectivo_tarjeta' %}
                 Usted va a pagar en efectivo un total de {{ sale.cash }}<br>
                 Y se le va a descontar de su tarjeta un monto de {{ sale.amount_debited }}<br>
             {% endif %}
-            Total de productos {{ sale.saledetail_set.all.count }}
+            {#Total de productos {{ sale.saledetail_set.all.count }}#}
         </p>
     {% endif %}
     <div class="signatures">
