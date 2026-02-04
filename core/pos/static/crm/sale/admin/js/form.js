@@ -781,7 +781,6 @@ $(function () {
             columns: [
                 {data: "name"},
                 {data: "category.name"},
-                {data: "desc"},
                 {data: "pvp"},
                 {data: "price_promotion"},
                 {data: "stock"},
@@ -806,7 +805,7 @@ $(function () {
                     targets: [2],
                     class: 'text-center',
                     render: function (data, type, row) {
-                        return data
+                        return 'S/.' + parseFloat(data).toFixed(2);
                     }
                 },
                 {
@@ -818,13 +817,6 @@ $(function () {
                 },
                 {
                     targets: [4],
-                    class: 'text-center',
-                    render: function (data, type, row) {
-                        return 'S/.' + parseFloat(data).toFixed(2);
-                    }
-                },
-                {
-                    targets: [5],
                     class: 'text-center',
                     render: function (data, type, row) {
                         if (row.category.inventoried) {

@@ -136,6 +136,9 @@
         <b>Forma de pago:</b> {{ sale.get_payment_condition_display }}<br>
         {% if sale.payment_condition == 'contado' %}
             <b>Método de pago:</b> {{ sale.get_payment_method_display }}<br>
+            {% if sale.payment_bank %}
+                <b>Banco:</b> {{ sale.payment_bank.name }}<br>
+            {% endif %}
             {% if sale.payment_method in 'yape,plin,transferencia,deposito' and sale.operation_number %}
                 <b>Nro de Operación:</b> {{ sale.operation_number }}<br>
                 <b>Fecha de Operación:</b> {{ sale.operation_date }}<br>
