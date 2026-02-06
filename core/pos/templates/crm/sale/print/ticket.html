@@ -8,7 +8,11 @@
     <style>
         @page {
             width: 58mm;
+            {% if is_android %}
+            height: 135mm;
+            {% else %}
             height: auto;
+            {% endif %}
             margin: 0;
             padding: 0;
         }
@@ -30,6 +34,9 @@
 
         .content {
             width: 58mm;
+            {% if is_android %}
+            height: 135mm;
+            {% endif %}
             padding: 5px;
             page-break-inside: avoid;
         }
@@ -216,14 +223,15 @@
     {% endif %}
     <br>
     <br>
+    <br>
     <div class="signatures">
         <div class="signature">
-            ---------------------<br>
+            -----------------------<br>
             Firma del cliente<br>
             DNI
         </div>
         <div class="signature">
-            ---------------------<br>
+            -----------------------<br>
             Firma del vendedor<br>
             DNI
         </div>

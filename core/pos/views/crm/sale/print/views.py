@@ -30,6 +30,11 @@ class SalePrintVoucherView(LoginRequiredMixin, View):
         height += increment
         return round(height)
 
+    def is_mobile_or_windows(self, request):
+        """Check if request comes from Android or Windows device"""
+        user_agent = request.META.get('HTTP_USER_AGENT', '').lower()
+        return 'android' in user_agent or 'windows' in user_agent
+
     def get(self, request, *args, **kwargs):
         try:
             # Check if ZPL format is requested (for Android/Zebra printer)
@@ -47,11 +52,16 @@ class SalePrintVoucherView(LoginRequiredMixin, View):
             else:
                 # Generate PDF (default)
                 context = {'sale': sale, 'company': company}
+                is_mobile_or_windows = self.is_mobile_or_windows(request)
+                context['is_android'] = is_mobile_or_windows
+                
                 if sale.type_voucher == 'ticket':
                     template = get_template('crm/sale/print/ticket.html')
-                    context['height'] = self.get_height_ticket()
+                    # Use fixed height for Android/Windows (12cm = 120mm), dynamic for desktop
+                    context['height'] = 120 if is_mobile_or_windows else self.get_height_ticket()
                 else:
                     template = get_template('crm/sale/print/invoice.html')
+                    
                 html_template = template.render(context).encode(encoding="UTF-8")
                 url_css = os.path.join(settings.BASE_DIR, 'static/lib/bootstrap-4.6.0/css/bootstrap.min.css')
                 pdf_file = HTML(string=html_template, base_url=request.build_absolute_uri()).write_pdf(
