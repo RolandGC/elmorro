@@ -140,9 +140,9 @@
         {% else %}
             -<br>
         {% endif %}
-        <b>Forma de pago:</b> {{ sale.get_payment_condition_display }}<br>
+        {#<b>Forma de pago:</b> {{ sale.get_payment_condition_display }}<br>#}
         {% if sale.payment_condition == 'contado' %}
-            <b>Método de pago:</b> {{ sale.get_payment_method_display }}<br>
+            <b>Forma de pago:</b> {{ sale.get_payment_method_display }}<br>
             {% if sale.payment_bank %}
                 <b>Banco:</b> {{ sale.payment_bank.name }}<br>
             {% endif %}

@@ -16,7 +16,7 @@
             <a class="nav-link infobyip" rel="infobyip"
                title="Ubicación: {{ request.session.infobyip.location }}<br>Proveedor: {{ request.session.infobyip.isp }}<br>País:{{ request.session.infobyip.countrycode }}"
                data-toggle="tooltip" data-placement="bottom" data-html="true">
-                {{ request.session.infobyip.ipaddress }}
+                {#{{ request.session.infobyip.ipaddress }}#}
             </a>
         </li>
         {% if request.user.groups.all %}

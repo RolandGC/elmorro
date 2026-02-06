@@ -35,7 +35,7 @@ class User(AbstractUser):
     def get_image(self):
         if self.image:
             return '{}{}'.format(settings.MEDIA_URL, self.image)
-        return '{}{}'.format(settings.STATIC_URL, 'img/default/empty.png')
+        return '{}{}'.format(settings.STATIC_URL, 'img/default/logoMorroHoriztl.png')
 
     def remove_image(self):
         try:

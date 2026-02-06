@@ -16,14 +16,13 @@ print('Dashboard: {} {}'.format(dashboard.name, '(creado)' if created else '(act
 
 # Crear o actualizar Company
 company, created = Company.objects.get_or_create(name='El Morro S.A.C.')
-company.ruc = '10462002039'
-company.email = 'seo.roland@gamil.com'
-company.phone = '462002'
-company.mobile = '921047681'
+company.ruc = '20532482683'
+company.email = 'area.ti@elmorro.com.pe'
+company.phone = '46200233'
+company.mobile = '913364475'
 company.desc = 'Software'
 company.website = 'elmorro.com.pe'
-company.address = 'av. industrial S/N '
-company.igv = 18.00
+company.address = 'Parque ind. Mz: I Lt: 13'
 company.save()
 print('Company: {} {}'.format(company.name, '(creada)' if created else '(actualizada)'))
 
@@ -651,17 +650,20 @@ print('Grupo {}: {}'.format(client_group.name, '(creado)' if created else '(actu
 for m in Module.objects.filter(url__in=['/pos/crm/client/update/profile/', '/pos/crm/sale/client/', '/user/update/password/']):
     gm, _ = GroupModule.objects.get_or_create(module=m, group=client_group)
 
+vendedor_group, createdVendedor = Group.objects.get_or_create(name='Vendedor')
+print('Grupo {}: {}'.format(vendedor_group.name, '(creado)' if createdVendedor else '(actualizado)'))
+
 # ===================== USUARIO ADMINISTRADOR =====================
 
-user, created = User.objects.get_or_create(username='Neo')
+user, created = User.objects.get_or_create(username='Administrador')
 if created:
-    user.full_name = 'Roland Gutierrez'
-    user.dni = '462002039'
-    user.email = 'seo.cristhian@gmail.com'
+    user.full_name = 'Soledad Arua'
+    user.dni = '462002031'
+    user.email = 'area.ti@elmorro.com.pe'
     user.is_active = True
     user.is_superuser = True
     user.is_staff = True
-    user.set_password('Enyaeslamejor12')
+    user.set_password('12345678')
     user.save()
     user.groups.add(admin_group)
     print('Usuario {}: (creado)'.format(user.username))

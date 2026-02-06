@@ -8,6 +8,7 @@ var input_birthdate;
 var select_paymentcondition;
 var select_paymentmethod;
 var select_paymentbank;
+var original_bank_options;
 var input_cash;
 let input_initial;
 var input_cardnumber;
@@ -651,6 +652,8 @@ $(function () {
     select_paymentcondition = $('select[name="payment_condition"]');
     select_paymentmethod = $('select[name="payment_method"]');
     select_paymentbank = $('select[name="payment_bank"]');
+    // Cache original bank options so we can restore/filter reliably (works with Select2)
+    original_bank_options = select_paymentbank.find('option').clone();
     input_cardnumber = $('input[name="card_number"]');
     input_amountdebited = $('input[name="amount_debited"]');
     input_cash = $('input[name="cash"]');
@@ -969,6 +972,8 @@ $(function () {
         updateOperationNumberVisibility();
     }).on('select2:select', function () {
         updateOperationNumberVisibility();
+    }).on('select2:unselect', function () {
+        updateOperationNumberVisibility();
     });
 
     function updateOperationNumberVisibility() {
@@ -992,12 +997,17 @@ $(function () {
         }
 
         // Show/hide payment bank field only for Transferencia and Depósito
-        if (id === 'transferencia' || id === 'deposito') {
+        if (id === 'transferencia' || id === 'deposito' || id === 'yape') {
             $('#rowPaymentBank').show();
             fvSale.enableValidator('payment_bank');
+            
+            // Filter banks based on payment method
+            filterBanksByMethod(id);
         } else {
             $('#rowPaymentBank').hide();
             fvSale.disableValidator('payment_bank');
+            // Reset filter to show all banks when hiding
+            resetBankFilter();
         }
 
         switch (id) {
@@ -1019,6 +1029,57 @@ $(function () {
                 fvSale.disableValidator('titular');
                 fvSale.disableValidator('amount_debited');
                 break;
+        }
+    }
+
+    function filterBanksByMethod(method) {
+        console.log('Filtering banks for method:', method);
+        // Keep the current selected bank value (if any)
+        var currentValue = select_paymentbank.val();
+        // Rebuild options from the cached original options to avoid Select2 inconsistencies
+        var placeholder = original_bank_options.filter(function() { return $(this).val() === ''; });
+        select_paymentbank.empty();
+        if (placeholder.length) {
+            select_paymentbank.append(placeholder.clone());
+        }
+
+        original_bank_options.each(function() {
+            var opt = $(this);
+            var val = opt.val();
+            if (val === '') return; // skip placeholder (already added)
+            var text = opt.text().toLowerCase();
+            var keep = false;
+            if (method === 'yape') {
+                // Require both 'yape' and 'qr' present in the name (case-insensitive)
+                keep = (text.indexOf('yape') !== -1 || text.indexOf('qr') !== -1);
+            } else if (method === 'plin') {
+                keep = (text.indexOf('plin') !== -1);
+            } else if (method === 'transferencia' || method === 'deposito') {
+                // Show all banks except those that are specific to Yape (contain 'yape' or 'qr')
+                keep = !(text.indexOf('yape') !== -1 || text.indexOf('qr') !== -1);
+            }
+            if (keep) {
+                select_paymentbank.append(opt.clone());
+            }
+        });
+
+        // If the previously selected value is no longer present, clear selection
+        if (currentValue && select_paymentbank.find('option[value="' + currentValue + '"]').length === 0) {
+            select_paymentbank.val('').trigger('change');
+        } else {
+            // re-apply current value to keep it if still present
+            select_paymentbank.val(currentValue).trigger('change');
+        }
+    }
+
+    function resetBankFilter() {
+        /**
+         * Reset bank filter to show all options
+         */
+        // Restore original options and refresh Select2
+        if (original_bank_options) {
+            select_paymentbank.empty().append(original_bank_options.clone());
+            select_paymentbank.val(select_paymentbank.find('option[value="' + select_paymentbank.val() + '"]').length ? select_paymentbank.val() : '').trigger('change');
         }
     }
     
