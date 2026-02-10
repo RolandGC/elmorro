@@ -15,6 +15,8 @@ var input_cardnumber;
 var input_amountdebited;
 var input_titular;
 var input_change;
+var input_amount;
+var amount_user_edited = false;
 
 var tblSearchProducts;
 var tblProducts;
@@ -67,8 +69,19 @@ var vents = {
         $('input[name="igv"]').val(vents.details.igv.toFixed(2));
         $('input[name="total_igv"]').val(vents.details.total_igv.toFixed(2));
         $('input[name="total_dscto"]').val(vents.details.total_dscto.toFixed(2));
-        $('input[name="total"]').val(vents.details.total.toFixed(2));
-        $('input[name="amount"]').val(vents.details.total.toFixed(2));
+        $('input[name="total"]').val(vents.details.total.toFixed(2));        
+        // Only overwrite the editable amount if the user hasn't modified it
+        if (!amount_user_edited) {
+            $('input[name="amount"]').val(vents.details.total.toFixed(2));
+            // keep internal total in sync
+            vents.details.total = parseFloat($('input[name="amount"]').val()) || vents.details.total;
+        } else {
+            // if user edited amount, respect it and update internal total
+            var manual = parseFloat($('input[name="amount"]').val());
+            if (!isNaN(manual)) {
+                vents.details.total = manual;
+            }
+        }
     },
     list_products: function () {
         this.calculate_invoice();
@@ -654,6 +667,17 @@ $(function () {
     select_paymentbank = $('select[name="payment_bank"]');
     // Cache original bank options so we can restore/filter reliably (works with Select2)
     original_bank_options = select_paymentbank.find('option').clone();
+    input_amount = $('input[name="amount"]');
+    // When user edits the amount manually, respect it and stop auto-overwriting
+    input_amount.on('input change', function () {
+        amount_user_edited = true;
+        var manual = parseFloat($(this).val());
+        if (!isNaN(manual)) {
+            vents.details.total = manual;
+        }
+        // Revalidate dependent validators
+        try { fvSale.revalidateField('change'); } catch (e) {}
+    });
     input_cardnumber = $('input[name="card_number"]');
     input_amountdebited = $('input[name="amount_debited"]');
     input_cash = $('input[name="cash"]');
