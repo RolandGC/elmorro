@@ -17,6 +17,7 @@ var input_titular;
 var input_change;
 var input_amount;
 var amount_user_edited = false;
+var total_user_edited = false;
 
 var tblSearchProducts;
 var tblProducts;
@@ -69,7 +70,20 @@ var vents = {
         $('input[name="igv"]').val(vents.details.igv.toFixed(2));
         $('input[name="total_igv"]').val(vents.details.total_igv.toFixed(2));
         $('input[name="total_dscto"]').val(vents.details.total_dscto.toFixed(2));
-        $('input[name="total"]').val(vents.details.total.toFixed(2));        
+        
+        // Only overwrite the total if the user hasn't modified it
+        if (!total_user_edited) {
+            $('input[name="total"]').val(vents.details.total.toFixed(2));
+            // keep internal total in sync
+            vents.details.total = parseFloat($('input[name="total"]').val()) || vents.details.total;
+        } else {
+            // if user edited total, respect it and update internal total
+            var manual = parseFloat($('input[name="total"]').val());
+            if (!isNaN(manual)) {
+                vents.details.total = manual;
+            }
+        }
+        
         // Only overwrite the editable amount if the user hasn't modified it
         if (!amount_user_edited) {
             $('input[name="amount"]').val(vents.details.total.toFixed(2));
@@ -524,22 +538,37 @@ document.addEventListener('DOMContentLoaded', function (e) {
                 },
                 cash: {
                     validators: {
-                        notEmpty: {},
+                        notEmpty: {
+                            enabled: false
+                        },
                         numeric: {
-                            message: 'El valor no es un número',
-                            thousandsSeparator: '',
-                            decimalSeparator: '.'
+                            enabled: false
                         }
                     }
                 },
                 change: {
                     validators: {
-                        notEmpty: {},
+                        notEmpty: {
+                            enabled: false
+                        },
                         callback: {
-                            //message: 'El cambio no puede ser negativo',
-                            callback: function (input) {
-                                return validateChange();
-                            }
+                            enabled: false
+                        }
+                    }
+                },
+                total: {
+                    validators: {
+                        notEmpty: {
+                            message: 'El monto total es obligatorio'
+                        },
+                        numeric: {
+                            message: 'El monto debe ser un número válido',
+                            thousandsSeparator: '',
+                            decimalSeparator: '.'
+                        },
+                        greaterThanOrEqual: {
+                            value: 0,
+                            message: 'El monto total no puede ser negativo'
                         }
                     }
                 },
@@ -584,10 +613,13 @@ document.addEventListener('DOMContentLoaded', function (e) {
             parameters.append('initial', input_initial.val());
             parameters.append('dscto', $('input[name="dscto"]').val());
             parameters.append('amount_debited', input_amountdebited.val());
+            // Agregar el total ingresado por el usuario
+            parameters.set('total', $('input[name="total"]').val());
             // attach date_joined (supports datetime-local input)
             var date_joined_val = $('input[name="date_joined"]').val() || $('#date_joined').val() || $('#id_date_joined').val() || '';
             parameters.append('date_joined', date_joined_val);
             console.log('date_joined sent:', date_joined_val);
+            console.log('total sent:', $('input[name="total"]').val());
             // attach operation_number for Yape/Plin/Transferencia/Depósito
             parameters.append('operation_number', $('input[name="operation_number"]').val() || '');
             parameters.append('comment', $('textarea[name="comment"]').val());
@@ -678,6 +710,20 @@ $(function () {
         // Revalidate dependent validators
         try { fvSale.revalidateField('change'); } catch (e) {}
     });
+    
+    // Add listener for total field
+    var input_total = $('input[name="total"]');
+    input_total.on('input change', function () {
+        total_user_edited = true;
+        var manual = parseFloat($(this).val());
+        if (!isNaN(manual)) {
+            vents.details.total = manual;
+        }
+        // Also update amount field to keep them in sync
+        $('input[name="amount"]').val(manual.toFixed(2));
+        amount_user_edited = true;
+    });
+    
     input_cardnumber = $('input[name="card_number"]');
     input_amountdebited = $('input[name="amount_debited"]');
     input_cash = $('input[name="cash"]');

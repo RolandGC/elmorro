@@ -128,6 +128,8 @@ class SaleAdminCreateView(PermissionMixin, CreateView):
                     # sale.dscto = float(request.POST['dscto']) / 100
                     sale.dscto = float(request.POST['dscto'])
                     sale.comment = request.POST.get('comment', '')
+                    # Usar el total ingresado por el usuario
+                    sale.total = float(request.POST.get('total', 0.00))
                     # if date_joined was not provided or could not be parsed, use current datetime
                     if not getattr(sale, 'date_joined', None):
                         sale.date_joined = timezone.now()

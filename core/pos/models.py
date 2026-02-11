@@ -414,7 +414,10 @@ class Sale(models.Model):
         self.subtotal = subtotal
         self.total_igv = self.subtotal * float(self.igv)
         self.total_dscto = self.subtotal * float(self.dscto)
-        self.total = float(self.subtotal) - float(self.total_dscto)
+        # Solo calcular el total si no fue establecido manualmente (valor por defecto es 0.00)
+        # Si el usuario ya ingresó un total diferente, no lo sobrescribir
+        if self.total == 0.00:
+            self.total = float(self.subtotal) - float(self.total_dscto)
         self.save()
 
     def calculate_serie(self):

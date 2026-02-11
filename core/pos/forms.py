@@ -411,6 +411,8 @@ class SaleForm(ModelForm):
         self.fields['client'].queryset = Client.objects.none()
         # Establecer la fecha actual como valor inicial para operation_date
         self.fields['operation_date'].initial = date.today()
+        # Hacer el campo total obligatorio
+        self.fields['total'].required = True
         # self.initial['client'] = '2'
 
     class Meta:
@@ -463,11 +465,13 @@ class SaleForm(ModelForm):
             }),
             'total': forms.TextInput(attrs={
                 'class': 'form-control form-control-sm',
-                'disabled': True
+                'autocomplete': 'off',
+                'placeholder': 'Ingrese el monto total S/.',
             }),
             'cash': forms.TextInput(attrs={
                 'class': 'form-control',
-                'autocomplete': 'off'
+                'autocomplete': 'off',
+                'disabled': True
             }),
             'initial': forms.TextInput(attrs={
                 'class': 'form-control',
