@@ -7,7 +7,7 @@
     <title>Title</title>
     <style>
         @page {
-            width: 58mm;
+            width: 64mm;
             {% if is_android %}
             height: 135mm;
             {% else %}
@@ -33,7 +33,7 @@
         }
 
         .content {
-            width: 58mm;
+            width: 64mm;
             {% if is_android %}
             height: 135mm;
             {% endif %}
@@ -42,7 +42,7 @@
         }
 
         .client {
-            font-size: 9px;
+            font-size: 10px;
             margin-top: 0;
             padding-top: 0;
             margin-bottom: 2px;
@@ -103,7 +103,7 @@
             justify-content: space-between;
             align-items: flex-start;
             padding: 2px 0;
-            font-size: 9px;
+            font-size: 10px;
             margin-top: 2px;
         }
 
@@ -125,6 +125,7 @@
         {# Teléfono: {{ company.phone }}<br> #}
         Web: {{ company.website }}<br>
     </p>
+    <br>
     <p class="ruc border-dotted">
         Acuse de recibo: Serie {{sale.serie}}
     </p>
@@ -185,14 +186,14 @@
         </tr>
         </thead>
         <tbody>
-        <tr style="line-height: 1;">
-            <td class="float-left"><b>Subtotal</b></td>
-            <td class="text-right">{{ sale.subtotal }}</td>
-        </tr>
-        <tr style="line-height: 1;">
-            <td class="float-left"><b>Igv {{ sale.igv }}%</b></td>
-            <td class="text-right">{{ sale.total_igv }}</td>
-        </tr>
+        {#<tr style="line-height: 1;">#}
+            {#<td class="float-left"><b>Subtotal</b></td>#}
+            {#<td class="text-right">{{ sale.subtotal }}</td>#}
+        {#</tr>#}
+        {#<tr style="line-height: 1;">#}
+            {#<td class="float-left"><b>Igv {{ sale.igv }}%</b></td>#}
+            {#<td class="text-right">{{ sale.total_igv }}</td>#}
+        {#</tr>#}
         {#<tr>#}
             {#<td class="float-left"><b>Descuento {{ sale.dscto }}%</b></td>#}
             {#<td class="text-right">{{ sale.total_dscto }}</td>#}
