@@ -158,9 +158,15 @@ class UserSeriesDeleteView(PermissionMixin, DeleteView):
         data = {}
         try:
             self.get_object().delete()
+            # Si es AJAX, devolver JSON
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return HttpResponse(json.dumps(data), content_type='application/json')
+            else:
+                # Si es POST normal, redirigir
+                return super().delete(request, *args, **kwargs)
         except Exception as e:
             data['error'] = str(e)
-        return HttpResponse(json.dumps(data), content_type='application/json')
+            return HttpResponse(json.dumps(data), content_type='application/json')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

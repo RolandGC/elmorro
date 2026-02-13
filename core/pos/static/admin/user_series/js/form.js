@@ -81,7 +81,7 @@ $(function () {
                                 Swal.fire('Error', errorObj, 'error');
                             }
                         } else {
-                            location.href = '/pos/admin/user_series/';
+                            location.href = '/pos/frm/user_series/';
                         }
                     },
                     error: function (jqXHR, textStatus, errorThrown) {

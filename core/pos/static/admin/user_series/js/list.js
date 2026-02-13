@@ -35,8 +35,8 @@ function getData(all) {
                 class: 'text-center',
                 orderable: false,
                 render: function (data, type, row) {
-                    var buttons = '<a href="/pos/admin/user_series/update/' + row.id + '/" class="btn btn-warning btn-flat btn-xs"><i class="fas fa-edit"></i></a> ';
-                    buttons += '<a rel="delete" class="btn btn-danger btn-flat btn-xs" href="/pos/admin/user_series/delete/' + row.id + '/"><i class="fas fa-trash-alt"></i></a>';
+                    var buttons = '<a href="/pos/frm/user_series/update/' + row.id + '/" class="btn btn-warning btn-flat btn-xs"><i class="fas fa-edit"></i></a> ';
+                    buttons += '<a rel="delete" class="btn btn-danger btn-flat btn-xs" href="/pos/frm/user_series/delete/' + row.id + '/"><i class="fas fa-trash-alt"></i></a>';
                     return buttons;
                 }
             }
@@ -53,12 +53,55 @@ $(function () {
 
     $('#data tbody')
         .off()
-        .on('click', 'a[rel="delete"]', function () {
-            $('.tooltip').remove();
+        .on('click', 'a[rel="delete"]', function (e) {
+            e.preventDefault();
             var tr = tblUserSeries.cell($(this).closest('td, li')).index();
             var row = tblUserSeries.row(tr.row).data();
-            submit_delete_ajax('Notificación de Eliminación', '¿Estás seguro de realizar la siguiente acción?', $(this).attr('href'), function () {
-                getData(true);
+            var deleteUrl = $(this).attr('href');
+            
+            $.confirm({
+                title: 'Notificación de Eliminación',
+                icon: 'fas fa-trash',
+                content: '¿Estás seguro de realizar la siguiente acción?',
+                theme: 'material',
+                columnClass: 'small',
+                typeAnimated: true,
+                cancelButtonClass: 'btn-primary',
+                draggable: true,
+                dragWindowBorder: false,
+                buttons: {
+                    info: {
+                        text: "Si",
+                        btnClass: 'btn-primary',
+                        action: function () {
+                            $.ajax({
+                                url: deleteUrl,
+                                type: 'POST',
+                                headers: {
+                                    'X-CSRFToken': csrftoken,
+                                    'X-Requested-With': 'XMLHttpRequest'
+                                },
+                                dataType: 'json',
+                                success: function (response) {
+                                    if (!response.hasOwnProperty('error')) {
+                                        getData(true);
+                                    } else {
+                                        Swal.fire('Error', response.error, 'error');
+                                    }
+                                },
+                                error: function () {
+                                    Swal.fire('Error', 'Ocurrió un error al eliminar', 'error');
+                                }
+                            });
+                        }
+                    },
+                    danger: {
+                        text: "No",
+                        btnClass: 'btn-red',
+                        action: function () {
+                        }
+                    }
+                }
             });
         });
 });
