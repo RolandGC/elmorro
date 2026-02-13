@@ -34,7 +34,7 @@ class Series(models.Model):
 
 
 class UserSeries(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, verbose_name='Usuario Vendedor')
+    user = models.OneToOneField(User, on_delete=models.CASCADE, verbose_name='Usuario')
     series = models.OneToOneField(Series, on_delete=models.CASCADE, verbose_name='Serie Asignada')
     date_assigned = models.DateTimeField(auto_now_add=True, verbose_name='Fecha de Asignación')
 
@@ -49,8 +49,8 @@ class UserSeries(models.Model):
         return item
 
     class Meta:
-        verbose_name = 'Asignación de Serie a Vendedor'
-        verbose_name_plural = 'Asignaciones de Series a Vendedores'
+        verbose_name = 'Asignación de Serie'
+        verbose_name_plural = 'Asignaciones de Series'
         default_permissions = ()
         permissions = (
             ('view_userseries', 'Can view Asignaciones de Series'),

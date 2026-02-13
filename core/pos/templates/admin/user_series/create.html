@@ -28,7 +28,7 @@
                     {% csrf_token %}
                     <div class="card-body">
                         <div class="form-group">
-                            <label for="id_user">Vendedor:</label>
+                            <label for="id_user">Usuario:</label>
                             {{ form.user }}
                             {% if form.user.errors %}
                                 <div class="invalid-feedback d-block">

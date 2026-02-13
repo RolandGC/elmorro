@@ -22,12 +22,12 @@ class SeriesForm(ModelForm):
 class UserSeriesForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Filtrar solo usuarios del grupo "Vendedor"
+        # Filtrar usuarios excluyendo el grupo "Cliente"
         try:
-            vendor_group = Group.objects.get(name='Vendedor')
-            self.fields['user'].queryset = vendor_group.user_set.all()
+            client_group = Group.objects.get(name='Cliente')
+            self.fields['user'].queryset = User.objects.exclude(groups__in=[client_group]).distinct()
         except Group.DoesNotExist:
-            self.fields['user'].queryset = User.objects.none()
+            self.fields['user'].queryset = User.objects.all()
         
         self.fields['user'].widget.attrs['autofocus'] = True
 

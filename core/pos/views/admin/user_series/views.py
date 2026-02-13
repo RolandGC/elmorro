@@ -36,7 +36,7 @@ class UserSeriesListView(PermissionMixin, FormView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['create_url'] = reverse_lazy('user_series_create')
-        context['title'] = 'Administración de Series'
+        context['title'] = 'Administración de Asignación de Series'
         return context
 
 
@@ -77,7 +77,7 @@ class UserSeriesCreateView(PermissionMixin, CreateView):
                     context = {
                         'form': form,
                         'list_url': self.success_url,
-                        'title': 'Asignar Serie a Vendedor',
+                        'title': 'Asignar Serie a Usuario',
                         'action': 'add'
                     }
                     return self.render_to_response(context)
@@ -88,7 +88,7 @@ class UserSeriesCreateView(PermissionMixin, CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['list_url'] = self.success_url
-        context['title'] = 'Asignar Serie a Vendedor'
+        context['title'] = 'Asignar Serie a Usuario'
         context['action'] = 'add'
         return context
 
@@ -143,7 +143,7 @@ class UserSeriesUpdateView(PermissionMixin, UpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['list_url'] = self.success_url
-        context['title'] = 'Editar Asignación de Serie'
+        context['title'] = 'Editar Asignación de Serie a Usuario'
         context['action'] = 'edit'
         return context
 
