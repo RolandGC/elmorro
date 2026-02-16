@@ -24,8 +24,12 @@ class UserSalesReportView(LoginRequiredMixin, ModuleMixin, TemplateView):
         
         try:
             if action == 'search_users':
-                # Obtener TODOS los usuarios del sistema
-                users = User.objects.values('id', 'full_name', 'dni').order_by('full_name')
+                # Obtener solo usuarios con los roles: Supervisor, Vendedor y Reparto
+                # Excluir: Cliente y Administrador
+                from django.contrib.auth.models import Group
+                
+                allowed_groups = Group.objects.filter(name__in=['Supervisor', 'Vendedor', 'Reparto'])
+                users = User.objects.filter(groups__in=allowed_groups).distinct().values('id', 'full_name', 'dni').order_by('full_name')
                 
                 data = list(users)
                 
