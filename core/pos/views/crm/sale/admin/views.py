@@ -52,7 +52,7 @@ class SaleAdminListView(PermissionMixin, FormView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['create_url'] = reverse_lazy('sale_admin_create')
-        context['title'] = 'Listado de Ventas'
+        context['title'] = 'Listado de Cobranzas'
         return context
 
 class SaleAdminCreateView(PermissionMixin, CreateView):
@@ -265,7 +265,7 @@ class SaleAdminCreateView(PermissionMixin, CreateView):
         context = super().get_context_data()
         context['frmClient'] = ClientForm()
         context['list_url'] = self.success_url
-        context['title'] = 'Nuevo registro de una Venta'
+        context['title'] = 'Nuevo registro de una Cobranza'
         context['action'] = 'add'
         client_default = Client.objects.filter(user__full_name='NN NN').first()
         context['client_default'] = json.dumps(client_default.toJSON()) if client_default else 'null'

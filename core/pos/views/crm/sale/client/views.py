@@ -37,5 +37,5 @@ class SaleClientListView(ModuleMixin, FormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['title'] = 'Listado de Ventas'
+        context['title'] = 'Listado de Cobranzas'
         return context

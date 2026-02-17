@@ -505,8 +505,8 @@ class SaleDetail(models.Model):
         }
 
     class Meta:
-        verbose_name = 'Detalle de Venta'
-        verbose_name_plural = 'Detalle de Ventas'
+        verbose_name = 'Detalle de Cobranza'
+        verbose_name_plural = 'Detalle de Cobranzas'
         default_permissions = ()
         ordering = ['-id']
 

@@ -28,6 +28,15 @@ var inputs_vents;
 
 var lastClickedButtonId;
 
+// Helper function to safely format numbers and avoid NaN
+function safeToFixed(value, decimals = 2) {
+    var num = parseFloat(value);
+    if (isNaN(num)) {
+        num = 0;
+    }
+    return num.toFixed(decimals);
+}
+
 $(document).ready(function() {
     $('.btnCollect').on('click', function() {
         lastClickedButtonId = $(this).attr('id');
@@ -50,30 +59,31 @@ var vents = {
     calculate_invoice: function () {
         var total = 0.00;
         $.each(this.details.products, function (i, item) {
-            item.cant = parseInt(item.cant);
-            item.subtotal = item.cant * parseFloat(item.price_current);
-            item.total_dscto = (parseFloat(item.dscto));
+            item.cant = parseInt(item.cant) || 0;
+            item.subtotal = item.cant * parseFloat(item.price_current || 0);
+            item.total_dscto = parseFloat(item.dscto || 0);
 
             item.total = item.subtotal - item.total_dscto;
             total += item.total;
         });
 
         vents.details.subtotal = total;
-        vents.details.dscto = parseFloat($('input[name="dscto"]').val());
-        // vents.details.total_dscto = vents.details.subtotal * (vents.details.dscto / 100);
-        vents.details.total_dscto = vents.details.dscto
+        var dscto_val = parseFloat($('input[name="dscto"]').val()) || 0;
+        vents.details.dscto = isNaN(dscto_val) ? 0 : dscto_val;
+        vents.details.total_dscto = vents.details.dscto;
         vents.details.total_igv = vents.details.subtotal * (vents.details.igv / 100);
         vents.details.total = vents.details.subtotal - vents.details.total_dscto;
         vents.details.total = parseFloat(vents.details.total.toFixed(2));
-        $('input[name="cash"]').val(vents.details.subtotal.toFixed(2));
-        $('input[name="subtotal"]').val(vents.details.subtotal.toFixed(2));
-        $('input[name="igv"]').val(vents.details.igv.toFixed(2));
-        $('input[name="total_igv"]').val(vents.details.total_igv.toFixed(2));
-        $('input[name="total_dscto"]').val(vents.details.total_dscto.toFixed(2));
+        
+        $('input[name="cash"]').val(safeToFixed(vents.details.subtotal, 2));
+        $('input[name="subtotal"]').val(safeToFixed(vents.details.subtotal, 2));
+        $('input[name="igv"]').val(safeToFixed(vents.details.igv, 2));
+        $('input[name="total_igv"]').val(safeToFixed(vents.details.total_igv, 2));
+        $('input[name="total_dscto"]').val(safeToFixed(vents.details.total_dscto, 2));
         
         // Only overwrite the total if the user hasn't modified it
         if (!total_user_edited) {
-            $('input[name="total"]').val(vents.details.total.toFixed(2));
+            $('input[name="total"]').val(safeToFixed(vents.details.total, 2));
             // keep internal total in sync
             vents.details.total = parseFloat($('input[name="total"]').val()) || vents.details.total;
         } else {
@@ -86,7 +96,7 @@ var vents = {
         
         // Only overwrite the editable amount if the user hasn't modified it
         if (!amount_user_edited) {
-            $('input[name="amount"]').val(vents.details.total.toFixed(2));
+            $('input[name="amount"]').val(safeToFixed(vents.details.total, 2));
             // keep internal total in sync
             vents.details.total = parseFloat($('input[name="amount"]').val()) || vents.details.total;
         } else {
@@ -113,48 +123,15 @@ var vents = {
             columns: [
                 {data: "id"},
                 {data: "name"},
-                //{data: "category.name"},
-                {data: "stock"},
-                {data: "cant"},
-                {data: "price_current"},
                 {data: "subtotal"},
-                {data: "dscto"},
-                {data: "total_dscto"},
                 {data: "total"},
             ],
             columnDefs: [
                 {
-                    targets: [2],
+                    targets: [-2, -1],
                     class: 'text-center',
                     render: function (data, type, row) {
-                        if (row.category.inventoried) {
-                            if (row.stock > 0) {
-                                return '<span class="badge badge-success">' + row.stock + '</span>';
-                            }
-                            return '<span class="badge badge-danger">' + row.stock + '</span>';
-                        }
-                        return '<span class="badge badge-secondary">Sin stock</span>';
-                    }
-                },
-                {
-                    targets: [-6],
-                    class: 'text-center',
-                    render: function (data, type, row) {
-                        return '<input type="text" class="form-control input-sm" style="width: 100px;" autocomplete="off" name="cant" value="' + row.cant + '">';
-                    }
-                },
-                {
-                    targets: [-3],
-                    class: 'text-center',
-                    render: function (data, type, row) {
-                        return '<input type="text" class="form-control input-sm" style="width: 100px;" autocomplete="off" name="dscto_unitary" value="' + row.dscto + '">';
-                    }
-                },
-                {
-                    targets: [-1, -2, -4, -5],
-                    class: 'text-center',
-                    render: function (data, type, row) {
-                        return 'S/.' + parseFloat(data).toFixed(2);
+                        return 'S/.' + safeToFixed(data, 2);
                     }
                 },
                 {
@@ -787,35 +764,6 @@ $(function () {
 
     $('#tblProducts tbody')
         .off()
-        .on('change', 'input[name="cant"]', function () {
-            var tr = tblProducts.cell($(this).closest('td, li')).index();
-            vents.details.products[tr.row].cant = parseInt($(this).val());
-            vents.calculate_invoice();
-            $('td:eq(5)', tblProducts.row(tr.row).node()).html('S/.' + vents.details.products[tr.row].subtotal.toFixed(2));
-            $('td:eq(8)', tblProducts.row(tr.row).node()).html('S/.' + vents.details.products[tr.row].total.toFixed(2));
-            console.log(vents)
-        })
-        .on('input', 'input[name="cant"]', function () {
-            var tr = tblProducts.cell($(this).closest('td, li')).index();
-            vents.details.products[tr.row].cant = parseInt($(this).val());
-            vents.calculate_invoice();
-            $('td:eq(5)', tblProducts.row(tr.row).node()).html('S/.' + vents.details.products[tr.row].subtotal.toFixed(2));
-            $('td:eq(8)', tblProducts.row(tr.row).node()).html('S/.' + vents.details.products[tr.row].total.toFixed(2));
-        })
-        .on('change', 'input[name="dscto_unitary"]', function () {
-            var tr = tblProducts.cell($(this).closest('td, li')).index();
-            vents.details.products[tr.row].dscto = parseFloat($(this).val());
-            vents.calculate_invoice();
-            $('td:eq(7)', tblProducts.row(tr.row).node()).html('S/.' + vents.details.products[tr.row].total_dscto.toFixed(2));
-            $('td:eq(8)', tblProducts.row(tr.row).node()).html('S/.' + vents.details.products[tr.row].total.toFixed(2));
-        })
-        .on('input', 'input[name="dscto_unitary"]', function () {
-            var tr = tblProducts.cell($(this).closest('td, li')).index();
-            vents.details.products[tr.row].dscto = parseFloat($(this).val());
-            vents.calculate_invoice();
-            $('td:eq(7)', tblProducts.row(tr.row).node()).html('S/.' + vents.details.products[tr.row].total_dscto.toFixed(2));
-            $('td:eq(8)', tblProducts.row(tr.row).node()).html('S/.' + vents.details.products[tr.row].total.toFixed(2));
-        })
         .on('click', 'a[rel="remove"]', function () {
             var tr = tblProducts.cell($(this).closest('td, li')).index();
             vents.details.subtotal = vents.details.subtotal - vents.details.products[tr.row].subtotal;
@@ -823,10 +771,10 @@ $(function () {
             vents.details.total_igv = vents.details.subtotal * (vents.details.igv / 100);
             vents.details.total = vents.details.subtotal - vents.details.total_dscto;
             vents.details.total = parseFloat(vents.details.total.toFixed(2));
-            $('input[name="cash"]').val(vents.details.subtotal.toFixed(2));
-            $('input[name="subtotal"]').val(vents.details.subtotal.toFixed(2));
-            $('input[name="total_igv"]').val(vents.details.total_igv.toFixed(2));
-            $('input[name="total"]').val(vents.details.total.toFixed(2));
+            $('input[name="cash"]').val(safeToFixed(vents.details.subtotal, 2));
+            $('input[name="subtotal"]').val(safeToFixed(vents.details.subtotal, 2));
+            $('input[name="total_igv"]').val(safeToFixed(vents.details.total_igv, 2));
+            $('input[name="total"]').val(safeToFixed(vents.details.total, 2));
             $('input[name="amount"]').val(vents.details.total.toFixed(2));
             tblProducts.row(tr.row).remove().draw();
         });

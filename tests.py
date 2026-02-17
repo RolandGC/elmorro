@@ -382,12 +382,12 @@ module, created = Module.objects.get_or_create(
     moduletype_id=type_administrativo.id,
     url='/pos/frm/user/sales/report/',
     defaults={
-        'name': 'Reporte de Ventas por Usuario',
+        'name': 'Reporte de Cobranzas por Usuario',
         'is_active': True,
         'is_vertical': True,
         'is_visible': True,
         'icon': 'fas fa-chart-line',
-        'description': 'Permite ver los reportes de ventas detallados por usuario y método de pago'
+        'description': 'Permite ver los reportes de Cobranzas detallados por usuario y método de pago'
     }
 )
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
@@ -414,12 +414,12 @@ module, created = Module.objects.get_or_create(
     moduletype_id=type_facturacion.id,
     url='/pos/crm/sale/admin/',
     defaults={
-        'name': 'Ventas',
+        'name': 'Cobranzas',
         'is_active': True,
         'is_vertical': True,
         'is_visible': True,
         'icon': 'fas fa-shopping-cart',
-        'description': 'Permite administrar las ventas de los productos'
+        'description': 'Permite administrar las cobranzas'
     }
 )
 for p in Permission.objects.filter(content_type__model=Sale._meta.label.split('.')[1].lower()):
@@ -429,12 +429,12 @@ print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 module, created = Module.objects.get_or_create(
     url='/pos/crm/sale/client/',
     defaults={
-        'name': 'Ventas',
+        'name': 'Cobranzas',
         'is_active': True,
         'is_vertical': False,
         'is_visible': True,
         'icon': 'fas fa-shopping-cart',
-        'description': 'Permite administrar las ventas de los productos'
+        'description': 'Permite administrar las cobranzas de los clientes'
     }
 )
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
@@ -493,12 +493,12 @@ module, created = Module.objects.get_or_create(
     moduletype_id=type_reportes.id,
     url='/reports/sale/',
     defaults={
-        'name': 'Ventas',
+        'name': 'Cobranzas',
         'is_active': True,
         'is_vertical': True,
         'is_visible': True,
         'icon': 'fas fa-chart-bar',
-        'description': 'Permite ver los reportes de las ventas'
+        'description': 'Permite ver los reportes de las cobranzas realizadas'
     }
 )
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))

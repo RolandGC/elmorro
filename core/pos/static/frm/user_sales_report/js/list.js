@@ -82,7 +82,7 @@ function searchUserSales() {
             $('#summaryContainer').hide();
             
             // Actualizar título
-            $('#userTitle').html(`Detalle de Ventas - <strong>${data.user.full_name}</strong> (DNI: ${data.user.dni})`);
+            $('#userTitle').html(`Detalle de Cobranzas - <strong>${data.user.full_name}</strong> (DNI: ${data.user.dni})`);
             
             // Mostrar resumen por método de pago
             showPaymentMethodsSummary(data.sales_by_method, data.total_general, data.total_cantidad);
@@ -92,7 +92,7 @@ function searchUserSales() {
         },
         error: function(xhr, status, error) {
             console.error('Error:', error, xhr.responseText);
-            alert_sweetalert('error', 'Error', 'Error al buscar ventas', null, 3000);
+            alert_sweetalert('error', 'Error', 'Error al buscar cobranzas', null, 3000);
         }
     });
 }

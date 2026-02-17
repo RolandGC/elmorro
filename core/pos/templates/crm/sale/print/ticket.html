@@ -160,8 +160,8 @@
         <thead>
         <tr style="border-bottom: 1px double black;">
             <th style="width: 15%;">Cant.</th>
-            <th style="width: 40%;">Producto</th>
-            <th style="width: 15%;">P.Unid</th>
+            <th style="width: 60%;">Tip Cobranza</th>
+            {#<th style="width: 15%;">P.Unid</th>#}
             {#<th style="width: 15%;">Dscto</th>#}
             <th style="width: 15%;" class="text-right">Subtotal</th>
         </tr>
@@ -171,7 +171,7 @@
             <tr style="line-height: 1.1;">
                 <td>{{ det.cant }}</td>
                 <td>{{ det.product.name }}</td>
-                <td>{{ det.price }}</td>
+                {#<td>{{ det.price }}</td>#}
                 {#<td>{{ det.total_dscto }}</td>#}
                 <td class="text-right">{{ det.total }}</td>
             </tr>

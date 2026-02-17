@@ -12,6 +12,36 @@
     <script src="{% static 'lib/tempusdominus-bootstrap-4.5.37.0/js/tempusdominus-bootstrap.js' %}"></script>
     <link rel="stylesheet" href="{% static 'lib/tempusdominus-bootstrap-4.5.37.0/css/tempusdominus-bootstrap.css' %}"/>
     <script src="{% static 'crm/sale/admin/js/form.js' %}"></script>
+    <style>
+        /* Estilos responsive para textarea y inputs */
+        textarea {
+            width: 100%;
+            min-height: 80px;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: inherit;
+            resize: vertical;
+        }
+        
+        @media (max-width: 768px) {
+            textarea {
+                min-height: 100px;
+                font-size: 16px; /* Previene zoom en iOS */
+            }
+            
+            .row {
+                margin-left: -5px;
+                margin-right: -5px;
+            }
+            
+            .col-lg-4, .col-lg-6, .col-lg-12 {
+                padding-left: 5px;
+                padding-right: 5px;
+            }
+        }
+    </style>
 {% endblock %}
 
 {% block content %}
@@ -33,15 +63,15 @@
                     <input type="hidden" id="action" name="action" value="{{ action }}">
                     <div class="row">
                         <div class="col-md-12 col-lg-8 card p-3 pb-0">
-                            <h3 class="mb-0"><b><i class="fas fa-boxes"></i> Detalle de Venta</b></h3><br>
+                            <h3 class="mb-0"><b><i class="fas fa-boxes"></i> Detalle de Cobranza</b></h3><br>
                             <div class="row">
                                 <div class="col-lg-12">
                                     <div class="form-group">
-                                        <label>Búsqueda de productos:</label>
+                                        <label>Búsqueda tipo de cobranza:</label>
                                         <div class="input-group input-group-search">
                                             <input type="text" class="form-control" autocomplete="off"
                                                    name="searchproducts"
-                                                   placeholder="Ingrese el nombre de un producto">
+                                                   placeholder="Ingrese el tipo de cobranza a buscar">
                                             <div class="input-group-append">
                                                 <button class="btn btn-primary dropdown-toggle" type="button"
                                                         data-toggle="dropdown" aria-haspopup="true"
@@ -49,7 +79,7 @@
                                                 </button>
                                                 <div class="dropdown-menu dropdown-menu-right" style="cursor: pointer;">
                                                     <a class="dropdown-item btnSearchProducts"><i class="fas fa-search"></i> Buscar
-                                                        productos</a>
+                                                        Cobranza</a>
                                                     <a class="dropdown-item btnClearProducts"><i class="fas fa-times"></i> Limpiar
                                                         búsqueda</a>
                                                     <a class="dropdown-item btnRemoveAllProducts"><i class="fas fa-trash-alt"></i>
@@ -67,13 +97,13 @@
                                         <thead>
                                         <tr>
                                             <th style="width: 5%;">Eliminar</th>
-                                            <th style="width: 15%;">Producto</th>
-                                            <th style="width: 8%;">Stock</th>
-                                            <th style="width: 20%;">Cantidad</th>
-                                            <th style="width: 8%;">Precio</th>
+                                            <th style="width: 15%;">Tip Cobranza</th>
+                                            {#<th style="width: 8%;">Stock</th>#}
+                                            {#<th style="width: 20%;">Cantidad</th>#}
+                                            {#<th style="width: 8%;">Precio</th>#}
                                             <th style="width: 8%;">Subtotal</th>
-                                            <th style="width: 20%;">Dscto S/.</th>
-                                            <th style="width: 8%;">Valor Dscto</th>
+                                            {#<th style="width: 20%;">Dscto S/.</th>#}
+                                            {#<th style="width: 8%;">Valor Dscto</th>#}
                                             <th style="width: 8%;">Subtotal final</th>
                                         </tr>
                                         </thead>
@@ -169,12 +199,12 @@
                                         {{ form.cash }}
                                     </div>
                                 </div>
-                                <div class="col-lg-6">
-                                    <div class="form-group">
-                                        <label>Cambio:</label>
-                                        {{ form.change }}
-                                    </div>
-                                </div>
+                                {#<div class="col-lg-6">#}
+                                    {#<div class="form-group">#}
+                                        {#<label>Cambio:</label>#}
+                                        {#{{ form.change }}#}
+                                    {#</div>#}
+                                {#</div>#}
                             </div>
                             <div class="row rowVents">
                                 <div class="col-lg-4">
@@ -216,27 +246,27 @@
                                 <div class="col-lg-12">
                                     <table class="table table-bordered table-sm">
                                         <tbody>
-                                        <tr>
-                                            <td><b>SUBTOTAL</b></td>
-                                            <td>{{ form.subtotal }}</td>
+                                        {#<tr>#}
+                                            {#<td><b>SUBTOTAL</b></td>#}
+                                            {#<td>{{ form.subtotal }}</td>#}
 
-                                        </tr>
-                                        <tr>
-                                            <td><b>DESCUENTO %</b></td>
-                                            <td>{{ form.dscto }}</td>
-                                        </tr>
-                                        <tr>
-                                            <td><b>VALOR DESCUENTO</b></td>
-                                            <td>{{ form.total_dscto }}</td>
-                                        </tr>
-                                        <tr>
-                                            <td><b>Igv %</b></td>
-                                            <td>{{ form.igv }}</td>
-                                        </tr>
-                                        <tr>
-                                            <td><b>VALOR IGV</b></td>
-                                            <td>{{ form.total_igv }}</td>
-                                        </tr>
+                                        {#</tr>#}
+                                        {#<tr>#}
+                                            {#<td><b>DESCUENTO %</b></td>#}
+                                            {#<td>{{ form.dscto }}</td>#}
+                                        {#</tr>#}
+                                        {#<tr>#}
+                                            {#<td><b>VALOR DESCUENTO</b></td>#}
+                                            {#<td>{{ form.total_dscto }}</td>#}
+                                        {#</tr>#}
+                                        {#<tr>#}
+                                            {#<td><b>Igv %</b></td>#}
+                                            {#<td>{{ form.igv }}</td>#}
+                                        {#</tr>#}
+                                        {#<tr>#}
+                                            {#<td><b>VALOR IGV</b></td>#}
+                                            {#<td>{{ form.total_igv }}</td>#}
+                                        {#</tr>#}
                                         <tr>
                                             <td><b>TOTAL A PAGAR</b></td>
                                             <td>
@@ -253,7 +283,7 @@
                                 <div class="col-lg-12">
                                     <div class="form-group">
                                         <label class="control-label">Comentario:</label>
-                                        {{ form.comment }}
+                                        {{ form.comment|add_class:"form-control" }}
                                    </div>
                                 </div>
                             </div>
@@ -263,7 +293,7 @@
             </div>
             <div class="card-footer">
                 <button type="submit" id="btnFacturarImprimir" class="btn btn-primary btn-flat btnCollect">
-                    <i class="fas fa-file-invoice-dollar"></i> Facturar e imprimir
+                    <i class="fas fa-file-invoice-dollar"></i> Registrar e imprimir
                 </button>
                 <button type="button" class="btn btn-warning btn-flat btnProforma">
                     <i class="fas fa-file-alt"></i> Crear Proforma
