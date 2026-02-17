@@ -4,7 +4,7 @@ from django.contrib.auth.models import Permission
 from core.pos.models import *
 
 # Crear o actualizar Dashboard
-dashboard, created = Dashboard.objects.get_or_create(name='El Morro SAC')
+dashboard, created = Dashboard.objects.update_or_create(name='El Morro SAC')
 dashboard.icon = 'fas fa-shopping-cart'
 dashboard.layout = 1
 dashboard.card = ' '
@@ -15,7 +15,7 @@ dashboard.save()
 print('Dashboard: {} {}'.format(dashboard.name, '(creado)' if created else '(actualizado)'))
 
 # Crear o actualizar Company
-company, created = Company.objects.get_or_create(name='El Morro S.A.C.')
+company, created = Company.objects.update_or_create(name='El Morro S.A.C.')
 company.ruc = '20532482683'
 company.email = 'area.ti@elmorro.com.pe'
 company.phone = '46200233'
@@ -28,31 +28,31 @@ print('Company: {} {}'.format(company.name, '(creada)' if created else '(actuali
 
 # ===================== MODULE TYPES =====================
 
-type_security, created = ModuleType.objects.get_or_create(
+type_security, created = ModuleType.objects.update_or_create(
     name='Seguridad',
     defaults={'icon': 'fa fa-key'}
 )
 print('{} {}'.format(type_security.name, '(creado)' if created else '(actualizado)'))
 
-type_bodega, created = ModuleType.objects.get_or_create(
+type_bodega, created = ModuleType.objects.update_or_create(
     name='Bodega',
     defaults={'icon': 'fa fa-box-open'}
 )
 print('{} {}'.format(type_bodega.name, '(creado)' if created else '(actualizado)'))
 
-type_administrativo, created = ModuleType.objects.get_or_create(
+type_administrativo, created = ModuleType.objects.update_or_create(
     name='Administrativo',
     defaults={'icon': 'fa fa-briefcase'}
 )
 print('{} {}'.format(type_administrativo.name, '(creado)' if created else '(actualizado)'))
 
-type_facturacion, created = ModuleType.objects.get_or_create(
+type_facturacion, created = ModuleType.objects.update_or_create(
     name='Facturación',
     defaults={'icon': 'fa fa-receipt'}
 )
 print('{} {}'.format(type_facturacion.name, '(creado)' if created else '(actualizado)'))
 
-type_reportes, created = ModuleType.objects.get_or_create(
+type_reportes, created = ModuleType.objects.update_or_create(
     name='Reportes',
     defaults={'icon': 'fa fa-list-alt'}
 )
@@ -60,7 +60,7 @@ print('{} {}'.format(type_reportes.name, '(creado)' if created else '(actualizad
 
 # ===================== SEGURIDAD MODULES =====================
 
-module, created = Module.objects.get_or_create(
+module, created = Module.objects.update_or_create(
     moduletype_id=type_security.id,
     url='/security/module/type/',
     defaults={
@@ -76,7 +76,7 @@ for p in Permission.objects.filter(content_type__model=ModuleType._meta.label.sp
     module.permits.add(p)
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.get_or_create(
+module, created = Module.objects.update_or_create(
     moduletype_id=type_security.id,
     url='/security/module/',
     defaults={
@@ -92,7 +92,7 @@ for p in Permission.objects.filter(content_type__model=Module._meta.label.split(
     module.permits.add(p)
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.get_or_create(
+module, created = Module.objects.update_or_create(
     moduletype_id=type_security.id,
     url='/security/group/',
     defaults={
@@ -108,7 +108,7 @@ for p in Permission.objects.filter(content_type__model=Group._meta.label.split('
     module.permits.add(p)
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.get_or_create(
+module, created = Module.objects.update_or_create(
     moduletype_id=type_security.id,
     url='/security/database/backups/',
     defaults={
@@ -124,7 +124,7 @@ for p in Permission.objects.filter(content_type__model=DatabaseBackups._meta.lab
     module.permits.add(p)
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.get_or_create(
+module, created = Module.objects.update_or_create(
     moduletype_id=type_security.id,
     url='/security/dashboard/update/',
     defaults={
@@ -138,7 +138,7 @@ module, created = Module.objects.get_or_create(
 )
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.get_or_create(
+module, created = Module.objects.update_or_create(
     moduletype_id=type_security.id,
     url='/security/access/users/',
     defaults={
@@ -154,7 +154,7 @@ for p in Permission.objects.filter(content_type__model=AccessUsers._meta.label.s
     module.permits.add(p)
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.get_or_create(
+module, created = Module.objects.update_or_create(
     moduletype_id=type_security.id,
     url='/user/',
     defaults={
@@ -172,7 +172,7 @@ print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
 # ===================== BODEGA MODULES =====================
 
-module, created = Module.objects.get_or_create(
+module, created = Module.objects.update_or_create(
     moduletype_id=type_bodega.id,
     url='/pos/scm/provider/',
     defaults={
@@ -188,7 +188,7 @@ for p in Permission.objects.filter(content_type__model=Provider._meta.label.spli
     module.permits.add(p)
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.get_or_create(
+module, created = Module.objects.update_or_create(
     moduletype_id=type_bodega.id,
     url='/pos/scm/category/',
     defaults={
@@ -204,7 +204,7 @@ for p in Permission.objects.filter(content_type__model=Category._meta.label.spli
     module.permits.add(p)
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.get_or_create(
+module, created = Module.objects.update_or_create(
     moduletype_id=type_bodega.id,
     url='/pos/scm/product/',
     defaults={
@@ -220,7 +220,7 @@ for p in Permission.objects.filter(content_type__model=Product._meta.label.split
     module.permits.add(p)
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.get_or_create(
+module, created = Module.objects.update_or_create(
     moduletype_id=type_bodega.id,
     url='/pos/scm/purchase/',
     defaults={
@@ -236,7 +236,7 @@ for p in Permission.objects.filter(content_type__model=Purchase._meta.label.spli
     module.permits.add(p)
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.get_or_create(
+module, created = Module.objects.update_or_create(
     moduletype_id=type_bodega.id,
     url='/pos/scm/product/stock/adjustment/',
     defaults={
@@ -250,7 +250,7 @@ module, created = Module.objects.get_or_create(
 )
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.get_or_create(
+module, created = Module.objects.update_or_create(
     moduletype_id=type_bodega.id,
     url='/pos/scm/product/generadorqr/',
     defaults={
@@ -266,7 +266,7 @@ print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
 # ===================== ADMINISTRATIVO MODULES =====================
 
-module, created = Module.objects.get_or_create(
+module, created = Module.objects.update_or_create(
     moduletype_id=type_administrativo.id,
     url='/pos/frm/type/expense/',
     defaults={
@@ -282,7 +282,7 @@ for p in Permission.objects.filter(content_type__model=TypeExpense._meta.label.s
     module.permits.add(p)
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.get_or_create(
+module, created = Module.objects.update_or_create(
     moduletype_id=type_administrativo.id,
     url='/pos/frm/expenses/',
     defaults={
@@ -298,7 +298,7 @@ for p in Permission.objects.filter(content_type__model=Expenses._meta.label.spli
     module.permits.add(p)
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.get_or_create(
+module, created = Module.objects.update_or_create(
     moduletype_id=type_administrativo.id,
     url='/pos/frm/ctas/collect/',
     defaults={
@@ -314,7 +314,7 @@ for p in Permission.objects.filter(content_type__model=CtasCollect._meta.label.s
     module.permits.add(p)
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.get_or_create(
+module, created = Module.objects.update_or_create(
     moduletype_id=type_administrativo.id,
     url='/pos/frm/debts/pay/',
     defaults={
@@ -330,7 +330,7 @@ for p in Permission.objects.filter(content_type__model=DebtsPay._meta.label.spli
     module.permits.add(p)
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.get_or_create(
+module, created = Module.objects.update_or_create(
     moduletype_id=type_administrativo.id,
     url='/pos/frm/box/',
     defaults={
@@ -346,7 +346,7 @@ for p in Permission.objects.filter(content_type__model=Box._meta.label.split('.'
     module.permits.add(p)
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.get_or_create(
+module, created = Module.objects.update_or_create(
     moduletype_id=type_administrativo.id,
     url='/pos/frm/series/',
     defaults={
@@ -362,7 +362,7 @@ for p in Permission.objects.filter(content_type__model=Series._meta.label.split(
     module.permits.add(p)
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.get_or_create(
+module, created = Module.objects.update_or_create(
     moduletype_id=type_administrativo.id,
     url='/pos/frm/user_series/',
     defaults={
@@ -378,7 +378,7 @@ for p in Permission.objects.filter(content_type__model=UserSeries._meta.label.sp
     module.permits.add(p)
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.get_or_create(
+module, created = Module.objects.update_or_create(
     moduletype_id=type_administrativo.id,
     url='/pos/frm/user/sales/report/',
     defaults={
@@ -394,7 +394,7 @@ print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
 # ===================== FACTURACION MODULES =====================
 
-module, created = Module.objects.get_or_create(
+module, created = Module.objects.update_or_create(
     moduletype_id=type_facturacion.id,
     url='/pos/crm/client/',
     defaults={
@@ -410,7 +410,7 @@ for p in Permission.objects.filter(content_type__model=Client._meta.label.split(
     module.permits.add(p)
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.get_or_create(
+module, created = Module.objects.update_or_create(
     moduletype_id=type_facturacion.id,
     url='/pos/crm/sale/admin/',
     defaults={
@@ -426,7 +426,7 @@ for p in Permission.objects.filter(content_type__model=Sale._meta.label.split('.
     module.permits.add(p)
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.get_or_create(
+module, created = Module.objects.update_or_create(
     url='/pos/crm/sale/client/',
     defaults={
         'name': 'Cobranzas',
@@ -439,7 +439,7 @@ module, created = Module.objects.get_or_create(
 )
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.get_or_create(
+module, created = Module.objects.update_or_create(
     moduletype_id=type_facturacion.id,
     url='/pos/crm/promotions/',
     defaults={
@@ -455,7 +455,7 @@ for p in Permission.objects.filter(content_type__model=Promotions._meta.label.sp
     module.permits.add(p)
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.get_or_create(
+module, created = Module.objects.update_or_create(
     moduletype_id=type_facturacion.id,
     url='/pos/crm/devolution/',
     defaults={
@@ -471,7 +471,7 @@ for p in Permission.objects.filter(content_type__model=Devolution._meta.label.sp
     module.permits.add(p)
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.get_or_create(
+module, created = Module.objects.update_or_create(
     moduletype_id=type_facturacion.id,
     url='/pos/frm/paymentbank/',
     defaults={
@@ -489,7 +489,7 @@ print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
 # ===================== REPORTES MODULES =====================
 
-module, created = Module.objects.get_or_create(
+module, created = Module.objects.update_or_create(
     moduletype_id=type_reportes.id,
     url='/reports/sale/',
     defaults={
@@ -503,7 +503,7 @@ module, created = Module.objects.get_or_create(
 )
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.get_or_create(
+module, created = Module.objects.update_or_create(
     moduletype_id=type_reportes.id,
     url='/reports/purchase/',
     defaults={
@@ -517,7 +517,7 @@ module, created = Module.objects.get_or_create(
 )
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.get_or_create(
+module, created = Module.objects.update_or_create(
     moduletype_id=type_reportes.id,
     url='/reports/expenses/',
     defaults={
@@ -531,7 +531,7 @@ module, created = Module.objects.get_or_create(
 )
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.get_or_create(
+module, created = Module.objects.update_or_create(
     moduletype_id=type_reportes.id,
     url='/reports/debts/pay/',
     defaults={
@@ -545,7 +545,7 @@ module, created = Module.objects.get_or_create(
 )
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.get_or_create(
+module, created = Module.objects.update_or_create(
     moduletype_id=type_reportes.id,
     url='/reports/ctas/collect/',
     defaults={
@@ -559,7 +559,7 @@ module, created = Module.objects.get_or_create(
 )
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.get_or_create(
+module, created = Module.objects.update_or_create(
     moduletype_id=type_reportes.id,
     url='/reports/results/',
     defaults={
@@ -575,7 +575,7 @@ print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
 # ===================== UTILITY MODULES =====================
 
-module, created = Module.objects.get_or_create(
+module, created = Module.objects.update_or_create(
     url='/user/update/password/',
     defaults={
         'name': 'Cambiar password',
@@ -588,7 +588,7 @@ module, created = Module.objects.get_or_create(
 )
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.get_or_create(
+module, created = Module.objects.update_or_create(
     url='/user/update/profile/',
     defaults={
         'name': 'Editar perfil',
@@ -601,7 +601,7 @@ module, created = Module.objects.get_or_create(
 )
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.get_or_create(
+module, created = Module.objects.update_or_create(
     url='/pos/crm/client/update/profile/',
     defaults={
         'name': 'Editar perfil Cliente',
@@ -614,7 +614,7 @@ module, created = Module.objects.get_or_create(
 )
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.get_or_create(
+module, created = Module.objects.update_or_create(
     url='/pos/crm/company/update/',
     defaults={
         'name': 'Compañia',
@@ -629,7 +629,7 @@ print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
 # ===================== GROUPS =====================
 
-admin_group, created = Group.objects.get_or_create(name='Administrador')
+admin_group, created = Group.objects.update_or_create(name='Administrador')
 print('Grupo {}: {}'.format(admin_group.name, '(creado)' if created else '(actualizado)'))
 
 # Siempre agregar módulos al grupo administrador (para nuevos módulos)
@@ -643,19 +643,19 @@ for m in Module.objects.filter().exclude(url__in=['/pos/crm/client/update/profil
             permission_id=perm.id
         )
 
-client_group, created = Group.objects.get_or_create(name='Cliente')
+client_group, created = Group.objects.update_or_create(name='Cliente')
 print('Grupo {}: {}'.format(client_group.name, '(creado)' if created else '(actualizado)'))
 
 # Siempre agregar módulos al grupo cliente (para nuevos módulos)
 for m in Module.objects.filter(url__in=['/pos/crm/client/update/profile/', '/pos/crm/sale/client/', '/user/update/password/']):
     gm, _ = GroupModule.objects.get_or_create(module=m, group=client_group)
 
-vendedor_group, createdVendedor = Group.objects.get_or_create(name='Vendedor')
+vendedor_group, createdVendedor = Group.objects.update_or_create(name='Vendedor')
 print('Grupo {}: {}'.format(vendedor_group.name, '(creado)' if createdVendedor else '(actualizado)'))
 
 # ===================== USUARIO ADMINISTRADOR =====================
 
-user, created = User.objects.get_or_create(username='Administrador')
+user, created = User.objects.update_or_create(username='Administrador')
 if created:
     user.full_name = 'Admin'
     user.dni = '00112233'
