@@ -584,11 +584,11 @@ document.addEventListener('DOMContentLoaded', function (e) {
             parameters.append('payment_condition', select_paymentcondition.val());
             parameters.append('end_credit', input_endcredit.val());
             parameters.append('cash', input_cash.val());
-            parameters.append('change', input_change.val());
+            parameters.append('change', input_change.val() || '0.00');
             parameters.append('card_number', input_cardnumber.val());
             parameters.append('titular', input_titular.val());
             parameters.append('initial', input_initial.val());
-            parameters.append('dscto', $('input[name="dscto"]').val());
+            parameters.append('dscto', $('input[name="dscto"]').val() || '0.00');
             parameters.append('amount_debited', input_amountdebited.val());
             // Agregar el total ingresado por el usuario
             parameters.set('total', $('input[name="total"]').val());
@@ -704,7 +704,7 @@ $(function () {
     input_cardnumber = $('input[name="card_number"]');
     input_amountdebited = $('input[name="amount_debited"]');
     input_cash = $('input[name="cash"]');
-    input_change = $('input[name="change"]');
+    input_change = $('input[name="change"]').length > 0 ? $('input[name="change"]') : {val: () => '0.00'};
     input_titular = $('input[name="titular"]');
     inputs_vents = $('.rowVents');
     console.log(inputs_vents)
