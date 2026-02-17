@@ -657,8 +657,8 @@ print('Grupo {}: {}'.format(vendedor_group.name, '(creado)' if createdVendedor e
 
 user, created = User.objects.get_or_create(username='Administrador')
 if created:
-    user.full_name = 'Soledad Arua'
-    user.dni = '462002031'
+    user.full_name = 'Admin'
+    user.dni = '00112233'
     user.email = 'area.ti@elmorro.com.pe'
     user.is_active = True
     user.is_superuser = True
