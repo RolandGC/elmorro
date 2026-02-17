@@ -157,7 +157,7 @@ class SaleAdminCreateView(PermissionMixin, CreateView):
                         sale.end_credit = request.POST['end_credit']
                         sale.cash = 0.00
                         sale.change = 0.00
-                        sale.initial = request.POST['initial']
+                        sale.initial = float(request.POST['initial'])
                         sale.save()
                         ctascollect = CtasCollect()
                         ctascollect.sale_id = sale.id
