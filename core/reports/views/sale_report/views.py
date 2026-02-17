@@ -21,7 +21,7 @@ class SaleReportView(ModuleMixin, FormView):
                 data = []
                 start_date = request.POST['start_date']
                 end_date = request.POST['end_date']
-                search = Sale.objects.filter()
+                search = Sale.objects.filter(employee=request.user)
                 if len(start_date) and len(end_date):
                     search = search.filter(date_joined__range=[start_date, end_date])
                 for sale in search:
