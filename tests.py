@@ -382,7 +382,7 @@ module, created = Module.objects.get_or_create(
     moduletype_id=type_administrativo.id,
     url='/pos/frm/user/sales/report/',
     defaults={
-        'name': 'Reporte de Cobranzas por Usuario',
+        'name': 'Reprt Cobranzas por Usuario',
         'is_active': True,
         'is_vertical': True,
         'is_visible': True,

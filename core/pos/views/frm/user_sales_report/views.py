@@ -15,7 +15,7 @@ class UserSalesReportView(LoginRequiredMixin, ModuleMixin, TemplateView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['title'] = 'Reporte de Ventas por Usuario'
+        context['title'] = 'Reporte de Cobranzas por Usuario'
         return context
     
     def post(self, request, *args, **kwargs):
