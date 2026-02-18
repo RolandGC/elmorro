@@ -1,5 +1,5 @@
 import json
-
+from datetime import datetime, timedelta
 from django.contrib.auth.models import Group
 from django.db import transaction
 from django.db.models import Q
@@ -36,7 +36,14 @@ class SaleAdminListView(PermissionMixin, FormView):
                     search = search.filter(employee=request.user)
                 
                 if start_date and end_date:
-                    search = search.filter(date_joined__range=[start_date, end_date])
+                    # Convertir strings a datetime para permitir búsqueda inclusiva del día final
+                    try:
+                        end_date_obj = datetime.strptime(end_date, '%Y-%m-%d')
+                        # Agregar 1 día para incluir todo el día final
+                        end_date_obj = end_date_obj + timedelta(days=1)
+                        search = search.filter(date_joined__range=[start_date, end_date_obj.date()])
+                    except:
+                        search = search.filter(date_joined__range=[start_date, end_date])
                 for sale in search:
                     data.append(sale.toJSON())
             elif action == 'search_detproducts':
