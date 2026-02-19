@@ -209,17 +209,10 @@ class ExpensesForm(ModelForm):
 
     class Meta:
         model = Expenses
-        fields = ['typeexpense', 'desc', 'date_joined', 'valor']
+        fields = ['typeexpense', 'desc', 'valor']
         widgets = {
             'typeexpense': forms.Select(attrs={'class': 'form-control select2', 'style': 'width: 100%;'}),
             'desc': forms.Textarea(attrs={'placeholder': 'Ingrese una descripción', 'rows': 3, 'cols': '3'}),
-            'date_joined': forms.DateInput(format='%Y-%m-%d', attrs={
-                'class': 'form-control datetimepicker-input',
-                'id': 'date_joined',
-                'value': datetime.now().strftime('%Y-%m-%d'),
-                'data-toggle': 'datetimepicker',
-                'data-target': '#date_joined'
-            }),
             'valor': forms.TextInput()
         }
 

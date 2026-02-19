@@ -14,6 +14,7 @@ from core.pos.views.scm.category.views import *
 from core.pos.views.scm.purchase.views import *
 from core.pos.views.frm.typeexpense.views import *
 from core.pos.views.frm.expenses.views import *
+from core.pos.views.frm.expenses.print.views import ExpensePrintTicketView
 from core.pos.views.crm.client.views import *
 from core.pos.views.crm.sale.print.views import *
 from core.pos.views.crm.devolution.views import *
@@ -56,6 +57,7 @@ urlpatterns = [
     path('frm/expenses/add/', ExpensesCreateView.as_view(), name='expenses_create'),
     path('frm/expenses/update/<int:pk>/', ExpensesUpdateView.as_view(), name='expenses_update'),
     path('frm/expenses/delete/<int:pk>/', ExpensesDeleteView.as_view(), name='expenses_delete'),
+    path('frm/expenses/print/ticket/<int:pk>/', ExpensePrintTicketView.as_view(), name='expenses_print_ticket'),
     # debtspay
     path('frm/debts/pay/', DebtsPayListView.as_view(), name='debtspay_list'),
     path('frm/debts/pay/add/', DebtsPayCreateView.as_view(), name='debtspay_create'),
