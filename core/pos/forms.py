@@ -210,7 +210,7 @@ class ExpensesForm(ModelForm):
 
     class Meta:
         model = Expenses
-        fields = '__all__'
+        fields = ['typeexpense', 'desc', 'date_joined', 'valor']
         widgets = {
             'typeexpense': forms.Select(attrs={'class': 'form-control select2', 'style': 'width: 100%;'}),
             'desc': forms.Textarea(attrs={'placeholder': 'Ingrese una descripción', 'rows': 3, 'cols': '3'}),
@@ -225,15 +225,13 @@ class ExpensesForm(ModelForm):
         }
 
     def save(self, commit=True):
-        data = {}
         try:
             if self.is_valid():
-                super().save()
+                return super().save(commit=commit)
             else:
-                data['error'] = self.errors
+                raise ValueError(str(self.errors))
         except Exception as e:
-            data['error'] = str(e)
-        return data
+            raise
 
 
 class PaymentsDebtsPayForm(ModelForm):

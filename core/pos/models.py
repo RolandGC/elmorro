@@ -680,6 +680,7 @@ class TypeExpense(models.Model):
 
 class Expenses(models.Model):
     typeexpense = models.ForeignKey(TypeExpense, verbose_name='Tipo de Gasto', on_delete=models.PROTECT)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Usuario que registró el gasto')
     desc = models.CharField(max_length=500, null=True, blank=True, verbose_name='Descripción')
     date_joined = models.DateField(default=datetime.now, verbose_name='Fecha de Registro')
     valor = models.DecimalField(max_digits=9, decimal_places=2, default=0.00, verbose_name='Valor')
@@ -693,11 +694,12 @@ class Expenses(models.Model):
         return 'Sin detalles'
 
     def toJSON(self):
-        item = model_to_dict(self)
+        item = model_to_dict(self, exclude=['user'])
         item['typeexpense'] = self.typeexpense.toJSON()
         item['date_joined'] = self.date_joined.strftime('%Y-%m-%d')
         item['valor'] = format(self.valor, '.2f')
         item['desc'] = self.get_desc()
+        item['user'] = self.user.toJSON() if self.user else None
         return item
 
     class Meta:
