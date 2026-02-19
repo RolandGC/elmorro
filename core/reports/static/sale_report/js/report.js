@@ -110,10 +110,12 @@ function generateReport(all) {
         columns: [
             {data: "client.user.full_name"},
             {data: "date_joined"},
-            {data: "payment_condition.name"},
+            //{data: "payment_condition.name"},
+            {data: "payment_method.name"},
             // {data: "subtotal"},
-            {data: "total_dscto"},
-            {data: "cantidad_productos"},
+            //{data: "total_dscto"},
+            //{data: "cantidad_productos"},
+            {data: "serie"},
             {
                 data: null,
                 render: function(data, type, row) {

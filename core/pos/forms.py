@@ -338,18 +338,12 @@ class BoxForm(ModelForm):
     
     class Meta:
         model = Box
-        fields = ['date_close', 'hours_close', 'efectivo', 'yape', 'plin', 'transferencia', 'deposito', 'initial_box', 'bills', 'box_final', 'desc']
+        fields = ['datetime_close', 'efectivo', 'yape', 'plin', 'transferencia', 'deposito', 'initial_box', 'bills', 'box_final', 'desc']
         widgets = {
-            'date_close': forms.DateInput(format='%Y-%m-%d', attrs={
-                'class': 'form-control datetimepicker-input',
-                'id': 'date_joined',
-                'value': datetime.now().strftime('%Y-%m-%d'),
-                'data-toggle': 'datetimepicker',
-                'data-target': '#date_joined'
-            }),
-            'hours_close': forms.TimeInput(format='%H:%M', attrs={
-                'type': 'time',
-                'value': datetime.now().strftime('%H:%M')
+            'datetime_close': forms.DateTimeInput(format='%Y-%m-%d %H:%M', attrs={
+                'type': 'datetime-local',
+                'class': 'form-control',
+                'value': datetime.now().strftime('%Y-%m-%dT%H:%M')
             }),
             'efectivo': forms.TextInput(
                 attrs = {

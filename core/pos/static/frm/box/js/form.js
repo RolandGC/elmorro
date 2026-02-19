@@ -139,27 +139,12 @@ document.addEventListener('DOMContentLoaded', function () {
             }),
         },
         fields: {
-            date_close: {
+            datetime_close: {
                 validators: {
                     notEmpty: {
-                        message: 'La fecha de cierre es obligatoria'
-                    },
-                    date: {
-                        format: 'YYYY-MM-DD',
-                        message: 'La fecha no es válida'
+                        message: 'La fecha y hora de cierre son obligatorias'
                     }
-                },
-            },
-            hours_close: {
-                validators: {
-                    notEmpty: {
-                        message: 'La hora de cierre es obligatoria'
-                    },
-                    time: {
-                        format: 'HH:mm',
-                        message: 'La hora no es válida'
-                    }
-                },
+                }
             },
             efectivo: {
                 validators: {
@@ -275,16 +260,7 @@ document.addEventListener('DOMContentLoaded', function () {
         bills.addEventListener('change', updateBoxFinal);
     }
 
-    // Configuración del DateTimePicker
-    $('#id_date_close').datetimepicker({
-        format: 'YYYY-MM-DD',
-        locale: 'es'
-    });
-
-    $('#id_hours_close').datetimepicker({
-        format: 'HH:mm',
-        locale: 'es'
-    });
+    // El campo datetime_close es un input type="datetime-local" nativo del HTML5, no necesita inicialización adicional
 
 
     // Manejo del envío del formulario

@@ -101,10 +101,10 @@
                                             {#<th style="width: 8%;">Stock</th>#}
                                             {#<th style="width: 20%;">Cantidad</th>#}
                                             {#<th style="width: 8%;">Precio</th>#}
-                                            <th style="width: 8%;">Subtotal</th>
+                                            {#<th style="width: 8%;">Subtotal</th>#}
                                             {#<th style="width: 20%;">Dscto S/.</th>#}
                                             {#<th style="width: 8%;">Valor Dscto</th>#}
-                                            <th style="width: 8%;">Subtotal final</th>
+                                            {% comment %} <th style="width: 8%;">Subtotal final</th> {% endcomment %}
                                         </tr>
                                         </thead>
                                         <tbody>
@@ -309,7 +309,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">
-                        <b><i class="fa fa-search"></i> Búsqueda de productos</b>
+                        <b><i class="fa fa-search"></i> Búsqueda tipo de cobranzas</b>
                     </h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
@@ -322,9 +322,9 @@
                             <tr>
                                 <th>Nombre</th>
                                 <th>Categoría</th>
-                                <th>P./Unitario</th>
-                                <th>P./Promoción</th>
-                                <th>Stock</th>
+                                {% comment %} <th>P./Unitario</th> {% endcomment %}
+                                {% comment %} <th>P./Promoción</th> {% endcomment %}
+                                {% comment %} <th>Stock</th> {% endcomment %}
                                 <th>Agregar</th>
                             </tr>
                             </thead>

@@ -123,17 +123,17 @@ var vents = {
             columns: [
                 {data: "id"},
                 {data: "name"},
-                {data: "subtotal"},
-                {data: "total"},
+                //{data: "subtotal"},
+                //{data: "total"},
             ],
             columnDefs: [
-                {
-                    targets: [-2, -1],
-                    class: 'text-center',
-                    render: function (data, type, row) {
-                        return 'S/.' + safeToFixed(data, 2);
-                    }
-                },
+                // {
+                //     targets: [-1],
+                //     class: 'text-center',
+                //     render: function (data, type, row) {
+                //         return 'S/.' + safeToFixed(data, 2);
+                //     }
+                // },
                 {
                     targets: [0],
                     class: 'text-center',
@@ -802,9 +802,9 @@ $(function () {
             columns: [
                 {data: "name"},
                 {data: "category.name"},
-                {data: "pvp"},
-                {data: "price_promotion"},
-                {data: "stock"},
+                //{data: "pvp"},
+                //{data: "price_promotion"},
+                //{data: "stock"},
                 {data: "id"},
             ],
             columnDefs: [
@@ -822,33 +822,33 @@ $(function () {
                         return data
                     }
                 },
-                {
-                    targets: [2],
-                    class: 'text-center',
-                    render: function (data, type, row) {
-                        return 'S/.' + parseFloat(data).toFixed(2);
-                    }
-                },
-                {
-                    targets: [3],
-                    class: 'text-center',
-                    render: function (data, type, row) {
-                        return 'S/.' + parseFloat(data).toFixed(2);
-                    }
-                },
-                {
-                    targets: [4],
-                    class: 'text-center',
-                    render: function (data, type, row) {
-                        if (row.category.inventoried) {
-                            if (row.stock > 0) {
-                                return '<span class="badge badge-success">' + row.stock + '</span>';
-                            }
-                            return '<span class="badge badge-danger">' + row.stock + '</span>';
-                        }
-                        return '<span class="badge badge-secondary">Sin stock</span>';
-                    }
-                },
+                // {
+                //     targets: [2],
+                //     class: 'text-center',
+                //     render: function (data, type, row) {
+                //         return 'S/.' + parseFloat(data).toFixed(2);
+                //     }
+                // },
+                // {
+                //     targets: [3],
+                //     class: 'text-center',
+                //     render: function (data, type, row) {
+                //         return 'S/.' + parseFloat(data).toFixed(2);
+                //     }
+                // },
+                // {
+                //     targets: [4],
+                //     class: 'text-center',
+                //     render: function (data, type, row) {
+                //         if (row.category.inventoried) {
+                //             if (row.stock > 0) {
+                //                 return '<span class="badge badge-success">' + row.stock + '</span>';
+                //             }
+                //             return '<span class="badge badge-danger">' + row.stock + '</span>';
+                //         }
+                //         return '<span class="badge badge-secondary">Sin stock</span>';
+                //     }
+                // },
                 {
                     targets: [-1],
                     class: 'text-center',

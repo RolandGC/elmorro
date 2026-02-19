@@ -29,16 +29,17 @@ function getData(all) {
         },
         columns: [
             {data: "id"},
-            {data: "hours_close"},
-            {data: "date_close"},
+            {data: "datetime_close"},
             {data: "efectivo"},
             {data: "yape"},
             {data: "plin"},
             {data: "transferencia"},
             {data: "deposito"},
+            {data: "bills"},
             {data: "initial_box"},
             {data: "box_final"},
             {data: "desc"},
+            {data: "options"},
         ],
         columnDefs: [
             {
@@ -59,7 +60,7 @@ function getData(all) {
                 targets: [2],
                 class: 'text-center',
                 render: function (data, type, row) {
-                    return data
+                    return 'S/.' + data
                 }
             },
             {
@@ -112,8 +113,15 @@ function getData(all) {
                 }
             },
             {
-                targets: [-1],
+                targets: [10],
+                render: function (data, type, row) {
+                    return data || '-'
+                }
+            },
+            {
+                targets: [11],
                 class: 'text-center',
+                orderable: false,
                 render: function (data, type, row) {
                     var buttons = '';
                     buttons += '<a href="/pos/frm/box/update/' + row.id + '/" class="btn btn-warning btn-xs btn-flat"><i class="fas fa-edit"></i></a> ';

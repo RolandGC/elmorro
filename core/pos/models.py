@@ -792,8 +792,9 @@ class Devolution(models.Model):
 class Box(models.Model):
     user = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name='Usuario', related_name='boxes', null=True, blank=True)
     date_joined = models.DateField(default=timezone.now) 
-    date_close = models.DateField(verbose_name='Fecha de Cierre')
-    hours_close = models.TimeField(default=current_time, verbose_name='Hora de Cierre')
+    date_close = models.DateField(verbose_name='Fecha de Cierre', null=True, blank=True)
+    hours_close = models.TimeField(default=current_time, verbose_name='Hora de Cierre', null=True, blank=True)
+    datetime_close = models.DateTimeField(verbose_name='Fecha y Hora de Cierre', null=True, blank=True)
     efectivo = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name='Efectivo')
     yape = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name='Yape')
     plin = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name='Plin')
@@ -881,15 +882,26 @@ class Box(models.Model):
     def toJSON(self):
         item = model_to_dict(self)
         item['date_joined'] = self.date_joined.strftime('%Y-%m-%d')
-        item['date_close'] = self.date_close.strftime('%Y-%m-%d')
-        item['hours_close'] = self.hours_close.strftime('%H:%M')
+        
+        # Usar datetime_close si existe, si no combinar date_close y hours_close
+        if self.datetime_close:
+            item['datetime_close'] = self.datetime_close.strftime('%Y-%m-%d %H:%M')
+            item['date_close'] = self.datetime_close.strftime('%Y-%m-%d')
+            item['hours_close'] = self.datetime_close.strftime('%H:%M')
+        else:
+            item['date_close'] = self.date_close.strftime('%Y-%m-%d') if self.date_close else ''
+            item['hours_close'] = self.hours_close.strftime('%H:%M') if self.hours_close else ''
+            item['datetime_close'] = ''
+        
         item['efectivo'] = format(self.efectivo, '.2f')
         item['yape'] = format(self.yape, '.2f')
         item['plin'] = format(self.plin, '.2f')
         item['transferencia'] = format(self.transferencia, '.2f')
         item['deposito'] = format(self.deposito, '.2f')
+        item['bills'] = format(self.bills, '.2f') if self.bills else '0.00'
         item['initial_box'] = format(self.initial_box, '.2f')
         item['box_final'] = format(self.box_final, '.2f')
+        item['options'] = ''  # Columna vacía para las opciones (será llenada por JavaScript)
         return item
 
     class Meta:

@@ -159,10 +159,21 @@ class BoxCreateView(PermissionMixin, CreateView):
             if action == 'get_initial_values':
                 return self.get_initial_values()
             elif action == 'add':
+                from datetime import datetime
                 box = Box()
                 box.user = request.user
-                box.date_close = request.POST['date_close']
-                box.hours_close = request.POST['hours_close']
+                
+                # Obtener datetime_close del POST
+                datetime_str = request.POST.get('datetime_close', '')
+                if datetime_str:
+                    try:
+                        # El navegador envía en formato: 2025-12-19T14:30
+                        box.datetime_close = datetime.fromisoformat(datetime_str)
+                    except:
+                        box.datetime_close = datetime.now()
+                else:
+                    box.datetime_close = datetime.now()
+                
                 box.efectivo = float(request.POST.get('efectivo', 0))
                 box.yape = float(request.POST.get('yape', 0))
                 box.plin = float(request.POST.get('plin', 0))
@@ -307,9 +318,18 @@ class BoxUpdateView(PermissionMixin, UpdateView):
             if action == 'get_initial_values':
                 return self.get_initial_values()
             elif action == 'edit':
+                from datetime import datetime
                 box = self.get_object()
-                box.date_close = request.POST['date_close']
-                box.hours_close = request.POST['hours_close']
+                
+                # Obtener datetime_close del POST
+                datetime_str = request.POST.get('datetime_close', '')
+                if datetime_str:
+                    try:
+                        # El navegador envía en formato: 2025-12-19T14:30
+                        box.datetime_close = datetime.fromisoformat(datetime_str)
+                    except:
+                        pass
+                
                 box.efectivo = float(request.POST.get('efectivo', 0))
                 box.yape = float(request.POST.get('yape', 0))
                 box.plin = float(request.POST.get('plin', 0))
