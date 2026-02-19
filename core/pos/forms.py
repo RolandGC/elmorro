@@ -321,13 +321,23 @@ class BoxForm(ModelForm):
                 ).aggregate(total=Sum('total'))['total'] or 0
                 self.initial['deposito'] = round(float(total_deposito), 2)
                 
-                # Calcular el total del box
-                total = (float(total_efectivo) + 
+                # Calcular total de pagos de métodos
+                total_pagos = (float(total_efectivo) + 
                         float(total_yape) + 
                         float(total_plin) + 
                         float(total_transfer) + 
                         float(total_deposito))
-                self.initial['box_final'] = round(total, 2)
+                
+                # Calcular gastos del día
+                from core.pos.models import Expenses
+                total_gastos = Expenses.objects.filter(
+                    user=user,
+                    date_joined__date=fecha_actual
+                ).aggregate(total=Sum('valor'))['total'] or 0
+                self.initial['bills'] = round(float(total_gastos), 2)
+                
+                # Calcular el total del box (pagos - gastos)
+                self.initial['box_final'] = round(total_pagos - float(total_gastos), 2)
             except Exception as e:
                 # Si hay error en el cálculo, dejar los valores por defecto (0)
                 import traceback
@@ -394,14 +404,14 @@ class BoxForm(ModelForm):
                attrs = {
                    'type': 'number',
                    'step': '0.01',
-                    'value': '0'
+                   'readonly': 'readonly'
                 }
             ),
             'box_final': forms.TextInput(
                 attrs = {
                     'type': 'number',
                     'step': '0.01',
-                    'readonly': 'readonly'
+                    'disabled': 'disabled'
                 }
             ),
             'desc': forms.TextInput(attrs={'placeholder': 'Ingrese descripción'})

@@ -35,7 +35,7 @@ type_security, created = ModuleType.objects.update_or_create(
 print('{} {}'.format(type_security.name, '(creado)' if created else '(actualizado)'))
 
 type_bodega, created = ModuleType.objects.update_or_create(
-    name='Bodega',
+    name='Almacén',
     defaults={'icon': 'fa fa-box-open'}
 )
 print('{} {}'.format(type_bodega.name, '(creado)' if created else '(actualizado)'))

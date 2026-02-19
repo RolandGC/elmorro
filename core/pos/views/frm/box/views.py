@@ -73,11 +73,92 @@ class BoxCreateView(PermissionMixin, CreateView):
         kwargs['user'] = self.request.user
         return kwargs
 
+    def get_initial_values(self):
+        """Retorna los valores iniciales para el formulario"""
+        data = {}
+        try:
+            from datetime import date
+            from django.db.models import Sum
+            
+            user = self.request.user
+            fecha_actual = date.today()
+            
+            from core.pos.models import Sale, Expenses, PaymentsCtaCollect
+            
+            total_efectivo = Sale.objects.filter(
+                employee=user,
+                payment_condition='contado',
+                payment_method='efectivo',
+                date_joined__date=fecha_actual
+            ).aggregate(total=Sum('total'))['total'] or 0
+            data['efectivo'] = round(float(total_efectivo), 2)
+            
+            # Calcular yape
+            total_yape = Sale.objects.filter(
+                employee=user,
+                payment_condition='contado',
+                payment_method='yape',
+                date_joined__date=fecha_actual
+            ).aggregate(total=Sum('total'))['total'] or 0
+            data['yape'] = round(float(total_yape), 2)
+            
+            # Calcular plin
+            total_plin = Sale.objects.filter(
+                employee=user,
+                payment_condition='contado',
+                payment_method='plin',
+                date_joined__date=fecha_actual
+            ).aggregate(total=Sum('total'))['total'] or 0
+            data['plin'] = round(float(total_plin), 2)
+            
+            # Calcular transferencia
+            total_transfer = Sale.objects.filter(
+                employee=user,
+                payment_condition='contado',
+                payment_method='tarjeta_debito_credito',
+                date_joined__date=fecha_actual
+            ).aggregate(total=Sum('total'))['total'] or 0
+            data['transferencia'] = round(float(total_transfer), 2)
+            
+            # Calcular deposito
+            total_deposito = Sale.objects.filter(
+                employee=user,
+                payment_condition='contado',
+                payment_method='efectivo_tarjeta',
+                date_joined__date=fecha_actual
+            ).aggregate(total=Sum('total'))['total'] or 0
+            data['deposito'] = round(float(total_deposito), 2)
+            
+            # Calcular total de pagos de métodos
+            total_pagos = (float(total_efectivo) + 
+                    float(total_yape) + 
+                    float(total_plin) + 
+                    float(total_transfer) + 
+                    float(total_deposito))
+            
+            # Calcular gastos del día
+            total_gastos = Expenses.objects.filter(
+                user=user,
+                date_joined=fecha_actual
+            ).aggregate(total=Sum('valor'))['total'] or 0
+            data['bills'] = round(float(total_gastos), 2)
+            
+            # Calcular el total del box (pagos - gastos)
+            data['box_final'] = round(total_pagos - float(total_gastos), 2)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            data['error'] = str(e)
+        
+        return JsonResponse(data)
+
     def post(self, request, *args, **kwargs):
         data = {}
-        action = request.POST['action']
+        action = request.POST.get('action', '')
         try:
-            if action == 'add':
+            if action == 'get_initial_values':
+                return self.get_initial_values()
+            elif action == 'add':
                 box = Box()
                 box.user = request.user
                 box.date_close = request.POST['date_close']
@@ -87,10 +168,13 @@ class BoxCreateView(PermissionMixin, CreateView):
                 box.plin = float(request.POST.get('plin', 0))
                 box.transferencia = float(request.POST.get('transferencia', 0))
                 box.deposito = float(request.POST.get('deposito', 0))
-                box.bills = float(request.POST['bills'])
-                box.initial_box = float(request.POST['initial_box'])
-                box.box_final = float(request.POST['box_final'])
-                box.desc = request.POST['desc']
+                box.bills = float(request.POST.get('bills', 0))
+                box.initial_box = float(request.POST.get('initial_box', 0))
+                
+                # Calcular box_final automáticamente: efectivo + yape + plin + transferencia + deposito + initial_box - bills
+                box.box_final = float(box.efectivo) + float(box.yape) + float(box.plin) + float(box.transferencia) + float(box.deposito) + float(box.initial_box) - float(box.bills)
+                
+                box.desc = request.POST.get('desc', '')
                 box.save()
             elif action == 'validate_data':
                 return self.validate_data()
@@ -137,11 +221,92 @@ class BoxUpdateView(PermissionMixin, UpdateView):
         kwargs['user'] = self.request.user
         return kwargs
 
+    def get_initial_values(self):
+        """Retorna los valores iniciales para el formulario"""
+        data = {}
+        try:
+            from datetime import date
+            from django.db.models import Sum
+            
+            user = self.request.user
+            fecha_actual = date.today()
+            
+            from core.pos.models import Sale, Expenses, PaymentsCtaCollect
+            
+            total_efectivo = Sale.objects.filter(
+                employee=user,
+                payment_condition='contado',
+                payment_method='efectivo',
+                date_joined__date=fecha_actual
+            ).aggregate(total=Sum('total'))['total'] or 0
+            data['efectivo'] = round(float(total_efectivo), 2)
+            
+            # Calcular yape
+            total_yape = Sale.objects.filter(
+                employee=user,
+                payment_condition='contado',
+                payment_method='yape',
+                date_joined__date=fecha_actual
+            ).aggregate(total=Sum('total'))['total'] or 0
+            data['yape'] = round(float(total_yape), 2)
+            
+            # Calcular plin
+            total_plin = Sale.objects.filter(
+                employee=user,
+                payment_condition='contado',
+                payment_method='plin',
+                date_joined__date=fecha_actual
+            ).aggregate(total=Sum('total'))['total'] or 0
+            data['plin'] = round(float(total_plin), 2)
+            
+            # Calcular transferencia
+            total_transfer = Sale.objects.filter(
+                employee=user,
+                payment_condition='contado',
+                payment_method='tarjeta_debito_credito',
+                date_joined__date=fecha_actual
+            ).aggregate(total=Sum('total'))['total'] or 0
+            data['transferencia'] = round(float(total_transfer), 2)
+            
+            # Calcular deposito
+            total_deposito = Sale.objects.filter(
+                employee=user,
+                payment_condition='contado',
+                payment_method='efectivo_tarjeta',
+                date_joined__date=fecha_actual
+            ).aggregate(total=Sum('total'))['total'] or 0
+            data['deposito'] = round(float(total_deposito), 2)
+            
+            # Calcular total de pagos de métodos
+            total_pagos = (float(total_efectivo) + 
+                    float(total_yape) + 
+                    float(total_plin) + 
+                    float(total_transfer) + 
+                    float(total_deposito))
+            
+            # Calcular gastos del día
+            total_gastos = Expenses.objects.filter(
+                user=user,
+                date_joined=fecha_actual
+            ).aggregate(total=Sum('valor'))['total'] or 0
+            data['bills'] = round(float(total_gastos), 2)
+            
+            # Calcular el total del box (pagos - gastos)
+            data['box_final'] = round(total_pagos - float(total_gastos), 2)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            data['error'] = str(e)
+        
+        return JsonResponse(data)
+
     def post(self, request, *args, **kwargs):
         data = {}
-        action = request.POST['action']
+        action = request.POST.get('action', '')
         try:
-            if action == 'edit':
+            if action == 'get_initial_values':
+                return self.get_initial_values()
+            elif action == 'edit':
                 box = self.get_object()
                 box.date_close = request.POST['date_close']
                 box.hours_close = request.POST['hours_close']
@@ -150,10 +315,13 @@ class BoxUpdateView(PermissionMixin, UpdateView):
                 box.plin = float(request.POST.get('plin', 0))
                 box.transferencia = float(request.POST.get('transferencia', 0))
                 box.deposito = float(request.POST.get('deposito', 0))
-                box.bills = float(request.POST['bills'])
-                box.initial_box = float(request.POST['initial_box'])
-                box.box_final = float(request.POST['box_final'])
-                box.desc = request.POST['desc']
+                box.bills = float(request.POST.get('bills', 0))
+                box.initial_box = float(request.POST.get('initial_box', 0))
+                
+                # Calcular box_final automáticamente: efectivo + yape + plin + transferencia + deposito + initial_box - bills
+                box.box_final = float(box.efectivo) + float(box.yape) + float(box.plin) + float(box.transferencia) + float(box.deposito) + float(box.initial_box) - float(box.bills)
+                
+                box.desc = request.POST.get('desc', '')
                 box.save()
             elif action == 'validate_data':
                 return self.validate_data()
