@@ -20,7 +20,7 @@ class ExpensesListView(PermissionMixin, FormView):
         try:
             if action == 'search':
                 data = []
-                search = Expenses.objects.filter()
+                search = Expenses.objects.filter(user=request.user)
                 start_date = request.POST['start_date']
                 end_date = request.POST['end_date']
                 if len(start_date) and len(end_date):

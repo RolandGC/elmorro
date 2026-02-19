@@ -47,6 +47,7 @@ function getData(all) {
                 class: 'text-center',
                 render: function (data, type, row) {
                     var buttons = '';
+                    buttons += '<a href="/pos/frm/expenses/print/ticket/' + row.id + '/" target="_blank" class="btn btn-primary btn-xs btn-flat"><i class="fas fa-print"></i></a> ';
                     buttons += '<a href="/pos/frm/expenses/update/' + row.id + '/" class="btn btn-warning btn-xs btn-flat"><i class="fas fa-edit"></i></a> ';
                     buttons += '<a href="/pos/frm/expenses/delete/' + row.id + '/" class="btn btn-danger btn-xs btn-flat"><i class="fas fa-trash"></i></a> ';
                     return buttons;

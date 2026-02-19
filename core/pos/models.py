@@ -683,6 +683,7 @@ class Expenses(models.Model):
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Usuario que registró el gasto')
     desc = models.CharField(max_length=500, null=True, blank=True, verbose_name='Descripción')
     date_joined = models.DateField(default=datetime.now, verbose_name='Fecha de Registro')
+    expense_date = models.DateField(null=True, blank=True, verbose_name='Fecha del Gasto')
     valor = models.DecimalField(max_digits=9, decimal_places=2, default=0.00, verbose_name='Valor')
 
     def __str__(self):
@@ -697,6 +698,7 @@ class Expenses(models.Model):
         item = model_to_dict(self, exclude=['user'])
         item['typeexpense'] = self.typeexpense.toJSON()
         item['date_joined'] = self.date_joined.strftime('%Y-%m-%d')
+        item['expense_date'] = self.expense_date.strftime('%Y-%m-%d') if self.expense_date else None
         item['valor'] = format(self.valor, '.2f')
         item['desc'] = self.get_desc()
         item['user'] = self.user.toJSON() if self.user else None

@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+{% load static %}
+{% load tz %}
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Ticket de Gasto</title>
+    <style>
+        @page {
+            width: 80mm;
+            height: auto;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "Roboto", "Lucida Grande", Verdana, Arial, sans-serif;
+            padding: 0;
+            margin: 0;
+            font-size: 8px;
+            color: black !important;
+            page-break-after: avoid;
+        }
+
+        p {
+            font-size: 10px;
+            margin: 2px 0;
+            padding: 0;
+        }
+
+        .content {
+            width: 80mm;
+            padding: 5px;
+            page-break-inside: avoid;
+        }
+
+        .name-company {
+            margin-top: 5px;
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 0;
+            text-align: center;
+            line-height: 1;
+        }
+
+        .desc-company {
+            font-size: 9px;
+            margin-top: 0;
+            margin-bottom: 2px;
+            line-height: 1.1;
+            text-align: center;
+        }
+
+        .title-ticket {
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            text-align: center;
+            margin: 3px 0;
+            border-bottom: 2px solid black;
+            padding-bottom: 2px;
+        }
+
+        .border-dotted {
+            border-top: 1px dotted black;
+            border-bottom: 1px dotted black;
+            padding: 2px 0;
+        }
+
+        .info-section {
+            font-size: 9px;
+            margin-top: 3px;
+            margin-bottom: 3px;
+            line-height: 1.3;
+        }
+
+        .info-section p {
+            margin: 1px 0;
+            padding: 0;
+        }
+
+        .info-section b {
+            font-weight: bold;
+        }
+
+        .section-label {
+            font-size: 9px;
+            font-weight: bold;
+            margin-top: 3px;
+            margin-bottom: 2px;
+            text-transform: uppercase;
+            border-bottom: 1px solid black;
+        }
+
+        .expense-detail {
+            width: 100%;
+            margin: 2px 0;
+            font-size: 9px;
+            line-height: 1.2;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 2px 0;
+            padding: 1px 0;
+            border-bottom: 1px dotted #ccc;
+        }
+
+        .detail-label {
+            font-weight: bold;
+            width: 60%;
+        }
+
+        .detail-value {
+            text-align: right;
+            width: 40%;
+        }
+
+        .total-section {
+            margin-top: 3px;
+            padding-top: 3px;
+            border-top: 2px solid black;
+            text-align: right;
+            font-weight: bold;
+            font-size: 11px;
+        }
+
+        .img-logo {
+            margin-top: 2px;
+            width: 60px;
+            height: 40px;
+            margin-bottom: 3px;
+        }
+
+        .footer-text {
+            font-size: 8px;
+            text-align: center;
+            margin-top: 3px;
+            padding-top: 3px;
+            border-top: 1px dotted black;
+            line-height: 1.2;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        table {
+            width: 100%;
+            font-size: 9px;
+            border-collapse: collapse;
+        }
+
+        table td {
+            padding: 1px 2px;
+            line-height: 1.1;
+        }
+
+        .stamp {
+            text-align: center;
+            margin-top: 5px;
+            font-weight: bold;
+            font-size: 12px;
+            color: #666;
+            border: 2px dashed #999;
+            padding: 3px;
+            display: inline-block;
+            width: 100%;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+<div class="content">
+    <!-- Logo y Datos de la Empresa -->
+    {% if company.get_image %}
+        <div class="text-center">
+            <img src="{{ company.get_image }}" class="img-logo" style="display: block; margin: 0 auto;">
+        </div>
+    {% endif %}
+    <h1 class="name-company">{{ company.name }}</h1>
+    <p class="desc-company">
+        {{ company.address }}<br>
+        Teléfono: {{ company.phone }}<br>
+        Celular: {{ company.mobile }}<br>
+    </p>
+
+    <!-- Título del Ticket -->
+    <div class="title-ticket">✓ COMPROBANTE DE GASTO</div>
+
+    <!-- Información del Gasto -->
+    <div class="info-section border-dotted">
+        <p><b>Nro. Comprobante:</b> {{ expense.id }}</p>
+        <p><b>Tipo de Gasto:</b> {{ expense.typeexpense.name }}</p>
+        <p><b>Registro por:</b> {{ expense.user.full_name }}</p>
+        <p><b>Fecha:</b> {% if expense.date_joined %}{{ expense.date_joined|date:"d/m/Y" }}{% else %}-{% endif %}</p>
+    </div>
+
+    <!-- Detalles del Gasto -->
+    <div class="section-label">Detalles del Gasto</div>
+    <div class="expense-detail">
+        <p><b>Descripción:</b></p>
+        <p style="margin-left: 5px; font-size: 8px; line-height: 1.3;">{{ expense.desc }}</p>
+    </div>
+
+    <!-- Valor del Gasto -->
+    <div class="total-section">
+        <div class="detail-row" style="border: none; margin-top: 5px;">
+            <div class="detail-label">TOTAL DEL GASTO:</div>
+            <div class="detail-value">S/ {{ expense.valor|floatformat:2 }}</div>
+        </div>
+    </div>
+
+    <!-- Firma -->
+    <div style="margin-top: 8px; text-align: center;">
+        <p style="margin: 15px 0 2px 0; border-top: 1px solid black; padding-top: 5px; font-size: 8px;">
+            ________________________<br>
+            Firma autorizante
+        </p>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer-text">
+        <p style="margin: 2px 0;">¡Gracias por su gestión!</p>
+        <p style="margin: 2px 0; font-size: 7px;">Documento generado automáticamente</p>
+        <p style="margin: 2px 0; font-size: 7px;">{{ expense.date_joined|localtime|date:"d/m/Y H:i:s" }}</p>
+    </div>
+
+    <div class="stamp">
+        GASTO REGISTRADO
+    </div>
+</div>
+</body>
+</html>
