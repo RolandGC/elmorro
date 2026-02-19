@@ -31,9 +31,11 @@ function getData(all) {
             {data: "id"},
             {data: "hours_close"},
             {data: "date_close"},
-            {data: "cash_sale"},
-            // {data: "cash_credit"},
-            {data: "sale_card"},
+            {data: "efectivo"},
+            {data: "yape"},
+            {data: "plin"},
+            {data: "transferencia"},
+            {data: "deposito"},
             {data: "initial_box"},
             {data: "box_final"},
             {data: "desc"},
@@ -64,25 +66,46 @@ function getData(all) {
                 targets: [3],
                 class: 'text-center',
                 render: function (data, type, row) {
-                    return data
+                    return 'S/.' + data
                 }
             },
             {
                 targets: [4],
                 class: 'text-center',
                 render: function (data, type, row) {
-                    return data
+                    return 'S/.' + data
                 }
             },
             {
                 targets: [5],
                 class: 'text-center',
                 render: function (data, type, row) {
-                    return data
+                    return 'S/.' + data
                 }
             },
             {
                 targets: [6],
+                class: 'text-center',
+                render: function (data, type, row) {
+                    return 'S/.' + data
+                }
+            },
+            {
+                targets: [7],
+                class: 'text-center',
+                render: function (data, type, row) {
+                    return 'S/.' + data
+                }
+            },
+            {
+                targets: [8],
+                class: 'text-center',
+                render: function (data, type, row) {
+                    return 'S/.' + data
+                }
+            },
+            {
+                targets: [9],
                 class: 'text-center',
                 render: function (data, type, row) {
                     return 'S/.' + data
