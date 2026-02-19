@@ -1,6 +1,7 @@
 from django.forms import ModelForm
 from django import forms
 from django.contrib.auth.models import Group
+from django.db.models import Sum
 from datetime import datetime, date
 
 from .models import *
@@ -258,21 +259,76 @@ class PaymentsDebtsPayForm(ModelForm):
         }
 
 class BoxForm(ModelForm):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
         
-        # Redondear valores a 2 decimales
-        self.initial['cash_sale'] = round(Box.total_efectivo() + Box.total_payments_ctas_collect_efectivo(), 2)
-        self.initial['sale_card'] = round(Box.total_tarjeta_yape_plin() + Box.total_payments_ctas_collect_credito(), 2)
-        self.initial['box_final'] = round(
-            Box.total_efectivo() + 
-            Box.total_payments_ctas_collect_efectivo() + 
-            Box.total_tarjeta_yape_plin() + 
-            Box.total_payments_ctas_collect_credito(), 2
-        )
+        # Si se proporciona el usuario, calcular los valores iniciales
+        if user:
+            try:
+                from datetime import date
+                
+                fecha_actual = date.today()
+                
+                # Calcular efectivo
+                total_efectivo = Sale.objects.filter(
+                    employee=user,
+                    payment_condition='contado',
+                    payment_method='efectivo',
+                    date_joined__date=fecha_actual
+                ).aggregate(total=Sum('total'))['total'] or 0
+                self.initial['efectivo'] = round(float(total_efectivo), 2)
+                
+                # Calcular yape
+                total_yape = Sale.objects.filter(
+                    employee=user,
+                    payment_condition='contado',
+                    payment_method='yape',
+                    date_joined__date=fecha_actual
+                ).aggregate(total=Sum('total'))['total'] or 0
+                self.initial['yape'] = round(float(total_yape), 2)
+                
+                # Calcular plin
+                total_plin = Sale.objects.filter(
+                    employee=user,
+                    payment_condition='contado',
+                    payment_method='plin',
+                    date_joined__date=fecha_actual
+                ).aggregate(total=Sum('total'))['total'] or 0
+                self.initial['plin'] = round(float(total_plin), 2)
+                
+                # Calcular transferencia
+                total_transfer = Sale.objects.filter(
+                    employee=user,
+                    payment_condition='contado',
+                    payment_method='tarjeta_debito_credito',
+                    date_joined__date=fecha_actual
+                ).aggregate(total=Sum('total'))['total'] or 0
+                self.initial['transferencia'] = round(float(total_transfer), 2)
+                
+                # Calcular deposito
+                total_deposito = Sale.objects.filter(
+                    employee=user,
+                    payment_condition='contado',
+                    payment_method='efectivo_tarjeta',
+                    date_joined__date=fecha_actual
+                ).aggregate(total=Sum('total'))['total'] or 0
+                self.initial['deposito'] = round(float(total_deposito), 2)
+                
+                # Calcular el total del box
+                total = (float(total_efectivo) + 
+                        float(total_yape) + 
+                        float(total_plin) + 
+                        float(total_transfer) + 
+                        float(total_deposito))
+                self.initial['box_final'] = round(total, 2)
+            except Exception as e:
+                # Si hay error en el cálculo, dejar los valores por defecto (0)
+                import traceback
+                traceback.print_exc()
+    
     class Meta:
         model = Box
-        fields = '__all__'
+        fields = ['date_close', 'hours_close', 'efectivo', 'yape', 'plin', 'transferencia', 'deposito', 'initial_box', 'bills', 'box_final', 'desc']
         widgets = {
             'date_close': forms.DateInput(format='%Y-%m-%d', attrs={
                 'class': 'form-control datetimepicker-input',
@@ -285,41 +341,64 @@ class BoxForm(ModelForm):
                 'type': 'time',
                 'value': datetime.now().strftime('%H:%M')
             }),
-            'cash_sale': forms.TextInput(
+            'efectivo': forms.TextInput(
                 attrs = {
                     'type': 'number',
+                    'step': '0.01',
+                    'readonly': 'readonly'
                 }
             ),
-            # 'cash_credit': forms.TextInput(
-            #     attrs = {
-            #         'type': 'number',
-            #     }
-            # ),
-            'sale_card': forms.TextInput(
+            'yape': forms.TextInput(
                 attrs = {
                     'type': 'number',
+                    'step': '0.01',
+                    'readonly': 'readonly'
+                }
+            ),
+            'plin': forms.TextInput(
+                attrs = {
+                    'type': 'number',
+                    'step': '0.01',
+                    'readonly': 'readonly'
+                }
+            ),
+            'transferencia': forms.TextInput(
+                attrs = {
+                    'type': 'number',
+                    'step': '0.01',
+                    'readonly': 'readonly'
+                }
+            ),
+            'deposito': forms.TextInput(
+                attrs = {
+                    'type': 'number',
+                    'step': '0.01',
+                    'readonly': 'readonly'
                 }
             ),
             'initial_box': forms.TextInput(
                attrs = {
                    'type': 'number',
+                   'step': '0.01',
                     'value': '0'
                 }
             ),
             'bills': forms.TextInput(
                attrs = {
                    'type': 'number',
+                   'step': '0.01',
                     'value': '0'
                 }
             ),
             'box_final': forms.TextInput(
                 attrs = {
                     'type': 'number',
+                    'step': '0.01',
+                    'readonly': 'readonly'
                 }
             ),
             'desc': forms.TextInput(attrs={'placeholder': 'Ingrese descripción'})
         }
-        exclude=['date_joined']
     def save(self, commit=True):
         data = {}
         try:

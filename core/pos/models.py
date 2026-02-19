@@ -17,6 +17,11 @@ from config import settings
 from core.pos.choices import payment_condition, payment_method, voucher, unit
 from core.user.models import User
 
+from datetime import datetime
+
+def current_time():
+    return datetime.now().time()
+
 class Series(models.Model):
     name = models.CharField(max_length=50, unique=True, verbose_name='Nombre')
 
@@ -785,12 +790,15 @@ class Devolution(models.Model):
 
 
 class Box(models.Model):
+    user = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name='Usuario', related_name='boxes', null=True, blank=True)
     date_joined = models.DateField(default=timezone.now) 
     date_close = models.DateField(verbose_name='Fecha de Cierre')
-    hours_close = models.TimeField(verbose_name='Hora de Cierre', null=True, blank=True)
-    cash_sale = models.IntegerField(verbose_name='Cobranzas en efectivo')
-    # cash_credit = models.IntegerField(verbose_name='Ventas en credito')
-    sale_card = models.IntegerField(verbose_name='cobranzas con tarjeta, yape o plin')
+    hours_close = models.TimeField(default=current_time, verbose_name='Hora de Cierre')
+    efectivo = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name='Efectivo')
+    yape = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name='Yape')
+    plin = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name='Plin')
+    transferencia = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name='Transferencia')
+    deposito = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name='Depósito')
     initial_box = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Caja inicial')
     bills = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Gastos del Día', null=True, blank=True)
     box_final = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Caja final total')
@@ -799,86 +807,87 @@ class Box(models.Model):
     def __str__(self):
         return self.date_close.strftime('%Y-%m-%d')
 
-    def total_cash(self):
-        try:
-            total_day_cash = Sale.objects.filter(date_joined=models.functions.Now().date()).aggregate(Sum('total'))[
-                'total__sum']
-            self.cash_sale = total_day_cash
-            self.cash_sale.save()
-        except:
-            pass
-    
-    
-    def total_efectivo():
+    def get_efectivo(self):
         fecha_actual = date.today()
         total_efectivo = Sale.objects.filter(
+            employee=self.user,
             payment_condition='contado',
             payment_method='efectivo',
-            date_joined=fecha_actual
-        ).aggregate(
-            total_efectivo=Sum('total')
-        )['total_efectivo']
-        
-        return total_efectivo or 0
-
-    def total_tarjeta_yape_plin():
-        fecha_actual = date.today() 
-        tarjeta_total = Sale.objects.filter(
-            payment_condition='contado',
-            payment_method='efectivo_tarjeta',
-            date_joined=fecha_actual
+            date_joined__date=fecha_actual
         ).aggregate(total=Sum('total'))['total'] or 0
-        yape_total = Sale.objects.filter(
+        
+        payments = PaymentsCtaCollect.objects.filter(date_joined__date=fecha_actual)
+        total_payments = sum(p.valor for p in payments if p.ctascollect.sale.employee == self.user and p.ctascollect.sale.payment_method == 'efectivo')
+        
+        return float(total_efectivo) + float(total_payments)
+
+    def get_yape(self):
+        fecha_actual = date.today()
+        total_yape = Sale.objects.filter(
+            employee=self.user,
             payment_condition='contado',
             payment_method='yape',
-            date_joined=fecha_actual
+            date_joined__date=fecha_actual
         ).aggregate(total=Sum('total'))['total'] or 0
-        plin_total = Sale.objects.filter(
+        
+        payments = PaymentsCtaCollect.objects.filter(date_joined__date=fecha_actual)
+        total_payments = sum(p.valor for p in payments if p.ctascollect.sale.employee == self.user and p.ctascollect.sale.payment_method == 'yape')
+        
+        return float(total_yape) + float(total_payments)
+
+    def get_plin(self):
+        fecha_actual = date.today()
+        total_plin = Sale.objects.filter(
+            employee=self.user,
             payment_condition='contado',
             payment_method='plin',
-            date_joined=fecha_actual
+            date_joined__date=fecha_actual
         ).aggregate(total=Sum('total'))['total'] or 0
-        targeta_debito_credito = Sale.objects.filter(
+        
+        payments = PaymentsCtaCollect.objects.filter(date_joined__date=fecha_actual)
+        total_payments = sum(p.valor for p in payments if p.ctascollect.sale.employee == self.user and p.ctascollect.sale.payment_method == 'plin')
+        
+        return float(total_plin) + float(total_payments)
+
+    def get_transferencia(self):
+        fecha_actual = date.today()
+        total_transfer = Sale.objects.filter(
+            employee=self.user,
             payment_condition='contado',
             payment_method='tarjeta_debito_credito',
-            date_joined=fecha_actual
+            date_joined__date=fecha_actual
         ).aggregate(total=Sum('total'))['total'] or 0
-        return tarjeta_total + yape_total + plin_total + targeta_debito_credito
+        
+        payments = PaymentsCtaCollect.objects.filter(date_joined__date=fecha_actual)
+        total_payments = sum(p.valor for p in payments if p.ctascollect.sale.employee == self.user and p.ctascollect.sale.payment_method == 'tarjeta_debito_credito')
+        
+        return float(total_transfer) + float(total_payments)
 
-    
-    def total_payments_ctas_collect_efectivo():
+    def get_deposito(self):
         fecha_actual = date.today()
-        payments = PaymentsCtaCollect.objects.filter(date_joined=fecha_actual)
+        total_deposito = Sale.objects.filter(
+            employee=self.user,
+            payment_condition='contado',
+            payment_method='efectivo_tarjeta',
+            date_joined__date=fecha_actual
+        ).aggregate(total=Sum('total'))['total'] or 0
         
-        total_payments = 0
-        for payment in payments:
-            sale = payment.ctascollect.sale
-            if sale.payment_method == 'efectivo':
-                # Sumar el valor del pago al total de pagos en efectivo
-                total_payments += payment.valor
-        return total_payments
-    
-    def total_payments_ctas_collect_credito():
-        fecha_actual = date.today()
-        payments = PaymentsCtaCollect.objects.filter(date_joined=fecha_actual)
+        payments = PaymentsCtaCollect.objects.filter(date_joined__date=fecha_actual)
+        total_payments = sum(p.valor for p in payments if p.ctascollect.sale.employee == self.user and p.ctascollect.sale.payment_method == 'efectivo_tarjeta')
         
-        total_payments = 0
-        for payment in payments:
-            sale = payment.ctascollect.sale
-            if sale.payment_method != 'efectivo':
-                # Sumar el valor del pago al total de pagos en efectivo
-                total_payments += payment.valor
-        return total_payments
+        return float(total_deposito) + float(total_payments)
 
     
     def toJSON(self):
         item = model_to_dict(self)
         item['date_joined'] = self.date_joined.strftime('%Y-%m-%d')
         item['date_close'] = self.date_close.strftime('%Y-%m-%d')
-        item['hours_close'] = self.hours_close.strftime('%H-%M')
-        item['cash_sale'] = self.cash_sale
-        # item['cash_credit'] = self.cash_credit
-        item['sale_card'] = self.sale_card
+        item['hours_close'] = self.hours_close.strftime('%H:%M')
+        item['efectivo'] = format(self.efectivo, '.2f')
+        item['yape'] = format(self.yape, '.2f')
+        item['plin'] = format(self.plin, '.2f')
+        item['transferencia'] = format(self.transferencia, '.2f')
+        item['deposito'] = format(self.deposito, '.2f')
         item['initial_box'] = format(self.initial_box, '.2f')
         item['box_final'] = format(self.box_final, '.2f')
         return item

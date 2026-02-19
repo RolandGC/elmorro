@@ -22,15 +22,21 @@ class BoxListView(PermissionMixin, FormView):
         try:
             if action == 'search':
                 data = []
-                search = Box.objects.filter()
+                search = Box.objects.filter(user=request.user)
                 start_date = request.POST['start_date']
                 end_date = request.POST['end_date']
                 if len(start_date) and len(end_date):
-                    search = search.filter(date_joined__range=[start_date, end_date])
+                    from datetime import datetime, timedelta
+                    try:
+                        end_date_obj = datetime.strptime(end_date, '%Y-%m-%d')
+                        end_date_obj = end_date_obj + timedelta(days=1)
+                        search = search.filter(date_joined__range=[start_date, end_date_obj.date()])
+                    except:
+                        search = search.filter(date_joined__range=[start_date, end_date])
                 for a in search:
                     data.append(a.toJSON())
             else:
-                data['error'] = 'No ha ingresado unqa opción'  # Ahora data es un diccionario válido
+                data['error'] = 'No ha ingresado una opción'  # Ahora data es un diccionario válido
         except Exception as e:
             data = {'error': str(e)}  # Asigna el error como un valor del diccionario
         print(data)
@@ -62,17 +68,26 @@ class BoxCreateView(PermissionMixin, CreateView):
             pass
         return JsonResponse(data)
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
     def post(self, request, *args, **kwargs):
         data = {}
         action = request.POST['action']
         try:
             if action == 'add':
                 box = Box()
+                box.user = request.user
                 box.date_close = request.POST['date_close']
                 box.hours_close = request.POST['hours_close']
-                box.cash_sale = float(request.POST['cash_sale'])
+                box.efectivo = float(request.POST.get('efectivo', 0))
+                box.yape = float(request.POST.get('yape', 0))
+                box.plin = float(request.POST.get('plin', 0))
+                box.transferencia = float(request.POST.get('transferencia', 0))
+                box.deposito = float(request.POST.get('deposito', 0))
                 box.bills = float(request.POST['bills'])
-                box.sale_card = float(request.POST['sale_card'])
                 box.initial_box = float(request.POST['initial_box'])
                 box.box_final = float(request.POST['box_final'])
                 box.desc = request.POST['desc']
@@ -117,12 +132,29 @@ class BoxUpdateView(PermissionMixin, UpdateView):
             pass
         return JsonResponse(data)
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
     def post(self, request, *args, **kwargs):
         data = {}
         action = request.POST['action']
         try:
             if action == 'edit':
-                data = self.get_form().save()
+                box = self.get_object()
+                box.date_close = request.POST['date_close']
+                box.hours_close = request.POST['hours_close']
+                box.efectivo = float(request.POST.get('efectivo', 0))
+                box.yape = float(request.POST.get('yape', 0))
+                box.plin = float(request.POST.get('plin', 0))
+                box.transferencia = float(request.POST.get('transferencia', 0))
+                box.deposito = float(request.POST.get('deposito', 0))
+                box.bills = float(request.POST['bills'])
+                box.initial_box = float(request.POST['initial_box'])
+                box.box_final = float(request.POST['box_final'])
+                box.desc = request.POST['desc']
+                box.save()
             elif action == 'validate_data':
                 return self.validate_data()
             else:
