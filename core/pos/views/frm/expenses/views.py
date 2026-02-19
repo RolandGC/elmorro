@@ -52,10 +52,23 @@ class ExpensesCreateView(PermissionMixin, CreateView):
         action = request.POST['action']
         try:
             if action == 'add':
-                data = self.get_form().save()
+                form = self.get_form()
+                if form.is_valid():
+                    expense = form.save(commit=False)
+                    expense.user = request.user
+                    expense.save()
+                    data = expense.toJSON()
+                else:
+                    error_messages = []
+                    for field, errors in form.errors.items():
+                        for error in errors:
+                            error_messages.append(f"{field}: {error}")
+                    data['error'] = ' | '.join(error_messages) if error_messages else 'Errores en el formulario'
             else:
                 data['error'] = 'No ha seleccionado ninguna opción'
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             data['error'] = str(e)
         return HttpResponse(json.dumps(data), content_type='application/json')
 
@@ -83,10 +96,25 @@ class ExpensesUpdateView(PermissionMixin, UpdateView):
         action = request.POST['action']
         try:
             if action == 'edit':
-                data = self.get_form().save()
+                form = self.get_form()
+                if form.is_valid():
+                    expense = form.save(commit=False)
+                    # Mantener el usuario original si no fue establecido, o asignar el actual
+                    if not expense.user:
+                        expense.user = request.user
+                    expense.save()
+                    data = expense.toJSON()
+                else:
+                    error_messages = []
+                    for field, errors in form.errors.items():
+                        for error in errors:
+                            error_messages.append(f"{field}: {error}")
+                    data['error'] = ' | '.join(error_messages) if error_messages else 'Errores en el formulario'
             else:
                 data['error'] = 'No ha seleccionado ninguna opción'
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             data['error'] = str(e)
         return HttpResponse(json.dumps(data), content_type='application/json')
 

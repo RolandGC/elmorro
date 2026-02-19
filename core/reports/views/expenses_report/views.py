@@ -20,7 +20,7 @@ class ExpensesReportView(ModuleMixin, django.views.generic.FormView):
                 data = []
                 start_date = request.POST['start_date']
                 end_date = request.POST['end_date']
-                search = Expenses.objects.filter()
+                search = Expenses.objects.filter(user=request.user)
                 if len(start_date) and len(end_date):
                     search = search.filter(date_joined__range=[start_date, end_date])
                 for i in search:
@@ -33,5 +33,6 @@ class ExpensesReportView(ModuleMixin, django.views.generic.FormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['title'] = 'Reporte de Gastos'
+        user_name = self.request.user.get_full_name() or self.request.user.username
+        context['title'] = f'Reporte de Gastos de {user_name}'
         return context
