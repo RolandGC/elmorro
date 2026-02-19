@@ -783,10 +783,10 @@ class Devolution(models.Model):
 class Box(models.Model):
     date_joined = models.DateField(default=timezone.now) 
     date_close = models.DateField(verbose_name='Fecha de Cierre')
-    hours_close = models.TimeField(default='00:00:00', verbose_name='Hora de Cierre')
-    cash_sale = models.IntegerField(verbose_name='Ventas en efectivo')
+    hours_close = models.TimeField(default=lambda: datetime.now().time(), verbose_name='Hora de Cierre')
+    cash_sale = models.IntegerField(verbose_name='Cobranzas en efectivo')
     # cash_credit = models.IntegerField(verbose_name='Ventas en credito')
-    sale_card = models.IntegerField(verbose_name='Ventas con tarjeta, yape o plin')
+    sale_card = models.IntegerField(verbose_name='cobranzas con tarjeta, yape o plin')
     initial_box = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Caja inicial')
     bills = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Gastos del Día', null=True, blank=True)
     box_final = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Caja final total')
