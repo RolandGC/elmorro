@@ -28,608 +28,508 @@ print('Company: {} {}'.format(company.name, '(creada)' if created else '(actuali
 
 # ===================== MODULE TYPES =====================
 
-type_security, created = ModuleType.objects.update_or_create(
-    name='Seguridad',
-    defaults={'icon': 'fa fa-key'}
-)
+type_security, created = ModuleType.objects.get_or_create(name='Seguridad')
 print('{} {}'.format(type_security.name, '(creado)' if created else '(actualizado)'))
 
-type_bodega, created = ModuleType.objects.update_or_create(
-    name='Almacén',
-    defaults={'icon': 'fa fa-box-open'}
-)
+type_bodega, created = ModuleType.objects.get_or_create(name='Almacén')
 print('{} {}'.format(type_bodega.name, '(creado)' if created else '(actualizado)'))
 
-type_administrativo, created = ModuleType.objects.update_or_create(
-    name='Administrativo',
-    defaults={'icon': 'fa fa-briefcase'}
-)
+type_administrativo, created = ModuleType.objects.get_or_create(name='Administrativo')
 print('{} {}'.format(type_administrativo.name, '(creado)' if created else '(actualizado)'))
 
-type_facturacion, created = ModuleType.objects.update_or_create(
-    name='Facturación',
-    defaults={'icon': 'fa fa-receipt'}
-)
+type_facturacion, created = ModuleType.objects.get_or_create(name='Facturación')
 print('{} {}'.format(type_facturacion.name, '(creado)' if created else '(actualizado)'))
 
-type_reportes, created = ModuleType.objects.update_or_create(
-    name='Reportes',
-    defaults={'icon': 'fa fa-list-alt'}
-)
+type_reportes, created = ModuleType.objects.get_or_create(name='Reportes')
 print('{} {}'.format(type_reportes.name, '(creado)' if created else '(actualizado)'))
 
 # ===================== SEGURIDAD MODULES =====================
 
-module, created = Module.objects.update_or_create(
-    moduletype_id=type_security.id,
-    url='/security/module/type/',
-    defaults={
-        'name': 'Tipos de Módulos',
-        'is_active': True,
-        'is_vertical': True,
-        'is_visible': True,
-        'icon': 'fas fa-door-open',
-        'description': 'Permite administrar los tipos de módulos del sistema'
-    }
-)
+module, created = Module.objects.get_or_create(url='/security/module/type/')
+module.moduletype_id = type_security.id
+module.name = 'Tipos de Módulos'
+module.is_active = True
+module.is_vertical = True
+module.is_visible = True
+module.icon = 'fas fa-door-open'
+module.description = 'Permite administrar los tipos de módulos del sistema'
+module.save()
 for p in Permission.objects.filter(content_type__model=ModuleType._meta.label.split('.')[1].lower()):
     module.permits.add(p)
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.update_or_create(
-    moduletype_id=type_security.id,
-    url='/security/module/',
-    defaults={
-        'name': 'Módulos',
-        'is_active': True,
-        'is_vertical': True,
-        'is_visible': True,
-        'icon': 'fas fa-th-large',
-        'description': 'Permite administrar los módulos del sistema'
-    }
-)
+module, created = Module.objects.get_or_create(url='/security/module/')
+module.moduletype_id = type_security.id
+module.name = 'Módulos'
+module.is_active = True
+module.is_vertical = True
+module.is_visible = True
+module.icon = 'fas fa-th-large'
+module.description = 'Permite administrar los módulos del sistema'
+module.save()
 for p in Permission.objects.filter(content_type__model=Module._meta.label.split('.')[1].lower()):
     module.permits.add(p)
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.update_or_create(
-    moduletype_id=type_security.id,
-    url='/security/group/',
-    defaults={
-        'name': 'Grupos',
-        'is_active': True,
-        'is_vertical': True,
-        'is_visible': True,
-        'icon': 'fas fa-users',
-        'description': 'Permite administrar los grupos de usuarios del sistema'
-    }
-)
+module, created = Module.objects.get_or_create(url='/security/group/')
+module.moduletype_id = type_security.id
+module.name = 'Grupos'
+module.is_active = True
+module.is_vertical = True
+module.is_visible = True
+module.icon = 'fas fa-users'
+module.description = 'Permite administrar los grupos de usuarios del sistema'
+module.save()
 for p in Permission.objects.filter(content_type__model=Group._meta.label.split('.')[1].lower()):
     module.permits.add(p)
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.update_or_create(
-    moduletype_id=type_security.id,
-    url='/security/database/backups/',
-    defaults={
-        'name': 'Respaldos',
-        'is_active': True,
-        'is_vertical': True,
-        'is_visible': True,
-        'icon': 'fas fa-database',
-        'description': 'Permite administrar los respaldos de base de datos'
-    }
-)
+module, created = Module.objects.get_or_create(url='/security/database/backups/')
+module.moduletype_id = type_security.id
+module.name = 'Respaldos'
+module.is_active = True
+module.is_vertical = True
+module.is_visible = True
+module.icon = 'fas fa-database'
+module.description = 'Permite administrar los respaldos de base de datos'
+module.save()
 for p in Permission.objects.filter(content_type__model=DatabaseBackups._meta.label.split('.')[1].lower()):
     module.permits.add(p)
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.update_or_create(
-    moduletype_id=type_security.id,
-    url='/security/dashboard/update/',
-    defaults={
-        'name': 'Conf. Dashboard',
-        'is_active': True,
-        'is_vertical': True,
-        'is_visible': True,
-        'icon': 'fas fa-tools',
-        'description': 'Permite configurar los datos de la plantilla'
-    }
-)
+module, created = Module.objects.get_or_create(url='/security/dashboard/update/')
+module.moduletype_id = type_security.id
+module.name = 'Conf. Dashboard'
+module.is_active = True
+module.is_vertical = True
+module.is_visible = True
+module.icon = 'fas fa-tools'
+module.description = 'Permite configurar los datos de la plantilla'
+module.save()
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.update_or_create(
-    moduletype_id=type_security.id,
-    url='/security/access/users/',
-    defaults={
-        'name': 'Accesos',
-        'is_active': True,
-        'is_vertical': True,
-        'is_visible': True,
-        'icon': 'fas fa-user-secret',
-        'description': 'Permite administrar los accesos de los usuarios'
-    }
-)
+module, created = Module.objects.get_or_create(url='/security/access/users/')
+module.moduletype_id = type_security.id
+module.name = 'Accesos'
+module.is_active = True
+module.is_vertical = True
+module.is_visible = True
+module.icon = 'fas fa-user-secret'
+module.description = 'Permite administrar los accesos de los usuarios'
+module.save()
 for p in Permission.objects.filter(content_type__model=AccessUsers._meta.label.split('.')[1].lower()):
     module.permits.add(p)
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.update_or_create(
-    moduletype_id=type_security.id,
-    url='/user/',
-    defaults={
-        'name': 'Usuarios',
-        'is_active': True,
-        'is_vertical': True,
-        'is_visible': True,
-        'icon': 'fas fa-user',
-        'description': 'Permite administrar a los administradores del sistema'
-    }
-)
+module, created = Module.objects.get_or_create(url='/user/')
+module.moduletype_id = type_security.id
+module.name = 'Usuarios'
+module.is_active = True
+module.is_vertical = True
+module.is_visible = True
+module.icon = 'fas fa-user'
+module.description = 'Permite administrar a los administradores del sistema'
+module.save()
 for p in Permission.objects.filter(content_type__model=User._meta.label.split('.')[1].lower()):
     module.permits.add(p)
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
 # ===================== BODEGA MODULES =====================
 
-module, created = Module.objects.update_or_create(
-    moduletype_id=type_bodega.id,
-    url='/pos/scm/provider/',
-    defaults={
-        'name': 'Proveedores',
-        'is_active': True,
-        'is_vertical': True,
-        'is_visible': True,
-        'icon': 'fas fa-truck',
-        'description': 'Permite administrar a los proveedores de las compras'
-    }
-)
+module, created = Module.objects.get_or_create(url='/pos/scm/provider/')
+module.moduletype_id = type_bodega.id
+module.name = 'Proveedores'
+module.is_active = True
+module.is_vertical = True
+module.is_visible = True
+module.icon = 'fas fa-truck'
+module.description = 'Permite administrar a los proveedores de las compras'
+module.save()
 for p in Permission.objects.filter(content_type__model=Provider._meta.label.split('.')[1].lower()):
     module.permits.add(p)
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.update_or_create(
-    moduletype_id=type_bodega.id,
-    url='/pos/scm/category/',
-    defaults={
-        'name': 'Categorías',
-        'is_active': True,
-        'is_vertical': True,
-        'is_visible': True,
-        'icon': 'fas fa-truck-loading',
-        'description': 'Permite administrar las categorías de los productos'
-    }
-)
+module, created = Module.objects.get_or_create(url='/pos/scm/category/')
+module.moduletype_id = type_bodega.id
+module.name = 'Categorías'
+module.is_active = True
+module.is_vertical = True
+module.is_visible = True
+module.icon = 'fas fa-truck-loading'
+module.description = 'Permite administrar las categorías de los productos'
+module.save()
 for p in Permission.objects.filter(content_type__model=Category._meta.label.split('.')[1].lower()):
     module.permits.add(p)
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.update_or_create(
-    moduletype_id=type_bodega.id,
-    url='/pos/scm/product/',
-    defaults={
-        'name': 'Productos',
-        'is_active': True,
-        'is_vertical': True,
-        'is_visible': True,
-        'icon': 'fas fa-box',
-        'description': 'Permite administrar los productos del sistema'
-    }
-)
+module, created = Module.objects.get_or_create(url='/pos/scm/product/')
+module.moduletype_id = type_bodega.id
+module.name = 'Productos'
+module.is_active = True
+module.is_vertical = True
+module.is_visible = True
+module.icon = 'fas fa-box'
+module.description = 'Permite administrar los productos del sistema'
+module.save()
 for p in Permission.objects.filter(content_type__model=Product._meta.label.split('.')[1].lower()):
     module.permits.add(p)
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.update_or_create(
-    moduletype_id=type_bodega.id,
-    url='/pos/scm/purchase/',
-    defaults={
-        'name': 'Compras',
-        'is_active': True,
-        'is_vertical': True,
-        'is_visible': True,
-        'icon': 'fas fa-dolly-flatbed',
-        'description': 'Permite administrar las compras de los productos'
-    }
-)
+module, created = Module.objects.get_or_create(url='/pos/scm/purchase/')
+module.moduletype_id = type_bodega.id
+module.name = 'Compras'
+module.is_active = True
+module.is_vertical = True
+module.is_visible = True
+module.icon = 'fas fa-dolly-flatbed'
+module.description = 'Permite administrar las compras de los productos'
+module.save()
 for p in Permission.objects.filter(content_type__model=Purchase._meta.label.split('.')[1].lower()):
     module.permits.add(p)
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.update_or_create(
-    moduletype_id=type_bodega.id,
-    url='/pos/scm/product/stock/adjustment/',
-    defaults={
-        'name': 'Ajuste de Stock',
-        'is_active': True,
-        'is_vertical': True,
-        'is_visible': True,
-        'icon': 'fas fa-sliders-h',
-        'description': 'Permite administrar los ajustes de stock de productos'
-    }
-)
+module, created = Module.objects.get_or_create(url='/pos/scm/product/stock/adjustment/')
+module.moduletype_id = type_bodega.id
+module.name = 'Ajuste de Stock'
+module.is_active = True
+module.is_vertical = True
+module.is_visible = True
+module.icon = 'fas fa-sliders-h'
+module.description = 'Permite administrar los ajustes de stock de productos'
+module.save()
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.update_or_create(
-    moduletype_id=type_bodega.id,
-    url='/pos/scm/product/generadorqr/',
-    defaults={
-        'name': 'Código barra',
-        'is_active': True,
-        'is_vertical': True,
-        'is_visible': True,
-        'icon': 'fas fa-barcode',
-        'description': 'Permite administrar la impresión de códigos de barra'
-    }
-)
+module, created = Module.objects.get_or_create(url='/pos/scm/product/generadorqr/')
+module.moduletype_id = type_bodega.id
+module.name = 'Código barra'
+module.is_active = True
+module.is_vertical = True
+module.is_visible = True
+module.icon = 'fas fa-barcode'
+module.description = 'Permite administrar la impresión de códigos de barra'
+module.save()
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
 # ===================== ADMINISTRATIVO MODULES =====================
 
-module, created = Module.objects.update_or_create(
-    moduletype_id=type_administrativo.id,
-    url='/pos/frm/type/expense/',
-    defaults={
-        'name': 'Tipos de Gastos',
-        'is_active': True,
-        'is_vertical': True,
-        'is_visible': True,
-        'icon': 'fas fa-comments-dollar',
-        'description': 'Permite administrar los tipos de gastos'
-    }
-)
+module, created = Module.objects.get_or_create(url='/pos/frm/type/expense/')
+module.moduletype_id = type_administrativo.id
+module.name = 'Tipos de Gastos'
+module.is_active = True
+module.is_vertical = True
+module.is_visible = True
+module.icon = 'fas fa-comments-dollar'
+module.description = 'Permite administrar los tipos de gastos'
+module.save()
 for p in Permission.objects.filter(content_type__model=TypeExpense._meta.label.split('.')[1].lower()):
     module.permits.add(p)
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.update_or_create(
-    moduletype_id=type_administrativo.id,
-    url='/pos/frm/expenses/',
-    defaults={
-        'name': 'Gastos',
-        'is_active': True,
-        'is_vertical': True,
-        'is_visible': True,
-        'icon': 'fas fa-file-invoice-dollar',
-        'description': 'Permite administrar los gastos de la compañia'
-    }
-)
+module, created = Module.objects.get_or_create(url='/pos/frm/expenses/')
+module.moduletype_id = type_administrativo.id
+module.name = 'Gastos'
+module.is_active = True
+module.is_vertical = True
+module.is_visible = True
+module.icon = 'fas fa-file-invoice-dollar'
+module.description = 'Permite administrar los gastos de la compañia'
+module.save()
 for p in Permission.objects.filter(content_type__model=Expenses._meta.label.split('.')[1].lower()):
     module.permits.add(p)
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.update_or_create(
-    moduletype_id=type_administrativo.id,
-    url='/pos/frm/ctas/collect/',
-    defaults={
-        'name': 'Cuentas por cobrar',
-        'is_active': True,
-        'is_vertical': True,
-        'is_visible': True,
-        'icon': 'fas fa-funnel-dollar',
-        'description': 'Permite administrar las cuentas por cobrar de los clientes'
-    }
-)
+module, created = Module.objects.get_or_create(url='/pos/frm/ctas/collect/')
+module.moduletype_id = type_administrativo.id
+module.name = 'Cuentas por cobrar'
+module.is_active = True
+module.is_vertical = True
+module.is_visible = True
+module.icon = 'fas fa-funnel-dollar'
+module.description = 'Permite administrar las cuentas por cobrar de los clientes'
+module.save()
 for p in Permission.objects.filter(content_type__model=CtasCollect._meta.label.split('.')[1].lower()):
     module.permits.add(p)
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.update_or_create(
-    moduletype_id=type_administrativo.id,
-    url='/pos/frm/debts/pay/',
-    defaults={
-        'name': 'Cuentas por pagar',
-        'is_active': True,
-        'is_vertical': True,
-        'is_visible': True,
-        'icon': 'fas fa-money-check-alt',
-        'description': 'Permite administrar las cuentas por pagar de los proveedores'
-    }
-)
+module, created = Module.objects.get_or_create(url='/pos/frm/debts/pay/')
+module.moduletype_id = type_administrativo.id
+module.name = 'Cuentas por pagar'
+module.is_active = True
+module.is_vertical = True
+module.is_visible = True
+module.icon = 'fas fa-money-check-alt'
+module.description = 'Permite administrar las cuentas por pagar de los proveedores'
+module.save()
 for p in Permission.objects.filter(content_type__model=DebtsPay._meta.label.split('.')[1].lower()):
     module.permits.add(p)
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.update_or_create(
-    moduletype_id=type_administrativo.id,
-    url='/pos/frm/box/',
-    defaults={
-        'name': 'Cierre caja',
-        'is_active': True,
-        'is_vertical': True,
-        'is_visible': True,
-        'icon': 'fas fa-money-check-alt',
-        'description': 'Permite administrar los cierres de caja'
-    }
-)
+module, created = Module.objects.get_or_create(url='/pos/frm/box/')
+module.moduletype_id = type_administrativo.id
+module.name = 'Cierre caja'
+module.is_active = True
+module.is_vertical = True
+module.is_visible = True
+module.icon = 'fas fa-money-check-alt'
+module.description = 'Permite administrar los cierres de caja'
+module.save()
 for p in Permission.objects.filter(content_type__model=Box._meta.label.split('.')[1].lower()):
     module.permits.add(p)
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.update_or_create(
-    moduletype_id=type_administrativo.id,
-    url='/pos/frm/series/',
-    defaults={
-        'name': 'Invoice Series',
-        'is_active': True,
-        'is_vertical': True,
-        'is_visible': True,
-        'icon': 'fas fa-receipt',
-        'description': 'Permite administrar las series de facturación'
-    }
-)
+module, created = Module.objects.get_or_create(url='/pos/frm/series/')
+module.moduletype_id = type_administrativo.id
+module.name = 'Invoice Series'
+module.is_active = True
+module.is_vertical = True
+module.is_visible = True
+module.icon = 'fas fa-receipt'
+module.description = 'Permite administrar las series de facturación'
+module.save()
 for p in Permission.objects.filter(content_type__model=Series._meta.label.split('.')[1].lower()):
     module.permits.add(p)
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.update_or_create(
-    moduletype_id=type_administrativo.id,
-    url='/pos/frm/user_series/',
-    defaults={
-        'name': 'Administración de Series',
-        'is_active': True,
-        'is_vertical': True,
-        'is_visible': True,
-        'icon': 'fas fa-user-tie',
-        'description': 'Permite asignar series a vendedores'
-    }
-)
+module, created = Module.objects.get_or_create(url='/pos/frm/user_series/')
+module.moduletype_id = type_administrativo.id
+module.name = 'Administración de Series'
+module.is_active = True
+module.is_vertical = True
+module.is_visible = True
+module.icon = 'fas fa-user-tie'
+module.description = 'Permite asignar series a vendedores'
+module.save()
 for p in Permission.objects.filter(content_type__model=UserSeries._meta.label.split('.')[1].lower()):
     module.permits.add(p)
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.update_or_create(
-    moduletype_id=type_administrativo.id,
-    url='/pos/frm/user/sales/report/',
-    defaults={
-        'name': 'Reprt Cobranzas por Usuario',
-        'is_active': True,
-        'is_vertical': True,
-        'is_visible': True,
-        'icon': 'fas fa-chart-line',
-        'description': 'Permite ver los reportes de Cobranzas detallados por usuario y método de pago'
-    }
-)
+module, created = Module.objects.get_or_create(url='/pos/frm/expense_series/')
+module.moduletype_id = type_administrativo.id
+module.name = 'Series de Gastos'
+module.is_active = True
+module.is_vertical = True
+module.is_visible = True
+module.icon = 'fas fa-receipt'
+module.description = 'Permite administrar las series de gastos'
+module.save()
+for p in Permission.objects.filter(content_type__model=ExpenseSeries._meta.label.split('.')[1].lower()):
+    module.permits.add(p)
+print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
+
+module, created = Module.objects.get_or_create(url='/pos/frm/user_expense_series/')
+module.moduletype_id = type_administrativo.id
+module.name = 'Administración de Series de Gastos'
+module.is_active = True
+module.is_vertical = True
+module.is_visible = True
+module.icon = 'fas fa-user-tie'
+module.description = 'Permite asignar series de gastos a usuarios'
+module.save()
+for p in Permission.objects.filter(content_type__model=UserExpenseSeries._meta.label.split('.')[1].lower()):
+    module.permits.add(p)
+print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
+
+module, created = Module.objects.get_or_create(url='/pos/frm/user/sales/report/')
+module.moduletype_id = type_administrativo.id
+module.name = 'Reprt Cobranzas por Usuario'
+module.is_active = True
+module.is_vertical = True
+module.is_visible = True
+module.icon = 'fas fa-chart-line'
+module.description = 'Permite ver los reportes de Cobranzas detallados por usuario y método de pago'
+module.save()
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
 # ===================== FACTURACION MODULES =====================
 
-module, created = Module.objects.update_or_create(
-    moduletype_id=type_facturacion.id,
-    url='/pos/crm/client/',
-    defaults={
-        'name': 'Clientes',
-        'is_active': True,
-        'is_vertical': True,
-        'is_visible': True,
-        'icon': 'fas fa-user-friends',
-        'description': 'Permite administrar los clientes del sistema'
-    }
-)
+module, created = Module.objects.get_or_create(url='/pos/crm/client/')
+module.moduletype_id = type_facturacion.id
+module.name = 'Clientes'
+module.is_active = True
+module.is_vertical = True
+module.is_visible = True
+module.icon = 'fas fa-user-friends'
+module.description = 'Permite administrar los clientes del sistema'
+module.save()
 for p in Permission.objects.filter(content_type__model=Client._meta.label.split('.')[1].lower()):
     module.permits.add(p)
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.update_or_create(
-    moduletype_id=type_facturacion.id,
-    url='/pos/crm/sale/admin/',
-    defaults={
-        'name': 'Cobranzas',
-        'is_active': True,
-        'is_vertical': True,
-        'is_visible': True,
-        'icon': 'fas fa-shopping-cart',
-        'description': 'Permite administrar las cobranzas'
-    }
-)
+module, created = Module.objects.get_or_create(url='/pos/crm/sale/admin/')
+module.moduletype_id = type_facturacion.id
+module.name = 'Cobranzas'
+module.is_active = True
+module.is_vertical = True
+module.is_visible = True
+module.icon = 'fas fa-shopping-cart'
+module.description = 'Permite administrar las cobranzas'
+module.save()
 for p in Permission.objects.filter(content_type__model=Sale._meta.label.split('.')[1].lower()):
     module.permits.add(p)
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.update_or_create(
-    url='/pos/crm/sale/client/',
-    defaults={
-        'name': 'Cobranzas',
-        'is_active': True,
-        'is_vertical': False,
-        'is_visible': True,
-        'icon': 'fas fa-shopping-cart',
-        'description': 'Permite administrar las cobranzas de los clientes'
-    }
-)
+module, created = Module.objects.get_or_create(url='/pos/crm/sale/client/')
+module.name = 'Cobranzas'
+module.is_active = True
+module.is_vertical = False
+module.is_visible = True
+module.icon = 'fas fa-shopping-cart'
+module.description = 'Permite administrar las cobranzas de los clientes'
+module.save()
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.update_or_create(
-    moduletype_id=type_facturacion.id,
-    url='/pos/crm/promotions/',
-    defaults={
-        'name': 'Promociones',
-        'is_active': True,
-        'is_vertical': True,
-        'is_visible': True,
-        'icon': 'far fa-calendar-check',
-        'description': 'Permite administrar las promociones de los productos'
-    }
-)
+module, created = Module.objects.get_or_create(url='/pos/crm/promotions/')
+module.moduletype_id = type_facturacion.id
+module.name = 'Promociones'
+module.is_active = True
+module.is_vertical = True
+module.is_visible = True
+module.icon = 'far fa-calendar-check'
+module.description = 'Permite administrar las promociones de los productos'
+module.save()
 for p in Permission.objects.filter(content_type__model=Promotions._meta.label.split('.')[1].lower()):
     module.permits.add(p)
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.update_or_create(
-    moduletype_id=type_facturacion.id,
-    url='/pos/crm/devolution/',
-    defaults={
-        'name': 'Devoluciones',
-        'is_active': True,
-        'is_vertical': True,
-        'is_visible': True,
-        'icon': 'fas fa-exchange-alt',
-        'description': 'Permite administrar las devoluciones de los productos'
-    }
-)
+module, created = Module.objects.get_or_create(url='/pos/crm/devolution/')
+module.moduletype_id = type_facturacion.id
+module.name = 'Devoluciones'
+module.is_active = True
+module.is_vertical = True
+module.is_visible = True
+module.icon = 'fas fa-exchange-alt'
+module.description = 'Permite administrar las devoluciones de los productos'
+module.save()
 for p in Permission.objects.filter(content_type__model=Devolution._meta.label.split('.')[1].lower()):
     module.permits.add(p)
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.update_or_create(
-    moduletype_id=type_facturacion.id,
-    url='/pos/frm/paymentbank/',
-    defaults={
-        'name': 'Bancos de Pago',
-        'is_active': True,
-        'is_vertical': True,
-        'is_visible': True,
-        'icon': 'fas fa-university',
-        'description': 'Permite administrar los bancos de pago'
-    }
-)
+module, created = Module.objects.get_or_create(url='/pos/frm/paymentbank/')
+module.moduletype_id = type_facturacion.id
+module.name = 'Bancos de Pago'
+module.is_active = True
+module.is_vertical = True
+module.is_visible = True
+module.icon = 'fas fa-university'
+module.description = 'Permite administrar los bancos de pago'
+module.save()
 for p in Permission.objects.filter(content_type__model=PaymentBank._meta.label.split('.')[1].lower()):
     module.permits.add(p)
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
 # ===================== REPORTES MODULES =====================
 
-module, created = Module.objects.update_or_create(
-    moduletype_id=type_reportes.id,
-    url='/reports/sale/',
-    defaults={
-        'name': 'Cobranzas',
-        'is_active': True,
-        'is_vertical': True,
-        'is_visible': True,
-        'icon': 'fas fa-chart-bar',
-        'description': 'Permite ver los reportes de las cobranzas realizadas'
-    }
-)
+module, created = Module.objects.get_or_create(url='/reports/sale/')
+module.moduletype_id = type_reportes.id
+module.name = 'Cobranzas'
+module.is_active = True
+module.is_vertical = True
+module.is_visible = True
+module.icon = 'fas fa-chart-bar'
+module.description = 'Permite ver los reportes de las cobranzas realizadas'
+module.save()
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.update_or_create(
-    moduletype_id=type_reportes.id,
-    url='/reports/purchase/',
-    defaults={
-        'name': 'Compras',
-        'is_active': True,
-        'is_vertical': True,
-        'is_visible': True,
-        'icon': 'fas fa-chart-bar',
-        'description': 'Permite ver los reportes de las compras'
-    }
-)
+module, created = Module.objects.get_or_create(url='/reports/purchase/')
+module.moduletype_id = type_reportes.id
+module.name = 'Compras'
+module.is_active = True
+module.is_vertical = True
+module.is_visible = True
+module.icon = 'fas fa-chart-bar'
+module.description = 'Permite ver los reportes de las compras'
+module.save()
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.update_or_create(
-    moduletype_id=type_reportes.id,
-    url='/reports/expenses/',
-    defaults={
-        'name': 'Gastos',
-        'is_active': True,
-        'is_vertical': True,
-        'is_visible': True,
-        'icon': 'fas fa-chart-bar',
-        'description': 'Permite ver los reportes de los gastos'
-    }
-)
+module, created = Module.objects.get_or_create(url='/reports/expenses/')
+module.moduletype_id = type_reportes.id
+module.name = 'Gastos'
+module.is_active = True
+module.is_vertical = True
+module.is_visible = True
+module.icon = 'fas fa-chart-bar'
+module.description = 'Permite ver los reportes de los gastos'
+module.save()
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.update_or_create(
-    moduletype_id=type_reportes.id,
-    url='/reports/debts/pay/',
-    defaults={
-        'name': 'Cuentas por Pagar',
-        'is_active': True,
-        'is_vertical': True,
-        'is_visible': True,
-        'icon': 'fas fa-chart-bar',
-        'description': 'Permite ver los reportes de las cuentas por pagar'
-    }
-)
+module, created = Module.objects.get_or_create(url='/reports/debts/pay/')
+module.moduletype_id = type_reportes.id
+module.name = 'Cuentas por Pagar'
+module.is_active = True
+module.is_vertical = True
+module.is_visible = True
+module.icon = 'fas fa-chart-bar'
+module.description = 'Permite ver los reportes de las cuentas por pagar'
+module.save()
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.update_or_create(
-    moduletype_id=type_reportes.id,
-    url='/reports/ctas/collect/',
-    defaults={
-        'name': 'Cuentas por Cobrar',
-        'is_active': True,
-        'is_vertical': True,
-        'is_visible': True,
-        'icon': 'fas fa-chart-bar',
-        'description': 'Permite ver los reportes de las cuentas por cobrar'
-    }
-)
+module, created = Module.objects.get_or_create(url='/reports/ctas/collect/')
+module.moduletype_id = type_reportes.id
+module.name = 'Cuentas por Cobrar'
+module.is_active = True
+module.is_vertical = True
+module.is_visible = True
+module.icon = 'fas fa-chart-bar'
+module.description = 'Permite ver los reportes de las cuentas por cobrar'
+module.save()
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.update_or_create(
-    moduletype_id=type_reportes.id,
-    url='/reports/results/',
-    defaults={
-        'name': 'Perdidas y Ganancias',
-        'is_active': True,
-        'is_vertical': True,
-        'is_visible': True,
-        'icon': 'fas fa-chart-bar',
-        'description': 'Permite ver los reportes de perdidas y ganancias'
-    }
-)
+module, created = Module.objects.get_or_create(url='/reports/results/')
+module.moduletype_id = type_reportes.id
+module.name = 'Perdidas y Ganancias'
+module.is_active = True
+module.is_vertical = True
+module.is_visible = True
+module.icon = 'fas fa-chart-bar'
+module.description = 'Permite ver los reportes de perdidas y ganancias'
+module.save()
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
 # ===================== UTILITY MODULES =====================
 
-module, created = Module.objects.update_or_create(
-    url='/user/update/password/',
-    defaults={
-        'name': 'Cambiar password',
-        'is_active': True,
-        'is_vertical': False,
-        'is_visible': True,
-        'icon': 'fas fa-key',
-        'description': 'Permite cambiar tu password de tu cuenta'
-    }
-)
+module, created = Module.objects.get_or_create(url='/user/update/password/')
+module.name = 'Cambiar password'
+module.is_active = True
+module.is_vertical = False
+module.is_visible = True
+module.icon = 'fas fa-key'
+module.description = 'Permite cambiar tu password de tu cuenta'
+module.save()
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.update_or_create(
-    url='/user/update/profile/',
-    defaults={
-        'name': 'Editar perfil',
-        'is_active': True,
-        'is_vertical': False,
-        'is_visible': True,
-        'icon': 'fas fa-user',
-        'description': 'Permite cambiar la información de tu cuenta'
-    }
-)
+module, created = Module.objects.get_or_create(url='/user/update/profile/')
+module.name = 'Editar perfil'
+module.is_active = True
+module.is_vertical = False
+module.is_visible = True
+module.icon = 'fas fa-user'
+module.description = 'Permite cambiar la información de tu cuenta'
+module.save()
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.update_or_create(
-    url='/pos/crm/client/update/profile/',
-    defaults={
-        'name': 'Editar perfil Cliente',
-        'is_active': True,
-        'is_vertical': False,
-        'is_visible': True,
-        'icon': 'fas fa-user',
-        'description': 'Permite cambiar la información de tu cuenta'
-    }
-)
+module, created = Module.objects.get_or_create(url='/pos/crm/client/update/profile/')
+module.name = 'Editar perfil Cliente'
+module.is_active = True
+module.is_vertical = False
+module.is_visible = True
+module.icon = 'fas fa-user'
+module.description = 'Permite cambiar la información de tu cuenta'
+module.save()
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
-module, created = Module.objects.update_or_create(
-    url='/pos/crm/company/update/',
-    defaults={
-        'name': 'Compañia',
-        'is_active': True,
-        'is_vertical': False,
-        'is_visible': True,
-        'icon': 'fa fa-cogs',
-        'description': 'Permite gestionar la información de la compañia'
-    }
-)
+module, created = Module.objects.get_or_create(url='/pos/crm/company/update/')
+module.name = 'Compañia'
+module.is_active = True
+module.is_vertical = False
+module.is_visible = True
+module.icon = 'fa fa-cogs'
+module.description = 'Permite gestionar la información de la compañia'
+module.save()
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
 # ===================== GROUPS =====================
 
-admin_group, created = Group.objects.update_or_create(name='Administrador')
+admin_group, created = Group.objects.get_or_create(name='Administrador')
 print('Grupo {}: {}'.format(admin_group.name, '(creado)' if created else '(actualizado)'))
 
 # Siempre agregar módulos al grupo administrador (para nuevos módulos)
@@ -643,19 +543,19 @@ for m in Module.objects.filter().exclude(url__in=['/pos/crm/client/update/profil
             permission_id=perm.id
         )
 
-client_group, created = Group.objects.update_or_create(name='Cliente')
+client_group, created = Group.objects.get_or_create(name='Cliente')
 print('Grupo {}: {}'.format(client_group.name, '(creado)' if created else '(actualizado)'))
 
 # Siempre agregar módulos al grupo cliente (para nuevos módulos)
 for m in Module.objects.filter(url__in=['/pos/crm/client/update/profile/', '/pos/crm/sale/client/', '/user/update/password/']):
     gm, _ = GroupModule.objects.get_or_create(module=m, group=client_group)
 
-vendedor_group, createdVendedor = Group.objects.update_or_create(name='Vendedor')
+vendedor_group, createdVendedor = Group.objects.get_or_create(name='Vendedor')
 print('Grupo {}: {}'.format(vendedor_group.name, '(creado)' if createdVendedor else '(actualizado)'))
 
 # ===================== USUARIO ADMINISTRADOR =====================
 
-user, created = User.objects.update_or_create(username='Administrador')
+user, created = User.objects.get_or_create(username='Administrador')
 if created:
     user.full_name = 'Admin'
     user.dni = '00112233'

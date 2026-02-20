@@ -66,6 +66,50 @@ class UserSeries(models.Model):
         ordering = ['-id']
 
 
+class ExpenseSeries(models.Model):
+    name = models.CharField(max_length=50, unique=True, verbose_name='Nombre')
+
+    def __str__(self):
+        return self.name
+
+    def toJSON(self):
+        item = model_to_dict(self)
+        return item
+
+    class Meta:
+        verbose_name = 'Serie de Gastos'
+        verbose_name_plural = 'Series de Gastos'
+        ordering = ['-id']
+
+
+class UserExpenseSeries(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, verbose_name='Usuario')
+    expense_series = models.OneToOneField(ExpenseSeries, on_delete=models.CASCADE, verbose_name='Serie de Gastos Asignada')
+    date_assigned = models.DateTimeField(auto_now_add=True, verbose_name='Fecha de Asignación')
+
+    def __str__(self):
+        return f'{self.user.full_name} - {self.expense_series.name}'
+
+    def toJSON(self):
+        item = model_to_dict(self, exclude=['date_assigned'])
+        item['user'] = self.user.toJSON()
+        item['expense_series'] = self.expense_series.toJSON()
+        item['date_assigned'] = self.date_assigned.strftime('%Y-%m-%d %H:%M')
+        return item
+
+    class Meta:
+        verbose_name = 'Asignación de Serie de Gastos'
+        verbose_name_plural = 'Asignaciones de Series de Gastos'
+        default_permissions = ()
+        permissions = (
+            ('view_userexpenseseries', 'Can view Asignaciones de Series de Gastos'),
+            ('add_userexpenseseries', 'Can add Asignaciones de Series de Gastos'),
+            ('change_userexpenseseries', 'Can change Asignaciones de Series de Gastos'),
+            ('delete_userexpenseseries', 'Can delete Asignaciones de Series de Gastos'),
+        )
+        ordering = ['-id']
+
+
 class PaymentBank(models.Model):
     name = models.CharField(max_length=100, unique=True, verbose_name='Nombre del Banco')
 
@@ -685,6 +729,7 @@ class Expenses(models.Model):
     date_joined = models.DateField(default=datetime.now, verbose_name='Fecha de Registro')
     expense_date = models.DateField(null=True, blank=True, verbose_name='Fecha del Gasto')
     valor = models.DecimalField(max_digits=9, decimal_places=2, default=0.00, verbose_name='Valor')
+    expense_serie = models.CharField(max_length=100, null=True, blank=True, verbose_name='Serie del Gasto')
 
     def __str__(self):
         return self.desc
@@ -693,6 +738,40 @@ class Expenses(models.Model):
         if self.desc:
             return self.desc
         return 'Sin detalles'
+
+    def calculate_expense_serie(self):
+        """
+        Calcula automáticamente el número de serie del gasto basado en:
+        - La serie asignada al usuario que registra el gasto
+        - El contador secuencial de gastos para esa serie
+        Formato: {NombreSerie}-{número_4_dígitos}
+        Ejemplo: GAS-0001
+        """
+        if self.user:
+            try:
+                user_expense_series = UserExpenseSeries.objects.get(user=self.user)
+                series_name = user_expense_series.expense_series.name
+                
+                # Contar cuántos gastos previos tiene este usuario con esta serie
+                expenses_count = Expenses.objects.filter(
+                    user=self.user,
+                    expense_serie__startswith=f'{series_name}-'
+                ).count()
+                
+                # El siguiente número secuencial
+                next_number = expenses_count + 1
+                self.expense_serie = f'{series_name}-{next_number:04d}'
+            except UserExpenseSeries.DoesNotExist:
+                # Si el usuario no tiene serie asignada, dejamos el campo vacío
+                self.expense_serie = None
+        else:
+            self.expense_serie = None
+
+    def save(self, *args, **kwargs):
+        """Sobrescribir save para calcular la serie automáticamente"""
+        if not self.expense_serie:
+            self.calculate_expense_serie()
+        super(Expenses, self).save(*args, **kwargs)
 
     def toJSON(self):
         item = model_to_dict(self, exclude=['user'])
