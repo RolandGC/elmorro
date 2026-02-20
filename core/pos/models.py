@@ -934,12 +934,12 @@ class Box(models.Model):
         total_transfer = Sale.objects.filter(
             employee=self.user,
             payment_condition='contado',
-            payment_method='tarjeta_debito_credito',
+            payment_method='transferencia',
             date_joined__date=fecha_actual
         ).aggregate(total=Sum('total'))['total'] or 0
         
         payments = PaymentsCtaCollect.objects.filter(date_joined__date=fecha_actual)
-        total_payments = sum(p.valor for p in payments if p.ctascollect.sale.employee == self.user and p.ctascollect.sale.payment_method == 'tarjeta_debito_credito')
+        total_payments = sum(p.valor for p in payments if p.ctascollect.sale.employee == self.user and p.ctascollect.sale.payment_method == 'transferencia')
         
         return float(total_transfer) + float(total_payments)
 
@@ -948,12 +948,12 @@ class Box(models.Model):
         total_deposito = Sale.objects.filter(
             employee=self.user,
             payment_condition='contado',
-            payment_method='efectivo_tarjeta',
+            payment_method='deposito',
             date_joined__date=fecha_actual
         ).aggregate(total=Sum('total'))['total'] or 0
         
         payments = PaymentsCtaCollect.objects.filter(date_joined__date=fecha_actual)
-        total_payments = sum(p.valor for p in payments if p.ctascollect.sale.employee == self.user and p.ctascollect.sale.payment_method == 'efectivo_tarjeta')
+        total_payments = sum(p.valor for p in payments if p.ctascollect.sale.employee == self.user and p.ctascollect.sale.payment_method == 'deposito')
         
         return float(total_deposito) + float(total_payments)
 

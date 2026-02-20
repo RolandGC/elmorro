@@ -115,7 +115,7 @@ class BoxCreateView(PermissionMixin, CreateView):
             total_transfer = Sale.objects.filter(
                 employee=user,
                 payment_condition='contado',
-                payment_method='tarjeta_debito_credito',
+                payment_method='transferencia',
                 date_joined__date=fecha_actual
             ).aggregate(total=Sum('total'))['total'] or 0
             data['transferencia'] = round(float(total_transfer), 2)
@@ -124,7 +124,7 @@ class BoxCreateView(PermissionMixin, CreateView):
             total_deposito = Sale.objects.filter(
                 employee=user,
                 payment_condition='contado',
-                payment_method='efectivo_tarjeta',
+                payment_method='deposito',
                 date_joined__date=fecha_actual
             ).aggregate(total=Sum('total'))['total'] or 0
             data['deposito'] = round(float(total_deposito), 2)
@@ -274,7 +274,7 @@ class BoxUpdateView(PermissionMixin, UpdateView):
             total_transfer = Sale.objects.filter(
                 employee=user,
                 payment_condition='contado',
-                payment_method='tarjeta_debito_credito',
+                payment_method='transferencia',
                 date_joined__date=fecha_actual
             ).aggregate(total=Sum('total'))['total'] or 0
             data['transferencia'] = round(float(total_transfer), 2)
@@ -283,7 +283,7 @@ class BoxUpdateView(PermissionMixin, UpdateView):
             total_deposito = Sale.objects.filter(
                 employee=user,
                 payment_condition='contado',
-                payment_method='efectivo_tarjeta',
+                payment_method='deposito',
                 date_joined__date=fecha_actual
             ).aggregate(total=Sum('total'))['total'] or 0
             data['deposito'] = round(float(total_deposito), 2)
