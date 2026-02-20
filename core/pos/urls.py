@@ -8,6 +8,7 @@ from core.pos.views.frm.ctascollect.views import *
 from core.pos.views.frm.debtspay.views import *
 from core.pos.views.frm.box.views import *
 from core.pos.views.frm.series.views import *
+from core.pos.views.frm.expense_series.views import *
 from core.pos.views.scm.product.views import *
 from core.pos.views.scm.provider.views import *
 from core.pos.views.scm.category.views import *
@@ -19,6 +20,7 @@ from core.pos.views.crm.client.views import *
 from core.pos.views.crm.sale.print.views import *
 from core.pos.views.crm.devolution.views import *
 from core.pos.views.admin.user_series.views import *
+from core.pos.views.admin.user_expense_series.views import *
 from core.pos.views.frm.paymentbank.views import *
 from core.pos.views.frm.user_sales_report.views import UserSalesReportView
 
@@ -82,6 +84,16 @@ urlpatterns = [
     path('frm/user_series/add/', UserSeriesCreateView.as_view(), name='user_series_create'),
     path('frm/user_series/update/<int:pk>/', UserSeriesUpdateView.as_view(), name='user_series_update'),
     path('frm/user_series/delete/<int:pk>/', UserSeriesDeleteView.as_view(), name='user_series_delete'),
+    # expense_series
+    path('frm/expense_series/', ExpenseSeriesListView.as_view(), name='expense_series_list'),
+    path('frm/expense_series/add/', ExpenseSeriesCreateView.as_view(), name='expense_series_create'),
+    path('frm/expense_series/update/<int:pk>/', ExpenseSeriesUpdateView.as_view(), name='expense_series_update'),
+    path('frm/expense_series/delete/<int:pk>/', ExpenseSeriesDeleteView.as_view(), name='expense_series_delete'),
+    # user_expense_series (administración de series de gastos)
+    path('frm/user_expense_series/', UserExpenseSeriesListView.as_view(), name='user_expense_series_list'),
+    path('frm/user_expense_series/add/', UserExpenseSeriesCreateView.as_view(), name='user_expense_series_create'),
+    path('frm/user_expense_series/update/<int:pk>/', UserExpenseSeriesUpdateView.as_view(), name='user_expense_series_update'),
+    path('frm/user_expense_series/delete/<int:pk>/', UserExpenseSeriesDeleteView.as_view(), name='user_expense_series_delete'),
     # promotions
     path('crm/promotions/', PromotionsListView.as_view(), name='promotions_list'),
     path('crm/promotions/add/', PromotionsCreateView.as_view(), name='promotions_create'),

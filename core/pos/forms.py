@@ -56,6 +56,55 @@ class UserSeriesForm(ModelForm):
         return cleaned_data
 
 
+class ExpenseSeriesForm(ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['name'].widget.attrs['autofocus'] = True
+
+    class Meta:
+        model = ExpenseSeries
+        fields = '__all__'
+        widgets = {
+            'name': forms.TextInput(attrs={'placeholder': 'Ingrese el nombre de la serie de gastos'}),
+        }
+
+
+class UserExpenseSeriesForm(ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Filtrar usuarios excluyendo el grupo "Cliente"
+        try:
+            client_group = Group.objects.get(name='Cliente')
+            self.fields['user'].queryset = User.objects.exclude(groups__in=[client_group]).distinct()
+        except Group.DoesNotExist:
+            self.fields['user'].queryset = User.objects.all()
+        
+        self.fields['user'].widget.attrs['autofocus'] = True
+
+    class Meta:
+        model = UserExpenseSeries
+        fields = ('user', 'expense_series')
+        widgets = {
+            'user': forms.Select(attrs={'class': 'form-control select2'}),
+            'expense_series': forms.Select(attrs={'class': 'form-control select2'}),
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        user = cleaned_data.get('user')
+        expense_series = cleaned_data.get('expense_series')
+        
+        if user and expense_series:
+            # Verificar que el usuario no tenga otra serie de gastos asignada
+            if UserExpenseSeries.objects.exclude(pk=self.instance.pk).filter(user=user).exists():
+                raise forms.ValidationError('Este usuario ya tiene una serie de gastos asignada.')
+            # Verificar que la serie no esté asignada a otro usuario
+            if UserExpenseSeries.objects.exclude(pk=self.instance.pk).filter(expense_series=expense_series).exists():
+                raise forms.ValidationError('Esta serie de gastos ya está asignada a otro usuario.')
+        
+        return cleaned_data
+
+
 class ProviderForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
