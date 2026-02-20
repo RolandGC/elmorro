@@ -270,12 +270,12 @@ module, created = Module.objects.update_or_create(
     moduletype_id=type_administrativo.id,
     url='/pos/frm/type/expense/',
     defaults={
-        'name': 'Tipos de Gastos',
+        'name': 'Tipos de Egresos',
         'is_active': True,
         'is_vertical': True,
         'is_visible': True,
         'icon': 'fas fa-comments-dollar',
-        'description': 'Permite administrar los tipos de gastos'
+        'description': 'Permite administrar los tipos de egresos'
     }
 )
 for p in Permission.objects.filter(content_type__model=TypeExpense._meta.label.split('.')[1].lower()):
@@ -286,12 +286,12 @@ module, created = Module.objects.update_or_create(
     moduletype_id=type_administrativo.id,
     url='/pos/frm/expenses/',
     defaults={
-        'name': 'Gastos',
+        'name': 'Egresos',
         'is_active': True,
         'is_vertical': True,
         'is_visible': True,
         'icon': 'fas fa-file-invoice-dollar',
-        'description': 'Permite administrar los gastos de la compañia'
+        'description': 'Permite administrar los egresos de la compañia'
     }
 )
 for p in Permission.objects.filter(content_type__model=Expenses._meta.label.split('.')[1].lower()):
@@ -521,12 +521,12 @@ module, created = Module.objects.update_or_create(
     moduletype_id=type_reportes.id,
     url='/reports/expenses/',
     defaults={
-        'name': 'Gastos',
+        'name': 'Egresos',
         'is_active': True,
         'is_vertical': True,
         'is_visible': True,
         'icon': 'fas fa-chart-bar',
-        'description': 'Permite ver los reportes de los gastos'
+        'description': 'Permite ver los reportes de los egresos'
     }
 )
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))

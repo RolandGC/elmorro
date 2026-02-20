@@ -113,52 +113,52 @@ $(function () {
                 scrollCollapse: true,
                 columns: [
                     {data: "product.name"},
-                    {data: "product.category.name"},
-                    {data: "price"},
-                    {data: "cant"},
-                    {data: "subtotal"},
-                    {data: "dscto"},
-                    {data: "total_dscto"},
+                    //{data: "product.category.name"},
+                    // {data: "price"},
+                    //{data: "cant"},
+                    //{data: "subtotal"},
+                    // {data: "dscto"},
+                    // {data: "total_dscto"},
                     {data: "total"},
                 ],
                 columnDefs: [
-                    {
-                        targets: [-1, -2, -4, -6],
-                        class: 'text-center',
-                        render: function (data, type, row) {
-                            return 'S/.' + parseFloat(data).toFixed(2);
-                        }
-                    },
-                    {
-                        targets: [-3],
-                        class: 'text-center',
-                        render: function (data, type, row) {
-                            return parseFloat(data).toFixed(2) + '%';
-                        }
-                    },
-                    {
-                        targets: [-5],
-                        class: 'text-center',
-                        render: function (data, type, row) {
-                            return data;
-                        }
-                    }
+                    // {
+                    //     targets: [-1, -2, -4, -6],
+                    //     class: 'text-center',
+                    //     render: function (data, type, row) {
+                    //         return 'S/.' + parseFloat(data).toFixed(2);
+                    //     }
+                    // },
+                    // {
+                    //     targets: [-3],
+                    //     class: 'text-center',
+                    //     render: function (data, type, row) {
+                    //         return parseFloat(data).toFixed(2) + '%';
+                    //     }
+                    // },
+                    // {
+                    //     targets: [-5],
+                    //     class: 'text-center',
+                    //     render: function (data, type, row) {
+                    //         return data;
+                    //     }
+                    // }
                 ]
             });
 
             var invoice = [];
             invoice.push({'id': 'Cliente', 'name': row.client.user.full_name});
-            invoice.push({'id': 'Forma de Pago', 'name': row.payment_condition.name});
+            //invoice.push({'id': 'Forma de Pago', 'name': row.payment_condition.name});
             invoice.push({'id': 'Método de Pago', 'name': row.payment_method.name});
-            invoice.push({'id': 'Subtotal', 'name': 'S/.' + row.subtotal});
-            invoice.push({'id': 'Igv', 'name': row.igv + ' %'});
-            invoice.push({'id': 'Total Igv', 'name': 'S/.' + row.total_igv});
-            invoice.push({'id': 'Descuento', 'name': row.dscto + ' %'});
-            invoice.push({'id': 'Total Descuento', 'name': 'S/.' + row.total_dscto});
+            //invoice.push({'id': 'Subtotal', 'name': 'S/.' + row.subtotal});
+            // invoice.push({'id': 'Igv', 'name': row.igv + ' %'});
+            // invoice.push({'id': 'Total Igv', 'name': 'S/.' + row.total_igv});
+            // invoice.push({'id': 'Descuento', 'name': row.dscto + ' %'});
+            // invoice.push({'id': 'Total Descuento', 'name': 'S/.' + row.total_dscto});
             invoice.push({'id': 'Total a pagar', 'name': 'S/.' + row.total});
             if (row.payment_method.id === 'efectivo') {
-                invoice.push({'id': 'Efectivo', 'name': 'S/.' + row.cash});
-                invoice.push({'id': 'Vuelto', 'name': 'S/.' + row.change});
+                // invoice.push({'id': 'Efectivo', 'name': 'S/.' + row.cash});
+                // invoice.push({'id': 'Vuelto', 'name': 'S/.' + row.change});
             } else if (row.payment_method.id === 'tarjeta_debito_credito') {
                 invoice.push({'id': 'Número de tarjeta', 'name': row.card_number});
                 invoice.push({'id': 'Titular de tarjeta', 'name': row.titular});
