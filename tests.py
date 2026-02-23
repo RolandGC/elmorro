@@ -214,12 +214,12 @@ print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
 module, created = Module.objects.get_or_create(url='/pos/frm/type/expense/')
 module.moduletype_id = type_administrativo.id
-module.name = 'Tipos de Gastos'
+module.name = 'Tipos de Egresos'
 module.is_active = True
 module.is_vertical = True
 module.is_visible = True
 module.icon = 'fas fa-comments-dollar'
-module.description = 'Permite administrar los tipos de gastos'
+module.description = 'Permite administrar los tipos de egresos'
 module.save()
 for p in Permission.objects.filter(content_type__model=TypeExpense._meta.label.split('.')[1].lower()):
     module.permits.add(p)
@@ -227,12 +227,12 @@ print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
 module, created = Module.objects.get_or_create(url='/pos/frm/expenses/')
 module.moduletype_id = type_administrativo.id
-module.name = 'Gastos'
+module.name = 'Egresos'
 module.is_active = True
 module.is_vertical = True
 module.is_visible = True
 module.icon = 'fas fa-file-invoice-dollar'
-module.description = 'Permite administrar los gastos de la compañia'
+module.description = 'Permite administrar los egresos de la compañia'
 module.save()
 for p in Permission.objects.filter(content_type__model=Expenses._meta.label.split('.')[1].lower()):
     module.permits.add(p)
@@ -305,12 +305,12 @@ print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
 module, created = Module.objects.get_or_create(url='/pos/frm/expense_series/')
 module.moduletype_id = type_administrativo.id
-module.name = 'Series de Gastos'
+module.name = 'Series de Egresos'
 module.is_active = True
 module.is_vertical = True
 module.is_visible = True
 module.icon = 'fas fa-receipt'
-module.description = 'Permite administrar las series de gastos'
+module.description = 'Permite administrar las series de egresos'
 module.save()
 for p in Permission.objects.filter(content_type__model=ExpenseSeries._meta.label.split('.')[1].lower()):
     module.permits.add(p)
@@ -318,12 +318,12 @@ print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
 module, created = Module.objects.get_or_create(url='/pos/frm/user_expense_series/')
 module.moduletype_id = type_administrativo.id
-module.name = 'Administración de Series de Gastos'
+module.name = 'Admin de Series de Egresos'
 module.is_active = True
 module.is_vertical = True
 module.is_visible = True
 module.icon = 'fas fa-user-tie'
-module.description = 'Permite asignar series de gastos a usuarios'
+module.description = 'Permite asignar series de egresos a usuarios'
 module.save()
 for p in Permission.objects.filter(content_type__model=UserExpenseSeries._meta.label.split('.')[1].lower()):
     module.permits.add(p)
@@ -443,12 +443,12 @@ print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
 module, created = Module.objects.get_or_create(url='/reports/expenses/')
 module.moduletype_id = type_reportes.id
-module.name = 'Gastos'
+module.name = 'Egresos'
 module.is_active = True
 module.is_vertical = True
 module.is_visible = True
 module.icon = 'fas fa-chart-bar'
-module.description = 'Permite ver los reportes de los gastos'
+module.description = 'Permite ver los reportes de los egresos'
 module.save()
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
@@ -552,6 +552,9 @@ for m in Module.objects.filter(url__in=['/pos/crm/client/update/profile/', '/pos
 
 vendedor_group, createdVendedor = Group.objects.get_or_create(name='Vendedor')
 print('Grupo {}: {}'.format(vendedor_group.name, '(creado)' if createdVendedor else '(actualizado)'))
+
+supervisor_group, createdSupervisor = Group.objects.get_or_create(name='Supervisor')
+print('Grupo {}: {}'.format(supervisor_group.name, '(creado)' if createdSupervisor else '(actualizado)'))
 
 # ===================== USUARIO ADMINISTRADOR =====================
 
