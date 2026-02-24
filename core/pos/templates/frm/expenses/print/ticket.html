@@ -193,7 +193,7 @@
       </p>
 
       <!-- Título del Ticket -->
-      <div class="title-ticket">✓ COMPROBANTE DE GASTO</div>
+      <div class="title-ticket">✓ COMPROBANTE DE EGRESO</div>
 
       <!-- Información del Gasto -->
       <div class="info-section border-dotted">
@@ -216,7 +216,7 @@
       </div>
 
       <!-- Detalles del Gasto -->
-      <div class="section-label">Detalles del Gasto</div>
+      <div class="section-label">Detalles del Egreso</div>
       <div class="expense-detail">
         <p>
           <b>Descripción:</b>
@@ -227,7 +227,7 @@
       <!-- Valor del Gasto -->
       <div class="total-section">
         <div class="detail-row" style="border: none; margin-top: 5px;">
-          <div class="detail-label">TOTAL DEL GASTO:</div>
+          <div class="detail-label">TOTAL DEL EGRESO:</div>
           <div class="detail-value">S/ {{ expense.valor|floatformat:2 }}</div>
         </div>
       </div>
@@ -249,7 +249,7 @@
         <p style="margin: 2px 0; font-size: 7px;">{{ expense.date_joined|localtime|date:'d/m/Y H:i:s' }}</p>
       </div>
 
-      <div class="stamp">GASTO REGISTRADO</div>
+      <div class="stamp">EGRESO REGISTRADO</div>
     </div>
   </body>
 </html>
