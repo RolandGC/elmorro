@@ -279,7 +279,7 @@ print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
 module, created = Module.objects.get_or_create(url='/pos/frm/series/')
 module.moduletype_id = type_administrativo.id
-module.name = 'Invoice Series'
+module.name = 'Crear Serie de Ingresos'
 module.is_active = True
 module.is_vertical = True
 module.is_visible = True
@@ -292,7 +292,7 @@ print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
 module, created = Module.objects.get_or_create(url='/pos/frm/user_series/')
 module.moduletype_id = type_administrativo.id
-module.name = 'Administración de Series'
+module.name = 'Asign Serie de Ingresos'
 module.is_active = True
 module.is_vertical = True
 module.is_visible = True
@@ -305,7 +305,7 @@ print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
 module, created = Module.objects.get_or_create(url='/pos/frm/expense_series/')
 module.moduletype_id = type_administrativo.id
-module.name = 'Series de Egresos'
+module.name = 'Crear Serie de Egresos'
 module.is_active = True
 module.is_vertical = True
 module.is_visible = True
@@ -318,7 +318,7 @@ print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
 module, created = Module.objects.get_or_create(url='/pos/frm/user_expense_series/')
 module.moduletype_id = type_administrativo.id
-module.name = 'Admin de Series de Egresos'
+module.name = 'Asign Serie de Egresos'
 module.is_active = True
 module.is_vertical = True
 module.is_visible = True

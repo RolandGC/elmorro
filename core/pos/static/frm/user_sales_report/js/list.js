@@ -115,7 +115,7 @@ function showPaymentMethodsSummary(methodsData, totalGeneral, totalCantidad) {
             var color = colors[method] || 'secondary';
             container.append(`
                 <div class="col-lg-4 col-md-6">
-                    <div class="card card-payment-method border-left-${color}">
+                    <div class="card card-payment-method" style="border-left: 5px solid ${color};">
                         <div class="card-header bg-gradient-${color}">
                             <h6 class="payment-method-title text-white m-0">
                                 <i class="fas fa-money-bill"></i> ${data.name.toUpperCase()}
@@ -126,10 +126,7 @@ function showPaymentMethodsSummary(methodsData, totalGeneral, totalCantidad) {
                                 <span>Nro Transacciones:</span>
                                 <span><strong>${data.count}</strong></span>
                             </div>
-                            <div class="payment-method-info">
-                                <span>Productos Vendidos:</span>
-                                <span><strong>${data.cantidad}</strong></span>
-                            </div>
+                            
                             <hr style="margin: 8px 0;">
                             <div class="payment-method-info">
                                 <span style="font-weight: 600;">Total Vendido:</span>
@@ -156,10 +153,7 @@ function showPaymentMethodsSummary(methodsData, totalGeneral, totalCantidad) {
                         <span>Total Transacciones:</span>
                         <span><strong>${getTotalCount(methodsData)}</strong></span>
                     </div>
-                    <div class="payment-method-info">
-                        <span>Total Productos:</span>
-                        <span><strong>${totalCantidad}</strong></span>
-                    </div>
+                    
                     <hr style="margin: 8px 0;">
                     <div class="payment-method-info">
                         <span style="font-weight: 600; font-size: 15px;">TOTAL GENERAL:</span>
@@ -195,7 +189,7 @@ function fillSalesTable(methodsData) {
                     <td>${sale.client}</td>
                     <td class="text-center"><strong>${sale.cantidad}</strong></td>
                     <td class="text-right">S/. ${parseFloat(sale.subtotal).toFixed(2)}</td>
-                    <td class="text-right">S/. ${parseFloat(sale.total_dscto).toFixed(2)}</td>
+                    
                     <td class="text-right"><strong>S/. ${parseFloat(sale.total).toFixed(2)}</strong></td>
                 </tr>
             `);
