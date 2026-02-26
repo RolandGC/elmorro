@@ -36,7 +36,7 @@ class ExpensesListView(PermissionMixin, FormView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['create_url'] = reverse_lazy('expenses_create')
-        context['title'] = 'Listado de Gastos'
+        context['title'] = 'Listado de Egresos'
         return context
 
 

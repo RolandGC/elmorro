@@ -34,5 +34,5 @@ class ExpensesReportView(ModuleMixin, django.views.generic.FormView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user_name = self.request.user.get_full_name() or self.request.user.username
-        context['title'] = f'Reporte de Gastos de {user_name}'
+        context['title'] = f'Reporte de Egresos de {user_name}'
         return context
