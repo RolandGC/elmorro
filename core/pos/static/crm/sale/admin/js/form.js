@@ -18,6 +18,7 @@ var input_change;
 var input_amount;
 var amount_user_edited = false;
 var total_user_edited = false;
+var supervisorMode = false;
 
 var tblSearchProducts;
 var tblProducts;
@@ -580,7 +581,21 @@ document.addEventListener('DOMContentLoaded', function (e) {
         .on('core.form.valid', function () {
             var parameters = new FormData($(fvSale.form)[0]);
             parameters.append('action', $('input[name="action"]').val());
-            parameters.append('payment_method', select_paymentmethod.val());
+            // Supervisor: recoger formas de pago de checkboxes y montos individuales
+            if (supervisorMode) {
+                var checkedMethods = [];
+                $('.chk-payment-method:checked').each(function() {
+                    checkedMethods.push($(this).val());
+                });
+                parameters.append('payment_method', checkedMethods.join(','));
+                parameters.append('efectivo_amount', $('#efectivo_amount').val() || '0.00');
+                parameters.append('yape_amount', $('#yape_amount').val() || '0.00');
+                parameters.append('plin_amount', $('#plin_amount').val() || '0.00');
+                parameters.append('transferencia_amount', $('#transferencia_amount').val() || '0.00');
+                parameters.append('deposito_amount', $('#deposito_amount').val() || '0.00');
+            } else {
+                parameters.append('payment_method', select_paymentmethod.val());
+            }
             parameters.append('payment_condition', select_paymentcondition.val());
             parameters.append('end_credit', input_endcredit.val());
             parameters.append('cash', input_cash.val());
@@ -972,14 +987,21 @@ $(function () {
             switch (id) {
                 case "contado":
                     fvSale.disableValidator('end_credit');
-                    select_paymentmethod.prop('disabled', false).val('efectivo').trigger('change');
+                    if (!supervisorMode) {
+                        select_paymentmethod.prop('disabled', false).val('efectivo').trigger('change');
+                    } else {
+                        // Supervisor: refrescar visibilidad según checkboxes actuales
+                        updateSupervisorFieldVisibility();
+                    }
                     input_initial.prop('disabled', true)
                     $('.rowInitial').hide();
                     break;
                 case "credito":
                     fvSale.enableValidator('initial');
                     hideRowsVents([{'pos': 2, 'enable': true}]);
-                select_paymentmethod.find('option[value="tarjeta_debito_credito"]').remove();
+                    if (!supervisorMode) {
+                        select_paymentmethod.find('option[value="tarjeta_debito_credito"]').remove();
+                    }
                     input_initial.prop('disabled', false)
                     $('.rowInitial').show();
                     break;
@@ -987,12 +1009,69 @@ $(function () {
         });
 
     select_paymentmethod.on('change', function () {
-        updateOperationNumberVisibility();
+        if (!supervisorMode) updateOperationNumberVisibility();
     }).on('select2:select', function () {
-        updateOperationNumberVisibility();
+        if (!supervisorMode) updateOperationNumberVisibility();
     }).on('select2:unselect', function () {
-        updateOperationNumberVisibility();
+        if (!supervisorMode) updateOperationNumberVisibility();
     });
+
+    // --- Supervisor: manejo de checkboxes de formas de pago ---
+    if (typeof is_supervisor !== 'undefined' && is_supervisor) {
+        supervisorMode = true;
+        console.log('[Supervisor] Modo supervisor activado');
+        console.log('[Supervisor] Checkboxes encontrados:', $('.chk-payment-method').length);
+        $('.chk-payment-method').on('change', function () {
+            console.log('[Supervisor] Checkbox cambiado:', $(this).val(), 'checked:', $(this).is(':checked'));
+            var checkedMethods = [];
+            $('.chk-payment-method:checked').each(function () {
+                checkedMethods.push($(this).val());
+            });
+            // Actualizar hidden input
+            $('#id_payment_method').val(checkedMethods.join(','));
+            // Mostrar/ocultar inputs de monto por forma de pago
+            var allMethods = ['efectivo', 'yape', 'plin', 'transferencia', 'deposito'];
+            allMethods.forEach(function (method) {
+                if (checkedMethods.indexOf(method) !== -1) {
+                    $('#group_' + method + '_amount').show();
+                } else {
+                    $('#group_' + method + '_amount').hide();
+                    $('#' + method + '_amount').val('0.00');
+                }
+            });
+            // Mostrar/ocultar contenedor de montos
+            if (checkedMethods.length > 0) {
+                $('#rowSupervisorAmounts').show();
+            } else {
+                $('#rowSupervisorAmounts').hide();
+            }
+            updateSupervisorFieldVisibility();
+        });
+    }
+
+    function updateSupervisorFieldVisibility() {
+        var checkedMethods = [];
+        $('.chk-payment-method:checked').each(function () {
+            checkedMethods.push($(this).val());
+        });
+        var hasEfectivo = checkedMethods.indexOf('efectivo') !== -1;
+        var isCredit = select_paymentcondition.val() === 'credito';
+
+        // En modo supervisor NO mostramos Nro Operación, Fecha Operación ni Banco
+        // Esa lógica solo aplica al selector simple (no múltiple)
+        $('#rowOperationNumber').hide();
+        $('#rowOperationDate').hide();
+        $('#rowPaymentBank').hide();
+
+        // Efectivo recibido / cambio
+        if (hasEfectivo) {
+            try { fvSale.enableValidator('change'); } catch (e) {}
+            hideRowsVents([{'pos': 0, 'enable': true}, {'pos': 1, 'enable': false}, {'pos': 2, 'enable': isCredit}]);
+        } else {
+            try { fvSale.disableValidator('change'); } catch (e) {}
+            hideRowsVents([{'pos': 0, 'enable': false}, {'pos': 1, 'enable': false}, {'pos': 2, 'enable': isCredit}]);
+        }
+    }
 
     function updateOperationNumberVisibility() {
         var id = select_paymentmethod.val();
@@ -1102,7 +1181,11 @@ $(function () {
     }
     
     // Initial visibility check when page loads
-    updateOperationNumberVisibility();
+    if (supervisorMode) {
+        updateSupervisorFieldVisibility();
+    } else {
+        updateOperationNumberVisibility();
+    }
     input_initial.on('change', function() {
         console.log('Change event detected for input_initial');
     });

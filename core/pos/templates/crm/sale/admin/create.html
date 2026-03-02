@@ -11,7 +11,7 @@
     <script src="{% static 'lib/bootstrap-touchspin-4.2.5/js/jquery.bootstrap-touchspin.js' %}"></script>
     <script src="{% static 'lib/tempusdominus-bootstrap-4.5.37.0/js/tempusdominus-bootstrap.js' %}"></script>
     <link rel="stylesheet" href="{% static 'lib/tempusdominus-bootstrap-4.5.37.0/css/tempusdominus-bootstrap.css' %}"/>
-    <script src="{% static 'crm/sale/admin/js/form.js' %}"></script>
+    <script src="{% static 'crm/sale/admin/js/form.js' %}?v=4"></script>
     <style>
         /* Estilos responsive para textarea y inputs */
         textarea {
@@ -146,10 +146,67 @@
                                 <div class="col-lg-6">
                                     <div class="form-group">
                                         <label class="control-label">Forma de pago:</label>
-                                        {{ form.payment_method }}
+                                        {% if is_supervisor %}
+                                            {# Checkboxes para supervisor - selección múltiple #}
+                                            <input type="hidden" id="id_payment_method" name="payment_method" value="">
+                                            <div id="supervisor-payment-methods" class="d-flex flex-wrap mt-1">
+                                                <div class="custom-control custom-checkbox mr-3 mb-2">
+                                                    <input type="checkbox" class="custom-control-input chk-payment-method" id="chk_efectivo" value="efectivo">
+                                                    <label class="custom-control-label" for="chk_efectivo">Efectivo</label>
+                                                </div>
+                                                <div class="custom-control custom-checkbox mr-3 mb-2">
+                                                    <input type="checkbox" class="custom-control-input chk-payment-method" id="chk_yape" value="yape">
+                                                    <label class="custom-control-label" for="chk_yape">Yape</label>
+                                                </div>
+                                                <div class="custom-control custom-checkbox mr-3 mb-2">
+                                                    <input type="checkbox" class="custom-control-input chk-payment-method" id="chk_plin" value="plin">
+                                                    <label class="custom-control-label" for="chk_plin">Plin</label>
+                                                </div>
+                                                <div class="custom-control custom-checkbox mr-3 mb-2">
+                                                    <input type="checkbox" class="custom-control-input chk-payment-method" id="chk_transferencia" value="transferencia">
+                                                    <label class="custom-control-label" for="chk_transferencia">Transferencia</label>
+                                                </div>
+                                                <div class="custom-control custom-checkbox mr-3 mb-2">
+                                                    <input type="checkbox" class="custom-control-input chk-payment-method" id="chk_deposito" value="deposito">
+                                                    <label class="custom-control-label" for="chk_deposito">Depósito</label>
+                                                </div>
+                                            </div>
+                                        {% else %}
+                                            {{ form.payment_method }}
+                                        {% endif %}
                                     </div>
                                 </div>
                             </div>
+
+                            {# Fila de montos desglosados por forma de pago (solo supervisor) #}
+                            {% if is_supervisor %}
+                            <div class="row" id="rowSupervisorAmounts" style="display: none;">
+                                <div class="col-lg-12">
+                                    <div class="d-flex flex-wrap" id="supervisor-amounts-container">
+                                        <div class="form-group mr-3 mb-2 supervisor-amount-group" id="group_efectivo_amount" style="display:none;">
+                                            <label class="control-label">Monto Efectivo:</label>
+                                            <input type="number" step="0.01" min="0" class="form-control supervisor-amount-input" id="efectivo_amount" name="efectivo_amount" value="0.00">
+                                        </div>
+                                        <div class="form-group mr-3 mb-2 supervisor-amount-group" id="group_yape_amount" style="display:none;">
+                                            <label class="control-label">Monto Yape:</label>
+                                            <input type="number" step="0.01" min="0" class="form-control supervisor-amount-input" id="yape_amount" name="yape_amount" value="0.00">
+                                        </div>
+                                        <div class="form-group mr-3 mb-2 supervisor-amount-group" id="group_plin_amount" style="display:none;">
+                                            <label class="control-label">Monto Plin:</label>
+                                            <input type="number" step="0.01" min="0" class="form-control supervisor-amount-input" id="plin_amount" name="plin_amount" value="0.00">
+                                        </div>
+                                        <div class="form-group mr-3 mb-2 supervisor-amount-group" id="group_transferencia_amount" style="display:none;">
+                                            <label class="control-label">Monto Transferencia:</label>
+                                            <input type="number" step="0.01" min="0" class="form-control supervisor-amount-input" id="transferencia_amount" name="transferencia_amount" value="0.00">
+                                        </div>
+                                        <div class="form-group mr-3 mb-2 supervisor-amount-group" id="group_deposito_amount" style="display:none;">
+                                            <label class="control-label">Monto Depósito:</label>
+                                            <input type="number" step="0.01" min="0" class="form-control supervisor-amount-input" id="deposito_amount" name="deposito_amount" value="0.00">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
 
                              <div class="row" id="rowOperationNumber" style="display: none;">
                                 <div class="col-lg-12">
@@ -383,6 +440,7 @@
     </div>
     <script type="application/javascript">
         var client_default = `{{ client_default|safe }}`
+        var is_supervisor = {{ is_supervisor|yesno:"true,false" }};
         vents.details.igv = parseFloat('{{ igv }}');
         $(function () {
             vents.list_products();

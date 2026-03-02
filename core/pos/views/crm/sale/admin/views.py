@@ -131,6 +131,14 @@ class SaleAdminCreateView(PermissionMixin, CreateView):
                     payment_bank_id = request.POST.get('payment_bank', '').strip()
                     if payment_bank_id:
                         sale.payment_bank_id = int(payment_bank_id)
+                    # Guardar montos desglosados si es supervisor con pagos múltiples
+                    is_supervisor = request.user.groups.filter(name='Supervisor').exists()
+                    if is_supervisor:
+                        sale.efectivo_amount = float(request.POST.get('efectivo_amount', 0) or 0)
+                        sale.yape_amount = float(request.POST.get('yape_amount', 0) or 0)
+                        sale.plin_amount = float(request.POST.get('plin_amount', 0) or 0)
+                        sale.transferencia_amount = float(request.POST.get('transferencia_amount', 0) or 0)
+                        sale.deposito_amount = float(request.POST.get('deposito_amount', 0) or 0)
                     sale.igv = float(Company.objects.first().igv) / 100
                     # sale.dscto = float(request.POST['dscto']) / 100
                     sale.dscto = float(request.POST['dscto'])
@@ -186,22 +194,17 @@ class SaleAdminCreateView(PermissionMixin, CreateView):
                         ctascollect.validate_debt()
                         
                     elif sale.payment_condition == 'contado':
-                        if sale.payment_method == 'efectivo':
+                        # Detectar métodos de pago (puede ser múltiple separado por comas en supervisor)
+                        methods = [m.strip() for m in sale.payment_method.split(',')]
+                        if 'efectivo' in methods:
                             sale.cash = float(request.POST['cash'])
                             sale.change = float(sale.cash) - sale.total
-                            sale.save()
-                        elif sale.payment_method in ['yape', 'plin']:
+                        if any(m in methods for m in ['yape', 'plin', 'transferencia', 'deposito']):
                             sale.operation_number = request.POST.get('operation_number', '')
                             operation_date = request.POST.get('operation_date', '')
                             if operation_date:
                                 sale.operation_date = operation_date
-                            sale.save()
-                        elif sale.payment_method in ['transferencia', 'deposito']:
-                            sale.operation_number = request.POST.get('operation_number', '')
-                            operation_date = request.POST.get('operation_date', '')
-                            if operation_date:
-                                sale.operation_date = operation_date
-                            sale.save()
+                        sale.save()
 
                     data = {'id': sale.id}
             elif action == 'search_products':
@@ -277,6 +280,8 @@ class SaleAdminCreateView(PermissionMixin, CreateView):
         client_default = Client.objects.filter(user__full_name='NN NN').first()
         context['client_default'] = json.dumps(client_default.toJSON()) if client_default else 'null'
         context['igv'] = Company.objects.first().get_igv()
+        # Flag para modo supervisor (formas de pago múltiples)
+        context['is_supervisor'] = self.request.user.groups.filter(name='Supervisor').exists()
         return context
 
 
