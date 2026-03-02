@@ -1046,7 +1046,32 @@ $(function () {
                 $('#rowSupervisorAmounts').hide();
             }
             updateSupervisorFieldVisibility();
+            // Recalcular total al cambiar checkboxes (algún monto pudo volver a 0)
+            updateSupervisorTotal();
         });
+
+        // Calcular total en tiempo real al escribir montos individuales
+        $(document).on('input change', '.supervisor-amount-input', function () {
+            updateSupervisorTotal();
+        });
+    }
+
+    function updateSupervisorTotal() {
+        var sum = 0;
+        $('.chk-payment-method:checked').each(function () {
+            var method = $(this).val();
+            var val = parseFloat($('#' + method + '_amount').val());
+            if (!isNaN(val)) sum += val;
+        });
+        sum = parseFloat(sum.toFixed(2));
+        // Actualizar total, amount, cash y estado interno
+        $('input[name="total"]').val(sum.toFixed(2));
+        $('input[name="amount"]').val(sum.toFixed(2));
+        $('input[name="subtotal"]').val(sum.toFixed(2));
+        vents.details.subtotal = sum;
+        vents.details.total = sum;
+        amount_user_edited = true;
+        total_user_edited = true;
     }
 
     function updateSupervisorFieldVisibility() {
