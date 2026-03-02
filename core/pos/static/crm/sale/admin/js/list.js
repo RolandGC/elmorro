@@ -28,44 +28,34 @@ function getData(all) {
             dataSrc: ""
         },
         columns: [
-            {data: "id"},
-            {data: "client.user.full_name"},
-            {data: "payment_condition.name"},
-            {data: "payment_method.name"},
-            {data: "type_voucher.name"},
-            {data: "date_joined"},
-            {data: "total"},
-            {data: "id"},
+            { data: "serie" },
+            { data: "client.user.full_name" },
+            //{ data: "payment_condition.name" },
+            { data: "payment_method.name" },
+            //{ data: "type_voucher.name" },
+            { data: "date_joined" },
+            { data: "comment" },
+            { data: "total" },
+            { data: "id" },
         ],
-        columnDefs: [
-            {
-                targets: [2],
-                class: 'text-center',
-                render: function (data, type, row) {
-                    if (row.payment_condition.id === 'credito') {
-                        return '<span class="badge badge-warning">' + row.payment_condition.name + '</span>';
-                    }
-                    return '<span class="badge badge-success">' + row.payment_condition.name + '</span>';
-                }
-            },
-            {
+        columnDefs: [{
                 targets: [3, 4, 5],
                 class: 'text-center',
-                render: function (data, type, row) {
+                render: function(data, type, row) {
                     return data;
                 }
             },
             {
                 targets: [-2],
                 class: 'text-center',
-                render: function (data, type, row) {
+                render: function(data, type, row) {
                     return 'S/.' + parseFloat(data).toFixed(2);
                 }
             },
             {
                 targets: [-1],
                 class: 'text-center',
-                render: function (data, type, row) {
+                render: function(data, type, row) {
                     var buttons = '';
                     buttons += '<a class="btn btn-info btn-xs btn-flat" rel="detail"><i class="fas fa-folder-open"></i></a> ';
                     buttons += '<a href="/pos/crm/sale/print/voucher/' + row.id + '/" target="_blank" class="btn btn-primary btn-xs btn-flat"><i class="fas fa-print"></i></a> ';
@@ -74,22 +64,22 @@ function getData(all) {
                 }
             },
         ],
-        rowCallback: function (row, data, index) {
+        rowCallback: function(row, data, index) {
 
         },
-        initComplete: function (settings, json) {
+        initComplete: function(settings, json) {
 
         }
     });
 }
 
-$(function () {
+$(function() {
 
     input_daterange = $('input[name="date_range"]');
 
     $('#data tbody')
         .off()
-        .on('click', 'a[rel="detail"]', function () {
+        .on('click', 'a[rel="detail"]', function() {
             $('.tooltip').remove();
             var tr = tblSale.cell($(this).closest('td, li')).index();
             var row = tblSale.row(tr.row).data();
@@ -112,14 +102,14 @@ $(function () {
                 scrollX: true,
                 scrollCollapse: true,
                 columns: [
-                    {data: "product.name"},
+                    { data: "product.name" },
                     //{data: "product.category.name"},
                     // {data: "price"},
                     //{data: "cant"},
                     //{data: "subtotal"},
                     // {data: "dscto"},
                     // {data: "total_dscto"},
-                    {data: "total"},
+                    { data: "total" },
                 ],
                 columnDefs: [
                     // {
@@ -147,27 +137,28 @@ $(function () {
             });
 
             var invoice = [];
-            invoice.push({'id': 'Cliente', 'name': row.client.user.full_name});
+            invoice.push({ 'id': 'Cliente', 'name': row.client.user.full_name });
             //invoice.push({'id': 'Forma de Pago', 'name': row.payment_condition.name});
-            invoice.push({'id': 'Método de Pago', 'name': row.payment_method.name});
+            invoice.push({ 'id': 'Acuse de recibo', 'name': row.serie });
+            invoice.push({ 'id': 'Método de Pago', 'name': row.payment_method.name });
             //invoice.push({'id': 'Subtotal', 'name': 'S/.' + row.subtotal});
             // invoice.push({'id': 'Igv', 'name': row.igv + ' %'});
             // invoice.push({'id': 'Total Igv', 'name': 'S/.' + row.total_igv});
             // invoice.push({'id': 'Descuento', 'name': row.dscto + ' %'});
             // invoice.push({'id': 'Total Descuento', 'name': 'S/.' + row.total_dscto});
-            invoice.push({'id': 'Total a pagar', 'name': 'S/.' + row.total});
+            invoice.push({ 'id': 'Total a pagar', 'name': 'S/.' + row.total });
             if (row.payment_method.id === 'efectivo') {
                 // invoice.push({'id': 'Efectivo', 'name': 'S/.' + row.cash});
                 // invoice.push({'id': 'Vuelto', 'name': 'S/.' + row.change});
             } else if (row.payment_method.id === 'tarjeta_debito_credito') {
-                invoice.push({'id': 'Número de tarjeta', 'name': row.card_number});
-                invoice.push({'id': 'Titular de tarjeta', 'name': row.titular});
-                invoice.push({'id': 'Monto a debitar', 'name': 'S/.' + row.amount_debited});
+                invoice.push({ 'id': 'Número de tarjeta', 'name': row.card_number });
+                invoice.push({ 'id': 'Titular de tarjeta', 'name': row.titular });
+                invoice.push({ 'id': 'Monto a debitar', 'name': 'S/.' + row.amount_debited });
             } else if (row.payment_method.id === 'efectivo_tarjeta') {
-                invoice.push({'id': 'Efectivo', 'name': 'S/.' + row.cash});
-                invoice.push({'id': 'Número de tarjeta', 'name': row.card_number});
-                invoice.push({'id': 'Titular de tarjeta', 'name': row.titular});
-                invoice.push({'id': 'Monto a debitar', 'name': 'S/.' + row.amount_debited});
+                invoice.push({ 'id': 'Efectivo', 'name': 'S/.' + row.cash });
+                invoice.push({ 'id': 'Número de tarjeta', 'name': row.card_number });
+                invoice.push({ 'id': 'Titular de tarjeta', 'name': row.titular });
+                invoice.push({ 'id': 'Monto a debitar', 'name': 'S/.' + row.amount_debited });
             }
 
             $('#tblInvoice').DataTable({
@@ -179,18 +170,16 @@ $(function () {
                 ordering: false,
                 info: false,
                 columns: [
-                    {data: "id"},
-                    {data: "name"},
+                    { data: "id" },
+                    { data: "name" },
                 ],
-                columnDefs: [
-                    {
-                        targets: [0, 1],
-                        class: 'text-left',
-                        render: function (data, type, row) {
-                            return data;
-                        }
-                    },
-                ]
+                columnDefs: [{
+                    targets: [0, 1],
+                    class: 'text-left',
+                    render: function(data, type, row) {
+                        return data;
+                    }
+                }, ]
             });
 
             $('.nav-tabs a[href="#home"]').tab('show');
@@ -206,7 +195,7 @@ $(function () {
                 format: 'YYYY-MM-DD',
             }
         })
-        .on('apply.daterangepicker', function (ev, picker) {
+        .on('apply.daterangepicker', function(ev, picker) {
             getData(false);
         });
 
@@ -214,11 +203,11 @@ $(function () {
 
     getData(false);
 
-    $('.btnSearch').on('click', function () {
+    $('.btnSearch').on('click', function() {
         getData(false);
     });
 
-    $('.btnSearchAll').on('click', function () {
+    $('.btnSearchAll').on('click', function() {
         getData(true);
     });
 });

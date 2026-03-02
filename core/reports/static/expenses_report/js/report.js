@@ -10,7 +10,7 @@ function initTable() {
         destroy: true,
     });
 
-    $.each(tblReport.settings()[0].aoColumns, function (key, value) {
+    $.each(tblReport.settings()[0].aoColumns, function(key, value) {
         columns.push(value.sWidthOrig);
     });
 }
@@ -40,13 +40,14 @@ function generateReport(all) {
             data: parameters,
             dataSrc: ''
         },
-        order: [[0, 'asc']],
+        order: [
+            [0, 'asc']
+        ],
         paging: false,
         ordering: true,
         searching: false,
         dom: 'Bfrtip',
-        buttons: [
-            {
+        buttons: [{
                 extend: 'excelHtml5',
                 text: 'Descargar Excel <i class="fas fa-file-excel"></i>',
                 titleAttr: 'Excel',
@@ -60,7 +61,7 @@ function generateReport(all) {
                 download: 'open',
                 orientation: 'landscape',
                 pageSize: 'LEGAL',
-                customize: function (doc) {
+                customize: function(doc) {
                     doc.styles = {
                         header: {
                             fontSize: 18,
@@ -88,16 +89,15 @@ function generateReport(all) {
                     doc.content[1].table.widths = columns;
                     doc.content[1].margin = [0, 35, 0, 0];
                     doc.content[1].layout = {};
-                    doc['footer'] = (function (page, pages) {
+                    doc['footer'] = (function(page, pages) {
                         return {
-                            columns: [
-                                {
+                            columns: [{
                                     alignment: 'left',
-                                    text: ['Fecha de creación: ', {text: current_date}]
+                                    text: ['Fecha de creación: ', { text: current_date }]
                                 },
                                 {
                                     alignment: 'right',
-                                    text: ['página ', {text: page.toString()}, ' de ', {text: pages.toString()}]
+                                    text: ['página ', { text: page.toString() }, ' de ', { text: pages.toString() }]
                                 }
                             ],
                             margin: 20
@@ -108,32 +108,30 @@ function generateReport(all) {
             }
         ],
         columns: [
-            {data: "id"},
-            {data: "typeexpense.name"},
-            {data: "date_joined"},
-            {data: "desc"},
-            {data: "valor"},
+            { data: "expense_serie" },
+            { data: "typeexpense.name" },
+            { data: "date_joined" },
+            { data: "desc" },
+            { data: "valor" },
         ],
-        columnDefs: [
-            {
-                targets: [-1],
-                orderable: false,
-                class: 'text-center',
-                render: function (data, type, row) {
-                    return 'S/.' + parseFloat(data).toFixed(2);
-                }
+        columnDefs: [{
+            targets: [-1],
+            orderable: false,
+            class: 'text-center',
+            render: function(data, type, row) {
+                return 'S/.' + parseFloat(data).toFixed(2);
             }
-        ],
-        rowCallback: function (row, data, index) {
+        }],
+        rowCallback: function(row, data, index) {
 
         },
-        initComplete: function (settings, json) {
+        initComplete: function(settings, json) {
 
         },
     });
 }
 
-$(function () {
+$(function() {
 
     current_date = new moment().format('YYYY-MM-DD');
     input_daterange = $('input[name="date_range"]');
@@ -153,11 +151,11 @@ $(function () {
 
     generateReport(false);
 
-    $('.btnSearchReport').on('click', function () {
+    $('.btnSearchReport').on('click', function() {
         generateReport(false);
     });
 
-    $('.btnSearchAll').on('click', function () {
+    $('.btnSearchAll').on('click', function() {
         generateReport(true);
     });
 });

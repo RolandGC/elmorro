@@ -28,93 +28,92 @@ function getData(all) {
             dataSrc: ""
         },
         columns: [
-            {data: "id"},
-            {data: "datetime_close"},
-            {data: "efectivo"},
-            {data: "yape"},
-            {data: "plin"},
-            {data: "transferencia"},
-            {data: "deposito"},
-            {data: "bills"},
-            {data: "initial_box"},
-            {data: "box_final"},
-            {data: "desc"},
-            {data: "options"},
+            { data: "id" },
+            { data: "datetime_close" },
+            { data: "efectivo" },
+            { data: "yape" },
+            { data: "plin" },
+            { data: "transferencia" },
+            { data: "deposito" },
+            { data: "bills" },
+            { data: "initial_box" },
+            { data: "box_final" },
+            { data: "desc" },
+            { data: "options" },
         ],
-        columnDefs: [
-            {
+        columnDefs: [{
                 targets: [0],
                 class: 'text-center',
-                render: function (data, type, row) {
+                render: function(data, type, row) {
                     return data
                 }
             },
             {
                 targets: [1],
                 class: 'text-center',
-                render: function (data, type, row) {
+                render: function(data, type, row) {
                     return data
                 }
             },
             {
                 targets: [2],
                 class: 'text-center',
-                render: function (data, type, row) {
+                render: function(data, type, row) {
                     return 'S/.' + data
                 }
             },
             {
                 targets: [3],
                 class: 'text-center',
-                render: function (data, type, row) {
+                render: function(data, type, row) {
                     return 'S/.' + data
                 }
             },
             {
                 targets: [4],
                 class: 'text-center',
-                render: function (data, type, row) {
+                render: function(data, type, row) {
                     return 'S/.' + data
                 }
             },
             {
                 targets: [5],
                 class: 'text-center',
-                render: function (data, type, row) {
+                render: function(data, type, row) {
                     return 'S/.' + data
                 }
             },
             {
                 targets: [6],
                 class: 'text-center',
-                render: function (data, type, row) {
+                render: function(data, type, row) {
                     return 'S/.' + data
                 }
             },
             {
                 targets: [7],
                 class: 'text-center',
-                render: function (data, type, row) {
+                render: function(data, type, row) {
                     return 'S/.' + data
                 }
             },
             {
                 targets: [8],
                 class: 'text-center',
-                render: function (data, type, row) {
+                render: function(data, type, row) {
                     return 'S/.' + data
                 }
             },
             {
                 targets: [9],
                 class: 'text-center',
-                render: function (data, type, row) {
+                render: function(data, type, row) {
                     return 'S/.' + data
                 }
             },
             {
                 targets: [10],
-                render: function (data, type, row) {
+                render: function(data, type, row) {
                     return data || '-'
                 }
             },
@@ -122,25 +121,27 @@ function getData(all) {
                 targets: [11],
                 class: 'text-center',
                 orderable: false,
-                render: function (data, type, row) {
+                render: function(data, type, row) {
                     var buttons = '';
+                    buttons += '<a href="/pos/frm/box/print/ticket/' + row.id + '/" target="_blank" class="btn btn-primary btn-xs btn-flat"><i class="fas fa-print"></i></a> ';
                     buttons += '<a href="/pos/frm/box/update/' + row.id + '/" class="btn btn-warning btn-xs btn-flat"><i class="fas fa-edit"></i></a> ';
                     buttons += '<a href="/pos/frm/box/delete/' + row.id + '/" class="btn btn-danger btn-xs btn-flat"><i class="fas fa-trash"></i></a> ';
                     return buttons;
                 }
             },
-            
+
+
         ],
-        rowCallback: function (row, data, index) {
-            
+        rowCallback: function(row, data, index) {
+
         },
-        initComplete: function (settings, json) {
-            
+        initComplete: function(settings, json) {
+
         }
     });
 }
 
-$(function () {
+$(function() {
 
     input_daterange = $('input[name="date_range"]');
 
@@ -152,7 +153,7 @@ $(function () {
                 format: 'YYYY-MM-DD',
             }
         })
-        .on('apply.daterangepicker', function (ev, picker) {
+        .on('apply.daterangepicker', function(ev, picker) {
             getData(false);
         });
 
@@ -160,17 +161,17 @@ $(function () {
 
     getData(false);
 
-    $('.btnSearch').on('click', function () {
+    $('.btnSearch').on('click', function() {
         getData(false);
     });
 
-    $('.btnSearchAll').on('click', function () {
+    $('.btnSearchAll').on('click', function() {
         getData(true);
     });
 
     $('#data tbody')
         .off()
-        .on('click', 'a[rel="payments"]', function () {
+        .on('click', 'a[rel="payments"]', function() {
             $('.tooltip').remove();
             var tr = tblCtasCollect.cell($(this).closest('td, li')).index(),
                 row = tblCtasCollect.row(tr.row).data();
@@ -187,96 +188,98 @@ $(function () {
                     headers: {
                         'X-CSRFToken': csrftoken
                     },
-                    data: function (d) {
+                    data: function(d) {
                         d.action = 'search_pays';
                         d.id = row.id;
                     },
                     dataSrc: ""
                 },
                 columns: [
-                    {data: "id"},
-                    {data: "hours_close"},
-                    {data: "date_close"},
-                    {data: "cash_sale"},
-                    {data: "cash_credit"},
-                    {data: "sale_card"},
-                    {data: "initial_box"},
-                    {data: "box_final"},
-                    {data: "desc"},
+                    { data: "id" },
+                    { data: "hours_close" },
+                    { data: "date_close" },
+                    { data: "cash_sale" },
+                    { data: "cash_credit" },
+                    { data: "sale_card" },
+                    { data: "initial_box" },
+                    { data: "box_final" },
+                    { data: "desc" },
                 ],
-                columnDefs: [
-                    {
+                columnDefs: [{
                         targets: [0],
                         class: 'text-center',
-                        render: function (data, type, row) {
+                        render: function(data, type, row) {
                             return data
                         }
                     },
                     {
                         targets: [1],
                         class: 'text-center',
-                        render: function (data, type, row) {
+                        render: function(data, type, row) {
                             return data
                         }
                     },
                     {
                         targets: [2],
                         class: 'text-center',
-                        render: function (data, type, row) {
+                        render: function(data, type, row) {
                             return data
                         }
                     },
                     {
                         targets: [3],
                         class: 'text-center',
-                        render: function (data, type, row) {
+                        render: function(data, type, row) {
                             return data
                         }
                     },
                     {
                         targets: [4],
                         class: 'text-center',
-                        render: function (data, type, row) {
+                        render: function(data, type, row) {
                             return data
                         }
                     },
                     {
                         targets: [5],
                         class: 'text-center',
-                        render: function (data, type, row) {
+                        render: function(data, type, row) {
                             return data
                         }
                     },
                     {
                         targets: [6],
                         class: 'text-center',
-                        render: function (data, type, row) {
+                        render: function(data, type, row) {
                             return 'S/.' + data
                         }
                     },
                     {
                         targets: [7],
                         class: 'text-center',
-                        render: function (data, type, row) {
+                        render: function(data, type, row) {
                             return 'S/.' + data
                         }
                     },
                     {
                         targets: [-1],
                         class: 'text-center',
-                        render: function (data, type, row) {
+                        render: function(data, type, row) {
                             var buttons = '';
+                            // print link similar to the expense list
+                            buttons += '<a href="/pos/frm/expenses/print/ticket/' + row.id + '/" target="_blank" class="btn btn-primary btn-xs btn-flat"><i class="fas fa-print"></i></a> ';
                             buttons += '<a href="/pos/frm/expenses/update/' + row.id + '/" class="btn btn-warning btn-xs btn-flat"><i class="fas fa-edit"></i></a> ';
                             buttons += '<a href="/pos/frm/expenses/delete/' + row.id + '/" class="btn btn-danger btn-xs btn-flat"><i class="fas fa-trash"></i></a> ';
                             return buttons;
                         }
                     },
+
                 ],
-                rowCallback: function (row, data, index) {
-                   
+                rowCallback: function(row, data, index) {
+
                 },
-                initComplete: function (settings, json) {
-                   
+                initComplete: function(settings, json) {
+
                 }
             });
             $('#myModalPayments').modal('show');
@@ -284,18 +287,17 @@ $(function () {
 
     $('#tblPayments tbody')
         .off()
-        .on('click', 'a[rel="delete"]', function () {
+        .on('click', 'a[rel="delete"]', function() {
             $('.tooltip').remove();
             var tr = tblPaymentsCtasCollect.cell($(this).closest('td, li')).index(),
                 row = tblPaymentsCtasCollect.row(tr.row).data();
             submit_with_ajax('Notificación',
                 '¿Estas seguro de eliminar el registro?',
-                pathname,
-                {
+                pathname, {
                     'id': row.id,
                     'action': 'delete_pay'
                 },
-                function () {
+                function() {
                     tblCtasCollect = tblCtasCollect.ajax.reload();
                     tblPaymentsCtasCollect.ajax.reload();
                 }

@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+{% load static %}
+{% load tz %}
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Ticket de Cierre de Caja</title>
+    <style>
+      @page {
+        width: 64mm;
+        height: 145mm;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: 'Roboto', 'Lucida Grande', Verdana, Arial, sans-serif;
+        padding: 0;
+        margin: 0;
+        font-size: 8px;
+        color: black !important;
+        page-break-after: avoid;
+      }
+      p {
+        font-size: 10px;
+        margin: 2px 0;
+        padding: 0;
+      }
+      .content {
+        width: 64mm;
+        height: 145mm;
+        padding: 5px;
+        page-break-inside: avoid;
+      }
+      .name-company {
+        margin-top: 5px;
+        font-size: 14px;
+        font-weight: bold;
+        text-transform: uppercase;
+        margin-bottom: 0;
+        text-align: center;
+        line-height: 1;
+      }
+      .desc-company {
+        font-size: 9px;
+        margin-top: 0;
+        margin-bottom: 2px;
+        line-height: 1.1;
+        text-align: center;
+      }
+      .title-ticket {
+        font-size: 12px;
+        font-weight: bold;
+        text-transform: uppercase;
+        text-align: center;
+        margin: 3px 0;
+        border-bottom: 2px solid black;
+        padding-bottom: 2px;
+      }
+      .border-dotted {
+        border-top: 1px dotted black;
+        border-bottom: 1px dotted black;
+        padding: 2px 0;
+      }
+      .info-section {
+        font-size: 9px;
+        margin-top: 3px;
+        margin-bottom: 3px;
+        line-height: 1.3;
+      }
+      .info-section p {
+        margin: 1px 0;
+        padding: 0;
+      }
+      .info-section b {
+        font-weight: bold;
+      }
+      .section-label {
+        font-size: 9px;
+        font-weight: bold;
+        margin-top: 3px;
+        margin-bottom: 2px;
+        text-transform: uppercase;
+        border-bottom: 1px solid black;
+      }
+      .detail-row {
+        display: flex;
+        justify-content: space-between;
+        margin: 2px 0;
+        padding: 1px 0;
+        border-bottom: 1px dotted #ccc;
+      }
+      .detail-label {
+        font-weight: bold;
+        width: 60%;
+      }
+      .detail-value {
+        text-align: right;
+        width: 40%;
+      }
+      .total-section {
+        margin-top: 3px;
+        padding-top: 3px;
+        border-top: 2px solid black;
+        text-align: right;
+        font-weight: bold;
+        font-size: 11px;
+      }
+      .img-logo {
+        margin-top: 2px;
+        width: 60px;
+        height: 40px;
+        margin-bottom: 3px;
+      }
+      .footer-text {
+        font-size: 8px;
+        text-align: center;
+        margin-top: 3px;
+        padding-top: 3px;
+        border-top: 1px dotted black;
+        line-height: 1.2;
+      }
+      .text-center {
+        text-align: center;
+      }
+      .text-right {
+        text-align: right;
+      }
+      table {
+        width: 100%;
+        font-size: 9px;
+        border-collapse: collapse;
+      }
+      table td {
+        padding: 1px 2px;
+        line-height: 1.1;
+      }
+      .stamp {
+        text-align: center;
+        margin-top: 5px;
+        font-weight: bold;
+        font-size: 12px;
+        color: #666;
+        border: 2px dashed #999;
+        padding: 3px;
+        display: inline-block;
+        width: 100%;
+        box-sizing: border-box;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="content">
+      {% if company.get_image %}
+        <div class="text-center">
+          <img src="{{ company.get_image }}" class="img-logo" style="display: block; margin: 0 auto;" />
+        </div>
+      {% endif %}
+      <h1 class="name-company">{{ company.name }}</h1>
+      <p class="desc-company">
+        {{ company.address }}<br />
+        Teléfono: {{ company.phone }}<br />
+        Celular: {{ company.mobile }}<br />
+      </p>
+
+      <div class="title-ticket">✓ CIERRE DE CAJA</div>
+
+      <div class="info-section border-dotted">
+        <p>
+          <b>Usuario:</b> {{ box.user.full_name }}
+        </p>
+        <p>
+          <b>Fecha y Hora Cierre:</b> {% if box.datetime_close %}
+            {{ box.datetime_close|localtime|date:'d/m/Y H:i:s' }}
+          {% else %}
+            -
+          {% endif %}
+        </p>
+        <p>
+          <b>Fecha Registro:</b> {% if box.date_joined %}
+            {{ box.date_joined|date:'d/m/Y' }}
+          {% else %}
+            -
+          {% endif %}
+        </p>
+      </div>
+
+      <div class="section-label">DETALLE DE CAJA</div>
+      <div class="expense-detail">
+        <div class="detail-row">
+          <div class="detail-label">Efectivo:</div>
+          <div class="detail-value">S/ {{ box.efectivo|floatformat:2 }}</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Yape:</div>
+          <div class="detail-value">S/ {{ box.yape|floatformat:2 }}</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Plin:</div>
+          <div class="detail-value">S/ {{ box.plin|floatformat:2 }}</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Transferencia:</div>
+          <div class="detail-value">S/ {{ box.transferencia|floatformat:2 }}</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Depósito:</div>
+          <div class="detail-value">S/ {{ box.deposito|floatformat:2 }}</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Gastos:</div>
+          <div class="detail-value">S/ {{ box.bills|floatformat:2 }}</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Caja Inicial:</div>
+          <div class="detail-value">S/ {{ box.initial_box|floatformat:2 }}</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Caja Final:</div>
+          <div class="detail-value">S/ {{ box.box_final|floatformat:2 }}</div>
+        </div>
+      </div>
+
+      {% if box.desc %}
+        <div class="section-label">DESCRIPCIÓN</div>
+        <p style="font-size:8px;">{{ box.desc }}</p>
+      {% endif %}
+
+      <div class="footer-text">
+        <p style="margin: 2px 0;">Generado automáticamente</p>
+        <p style="margin: 2px 0; font-size: 7px;">{{ box.datetime_close|localtime|date:'d/m/Y H:i:s' }}</p>
+      </div>
+
+      <div class="stamp">CIERRE REGISTRADO</div>
+    </div>
+  </body>
+</html>

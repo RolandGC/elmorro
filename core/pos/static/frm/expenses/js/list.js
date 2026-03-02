@@ -27,25 +27,24 @@ function getData(all) {
             dataSrc: ""
         },
         columns: [
-            {data: "id"},
-            {data: "typeexpense.name"},
-            {data: "date_joined"},
-            {data: "valor"},
-            {data: "desc"},
-            {data: "id"},
+            { data: "expense_serie" },
+            { data: "typeexpense.name" },
+            { data: "date_joined" },
+            { data: "valor" },
+            { data: "desc" },
+            { data: "id" },
         ],
-        columnDefs: [
-            {
+        columnDefs: [{
                 targets: [-3],
                 class: 'text-center',
-                render: function (data, type, row) {
+                render: function(data, type, row) {
                     return 'S/.' + parseFloat(data).toFixed(2);
                 }
             },
             {
                 targets: [-1],
                 class: 'text-center',
-                render: function (data, type, row) {
+                render: function(data, type, row) {
                     var buttons = '';
                     buttons += '<a href="/pos/frm/expenses/print/ticket/' + row.id + '/" target="_blank" class="btn btn-primary btn-xs btn-flat"><i class="fas fa-print"></i></a> ';
                     buttons += '<a href="/pos/frm/expenses/update/' + row.id + '/" class="btn btn-warning btn-xs btn-flat"><i class="fas fa-edit"></i></a> ';
@@ -54,16 +53,16 @@ function getData(all) {
                 }
             },
         ],
-        rowCallback: function (row, data, index) {
+        rowCallback: function(row, data, index) {
 
         },
-        initComplete: function (settings, json) {
+        initComplete: function(settings, json) {
 
         }
     });
 }
 
-$(function () {
+$(function() {
 
     input_daterange = $('input[name="date_range"]');
 
@@ -75,7 +74,7 @@ $(function () {
                 format: 'YYYY-MM-DD',
             }
         })
-        .on('apply.daterangepicker', function (ev, picker) {
+        .on('apply.daterangepicker', function(ev, picker) {
             getData(false);
         });
 
@@ -83,11 +82,11 @@ $(function () {
 
     getData(false);
 
-    $('.btnSearch').on('click', function () {
+    $('.btnSearch').on('click', function() {
         getData(false);
     });
 
-    $('.btnSearchAll').on('click', function () {
+    $('.btnSearchAll').on('click', function() {
         getData(true);
     });
 });

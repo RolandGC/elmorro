@@ -1,13 +1,21 @@
 import json
 from django.core.serializers.json import DjangoJSONEncoder
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse_lazy
-from django.views.generic import CreateView, TemplateView, ListView, UpdateView, DeleteView, FormView
+from django.views.generic import CreateView, TemplateView, ListView, UpdateView, DeleteView, FormView, View
 from core.security.mixins import PermissionMixin, ModuleMixin
+from django.template.loader import get_template
+from weasyprint import HTML, CSS
+from config import settings
+import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 from core.pos.forms import BoxForm, Box, BoxFormListView
+from core.pos.models import Company
 
 
 
@@ -201,6 +209,30 @@ class BoxCreateView(PermissionMixin, CreateView):
         context['title'] = 'Nuevo registro de un cierre de caja'
         context['action'] = 'add'
         return context
+
+
+class BoxPrintTicketView(LoginRequiredMixin, View):
+    """Genera un PDF con los datos del cierre de caja"""
+    success_url = reverse_lazy('box_list')
+
+    def get(self, request, *args, **kwargs):
+        try:
+            box = Box.objects.get(pk=self.kwargs['pk'])
+            company = Company.objects.first()
+            context = {
+                'box': box,
+                'company': company
+            }
+            template = get_template('frm/box/print/ticket.html')
+            html_template = template.render(context).encode(encoding="UTF-8")
+            url_css = os.path.join(settings.BASE_DIR, 'static/lib/bootstrap-4.6.0/css/bootstrap.min.css')
+            pdf_file = HTML(string=html_template, base_url=request.build_absolute_uri()).write_pdf(
+                stylesheets=[CSS(url_css)], presentational_hints=True)
+            response = HttpResponse(pdf_file, content_type='application/pdf')
+            return response
+        except Exception as e:
+            logger.error(f"Error generating box print: {str(e)}", exc_info=True)
+        return HttpResponseRedirect(self.success_url)
 
 
 class BoxUpdateView(PermissionMixin, UpdateView):
