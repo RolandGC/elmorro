@@ -76,6 +76,7 @@ function searchUserSales() {
                 alert_sweetalert('error', 'Error', data.error, null, 3000);
                 return;
             }
+            console.log('dataaa:', data);
 
             currentUser = data.user;
             $('#detailContainer').show();
@@ -103,11 +104,11 @@ function showPaymentMethodsSummary(methodsData, totalGeneral, totalCantidad) {
     container.empty();
 
     var colors = {
-        'efectivo': 'success',
-        'yape': 'warning',
-        'plin': 'info',
-        'transferencia': 'primary',
-        'deposito': 'danger'
+        'efectivo': '#28a745', // verde
+        'yape': '#730582', // morado
+        'plin': '#34d1e2', // celeste
+        'transferencia': '#f4d03f', // amarillo suave
+        'deposito': '#e09289' // rojo suave
     };
 
     $.each(methodsData, function(method, data) {
@@ -115,8 +116,8 @@ function showPaymentMethodsSummary(methodsData, totalGeneral, totalCantidad) {
             var color = colors[method] || 'secondary';
             container.append(`
                 <div class="col-lg-4 col-md-6">
-                    <div class="card card-payment-method" style="border-left: 5px solid ${color};">
-                        <div class="card-header bg-gradient-${color}">
+                    <div class="card card-payment-method" style="background:  #ffffff);">
+                        <div class="card-header " style= "background-color: ${color}; background: linear-gradient(155deg, ${color}, #ffffff);">
                             <h6 class="payment-method-title text-white m-0">
                                 <i class="fas fa-money-bill"></i> ${data.name.toUpperCase()}
                             </h6>
@@ -181,14 +182,14 @@ function fillSalesTable(methodsData) {
 
     $.each(methodsData, function(method, methodData) {
         $.each(methodData.sales, function(index, sale) {
+            console.log('Venta:', sale);
             tbody.append(`
                 <tr>
-                    <td class="text-center">#${sale.nro}</td>
+                    <td class="text-center">${sale.serie}</td>
                     <td class="text-center">${sale.date}</td>
                     <td class="text-center"><span class="badge badge-info">${sale.type_voucher}</span></td>
                     <td>${sale.client}</td>
-                    <td class="text-center"><strong>${sale.cantidad}</strong></td>
-                    <td class="text-right">S/. ${parseFloat(sale.subtotal).toFixed(2)}</td>
+                    <td>${sale.comment}</td>
                     
                     <td class="text-right"><strong>S/. ${parseFloat(sale.total).toFixed(2)}</strong></td>
                 </tr>
