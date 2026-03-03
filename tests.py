@@ -5,7 +5,7 @@ from core.pos.models import *
 
 # Crear o actualizar Dashboard
 dashboard, created = Dashboard.objects.update_or_create(name='El Morro SAC')
-dashboard.icon = 'fas fa-shopping-cart'
+dashboard.icon = 'fas fa-money-bill-wave'
 dashboard.layout = 1
 dashboard.card = ' '
 dashboard.navbar = 'navbar-dark navbar-primary'
@@ -361,7 +361,7 @@ module.name = 'Cobranzas'
 module.is_active = True
 module.is_vertical = True
 module.is_visible = True
-module.icon = 'fas fa-shopping-cart'
+module.icon = 'fas fa-money-bill-wave'
 module.description = 'Permite administrar las cobranzas'
 module.save()
 for p in Permission.objects.filter(content_type__model=Sale._meta.label.split('.')[1].lower()):
@@ -373,7 +373,7 @@ module.name = 'Cobranzas'
 module.is_active = True
 module.is_vertical = False
 module.is_visible = True
-module.icon = 'fas fa-shopping-cart'
+module.icon = 'fas fa-money-bill-wave'
 module.description = 'Permite administrar las cobranzas de los clientes'
 module.save()
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
