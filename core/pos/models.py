@@ -133,6 +133,57 @@ class PaymentBank(models.Model):
         ordering = ['-id']
 
 
+class Currency(models.Model):
+    name = models.CharField(max_length=50, unique=True, verbose_name='Nombre')
+    code = models.CharField(max_length=10, unique=True, verbose_name='Código')
+    symbol = models.CharField(max_length=5, verbose_name='Símbolo')
+    is_active = models.BooleanField(default=True, verbose_name='¿Activo?')
+
+    def __str__(self):
+        return '{} ({})'.format(self.name, self.symbol)
+
+    def toJSON(self):
+        item = model_to_dict(self)
+        return item
+
+    class Meta:
+        verbose_name = 'Moneda'
+        verbose_name_plural = 'Monedas'
+        default_permissions = ()
+        permissions = (
+            ('view_currency', 'Can view Monedas'),
+            ('add_currency', 'Can add Monedas'),
+            ('change_currency', 'Can change Monedas'),
+            ('delete_currency', 'Can delete Monedas'),
+        )
+        ordering = ['name']
+
+
+class PaymentMethodModel(models.Model):
+    name = models.CharField(max_length=100, verbose_name='Nombre')
+    code = models.CharField(max_length=50, unique=True, verbose_name='Código')
+    is_active = models.BooleanField(default=True, verbose_name='¿Activo?')
+
+    def __str__(self):
+        return self.name
+
+    def toJSON(self):
+        item = model_to_dict(self)
+        return item
+
+    class Meta:
+        verbose_name = 'Forma de Pago'
+        verbose_name_plural = 'Formas de Pago'
+        default_permissions = ()
+        permissions = (
+            ('view_paymentmethodmodel', 'Can view Formas de Pago'),
+            ('add_paymentmethodmodel', 'Can add Formas de Pago'),
+            ('change_paymentmethodmodel', 'Can change Formas de Pago'),
+            ('delete_paymentmethodmodel', 'Can delete Formas de Pago'),
+        )
+        ordering = ['name']
+
+
 class Company(models.Model):
     name = models.CharField(max_length=50, verbose_name='Nombre')
     ruc = models.CharField(max_length=13, verbose_name='Ruc')
@@ -380,7 +431,7 @@ class Sale(models.Model):
     client = models.ForeignKey(Client, on_delete=models.PROTECT, null=True, blank=True)
     employee = models.ForeignKey(User, on_delete=models.PROTECT, null=True, blank=True)
     payment_condition = models.CharField(choices=payment_condition, max_length=50, default='contado')
-    payment_method = models.CharField(max_length=150, default='efectivo', verbose_name='Método(s) de Pago', choices=payment_method)
+    payment_method = models.CharField(choices=payment_method, max_length=50, default='efectivo')
     type_voucher = models.CharField(choices=voucher, max_length=50, default='ticket')
     date_joined = models.DateTimeField(default=datetime.now)
     end_credit = models.DateField(default=datetime.now)
@@ -570,6 +621,40 @@ class SaleDetail(models.Model):
         verbose_name = 'Detalle de Cobranza'
         verbose_name_plural = 'Detalle de Cobranzas'
         default_permissions = ()
+        ordering = ['-id']
+
+
+class SalePayment(models.Model):
+    sale = models.ForeignKey(Sale, on_delete=models.CASCADE, related_name='payments', verbose_name='Venta')
+    amount = models.DecimalField(max_digits=9, decimal_places=2, default=0.00, verbose_name='Monto')
+    payment_method = models.ForeignKey(PaymentMethodModel, on_delete=models.PROTECT, verbose_name='Forma de Pago')
+    currency = models.ForeignKey(Currency, on_delete=models.PROTECT, verbose_name='Moneda')
+    bank = models.ForeignKey(PaymentBank, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Banco')
+    operation_number = models.CharField(max_length=50, null=True, blank=True, verbose_name='Nro de Operación')
+    date_joined = models.DateTimeField(default=datetime.now, verbose_name='Fecha del Pago')
+
+    def __str__(self):
+        return '{} - {} {}'.format(self.sale.nro(), self.currency.symbol, format(self.amount, '.2f'))
+
+    def toJSON(self):
+        item = model_to_dict(self, exclude=['sale'])
+        item['payment_method'] = self.payment_method.toJSON()
+        item['currency'] = self.currency.toJSON()
+        item['bank'] = self.bank.toJSON() if self.bank else {}
+        item['amount'] = format(self.amount, '.2f')
+        item['date_joined'] = self.date_joined.strftime('%d/%m/%Y %H:%M')
+        return item
+
+    class Meta:
+        verbose_name = 'Pago de Venta'
+        verbose_name_plural = 'Pagos de Ventas'
+        default_permissions = ()
+        permissions = (
+            ('view_salepayment', 'Can view Pagos de Ventas'),
+            ('add_salepayment', 'Can add Pagos de Ventas'),
+            ('change_salepayment', 'Can change Pagos de Ventas'),
+            ('delete_salepayment', 'Can delete Pagos de Ventas'),
+        )
         ordering = ['-id']
 
 
