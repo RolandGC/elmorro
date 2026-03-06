@@ -107,6 +107,17 @@ document.addEventListener('DOMContentLoaded', function (e) {
                         }
                     }
                 },
+                exchange_rate: {
+                    validators: {
+                        notEmpty: {},
+                        numeric: {
+                            message: 'La tasa de cambio debe ser un número',
+                            thousandsSeparator: '',
+                            decimalSeparator: '.'
+                        }
+                    }
+                },
+                
             },
         }
     )

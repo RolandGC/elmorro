@@ -136,11 +136,15 @@
         <b>Cliente:</b> {{ sale.client.user.full_name }}<br>
         <b>Número de DNI:</b> {{ sale.client.user.dni }}<br>
         <b>Hora y fecha de registro:</b>
+        
         {% if sale.date_joined %}
             {{ sale.date_joined|localtime|date:"H:i" }} del {{ sale.date_joined|localtime|date:"d/m/Y" }}<br>
         {% else %}
             -<br>
         {% endif %}
+        {% for payment in sale.payments.all %}
+        <b>{{payment.currency.symbol}}{{ payment.amount }} xdxdxdxd</b><br>
+        {% endfor %}
         {#<b>Forma de pago:</b> {{ sale.get_payment_condition_display }}<br>#}
         {% if sale.payment_condition == 'contado' %}
             <b>Forma de pago:</b>
