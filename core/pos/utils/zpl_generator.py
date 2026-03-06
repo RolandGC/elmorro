@@ -280,10 +280,10 @@ class ZPLGenerator:
             time_str=time_str,
             date_str=date_str,
             payment_condition=sale.get_payment_condition_display(),
-            payment_method=sale.get_payment_method_display() if sale.payment_condition == 'contado' else None,
-            bank_name=sale.payment_bank.name if hasattr(sale, 'payment_bank') and sale.payment_bank else None,
-            operation_number=sale.operation_number if sale.operation_number else None,
-            operation_date=str(sale.operation_date) if sale.operation_date else None,
+            payment_method=', '.join([p.payment_method.name for p in sale.payments.all()]) if sale.payments.exists() else None,
+            bank_name=', '.join([p.bank.name for p in sale.payments.all() if p.bank]) or None,
+            operation_number=', '.join([p.operation_number for p in sale.payments.all() if p.operation_number]) or None,
+            operation_date=None,
             end_credit=str(sale.end_credit) if sale.end_credit else None,
         )
 
@@ -312,12 +312,13 @@ class ZPLGenerator:
             zpl.add_comment(sale.comment)
 
         # Payment info
+        payment_methods_str = ', '.join([p.payment_method.name for p in sale.payments.all()]) if sale.payments.exists() else None
         zpl.add_payment_info(
             payment_condition=sale.payment_condition,
-            payment_method=sale.payment_method if sale.payment_condition == 'contado' else None,
-            cash=f"{sale.cash:.2f}" if sale.payment_method == 'efectivoss' else None,
-            change=f"{sale.change:.2f}" if sale.payment_method == 'efectivoss' else None,
-            amount_debited=f"{sale.amount_debited:.2f}" if sale.amount_debited else None,
+            payment_method=payment_methods_str if sale.payment_condition == 'contado' else None,
+            cash=f"{sale.cash:.2f}" if sale.cash else None,
+            change=f"{sale.change:.2f}" if sale.change else None,
+            amount_debited=None,
         )
 
         # Signatures

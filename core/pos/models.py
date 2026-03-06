@@ -14,7 +14,7 @@ from django.forms import model_to_dict
 from django.utils import timezone
 
 from config import settings
-from core.pos.choices import payment_condition, payment_method, voucher, unit
+from core.pos.choices import payment_condition, voucher, unit
 from core.user.models import User
 
 from datetime import datetime
@@ -431,7 +431,6 @@ class Sale(models.Model):
     client = models.ForeignKey(Client, on_delete=models.PROTECT, null=True, blank=True)
     employee = models.ForeignKey(User, on_delete=models.PROTECT, null=True, blank=True)
     payment_condition = models.CharField(choices=payment_condition, max_length=50, default='contado')
-    payment_method = models.CharField(choices=payment_method, max_length=50, default='efectivo')
     type_voucher = models.CharField(choices=voucher, max_length=50, default='ticket')
     date_joined = models.DateTimeField(default=datetime.now)
     end_credit = models.DateField(default=datetime.now)
@@ -448,16 +447,7 @@ class Sale(models.Model):
     card_number = models.CharField(max_length=30, null=True, blank=True)
     titular = models.CharField(max_length=30, null=True, blank=True)
     amount_debited = models.DecimalField(max_digits=9, decimal_places=2, default=0.00)
-    operation_number = models.CharField(max_length=50, null=True, blank=True, verbose_name='Nro de Operación (Yape/Plin)')
-    operation_date = models.DateField(default=date.today, null=True, blank=True, verbose_name='Fecha de Operación')
-    payment_bank = models.ForeignKey('PaymentBank', on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Banco de Depósito/Transferencia')
     comment = models.TextField(max_length=600, null=True, blank=True, verbose_name='Comentario')
-    # Campos para montos desglosados por forma de pago (supervisores)
-    efectivo_amount = models.DecimalField(max_digits=9, decimal_places=2, default=0.00, null=True, blank=True, verbose_name='Monto en Efectivo')
-    yape_amount = models.DecimalField(max_digits=9, decimal_places=2, default=0.00, null=True, blank=True, verbose_name='Monto en Yape')
-    plin_amount = models.DecimalField(max_digits=9, decimal_places=2, default=0.00, null=True, blank=True, verbose_name='Monto en Plin')
-    transferencia_amount = models.DecimalField(max_digits=9, decimal_places=2, default=0.00, null=True, blank=True, verbose_name='Monto en Transferencia')
-    deposito_amount = models.DecimalField(max_digits=9, decimal_places=2, default=0.00, null=True, blank=True, verbose_name='Monto en Depósito')
 
     def __str__(self):
         return f'{self.client.user.full_name} / {self.nro()}'
@@ -489,15 +479,11 @@ class Sale(models.Model):
         item['employee'] = {} if self.employee is None else self.employee.toJSON()
         item['client'] = {} if self.client is None else self.client.toJSON()
         item['payment_condition'] = {'id': self.payment_condition, 'name': self.get_payment_condition_display()}
-        # Soportar payment_method m\u00faltiple (valores separados por coma) para supervisor
-        if self.payment_method and ',' in self.payment_method:
-            methods = [m.strip() for m in self.payment_method.split(',')]
-            choices_dict = dict(payment_method)
-            names = [choices_dict.get(m, m) for m in methods]
-            item['payment_method'] = {'id': self.payment_method, 'name': ', '.join(names)}
-        else:
-            item['payment_method'] = {'id': self.payment_method, 'name': self.get_payment_method_display()}
-        item['payment_bank'] = {} if self.payment_bank is None else self.payment_bank.toJSON()
+        # Serializar pagos desde SalePayment
+        item['payments'] = [p.toJSON() for p in self.payments.all()]
+        # Generar resumen de formas de pago para compatibilidad
+        payment_names = [p.payment_method.name for p in self.payments.all()]
+        item['payment_method'] = {'id': '', 'name': ', '.join(payment_names) if payment_names else 'Sin pago'}
         item['type_voucher'] = {'id': self.type_voucher, 'name': self.get_type_voucher_display()}
         item['subtotal'] = format(self.subtotal, '.2f')
         item['dscto'] = format(self.dscto, '.2f')
@@ -987,73 +973,62 @@ class Box(models.Model):
 
     def get_efectivo(self):
         fecha_actual = date.today()
-        total_efectivo = Sale.objects.filter(
-            employee=self.user,
-            payment_condition='contado',
-            payment_method='efectivo',
-            date_joined__date=fecha_actual
-        ).aggregate(total=Sum('total'))['total'] or 0
+        # Sumar montos de SalePayment con método 'efectivo'
+        total_efectivo = SalePayment.objects.filter(
+            sale__employee=self.user,
+            sale__payment_condition='contado',
+            payment_method__code='efectivo',
+            sale__date_joined__date=fecha_actual
+        ).aggregate(total=Sum('amount'))['total'] or 0
         
         payments = PaymentsCtaCollect.objects.filter(date_joined__date=fecha_actual)
-        total_payments = sum(p.valor for p in payments if p.ctascollect.sale.employee == self.user and p.ctascollect.sale.payment_method == 'efectivo')
+        total_payments = sum(p.valor for p in payments if p.ctascollect.sale.employee == self.user)
         
         return float(total_efectivo) + float(total_payments)
 
     def get_yape(self):
         fecha_actual = date.today()
-        total_yape = Sale.objects.filter(
-            employee=self.user,
-            payment_condition='contado',
-            payment_method='yape',
-            date_joined__date=fecha_actual
-        ).aggregate(total=Sum('total'))['total'] or 0
+        total_yape = SalePayment.objects.filter(
+            sale__employee=self.user,
+            sale__payment_condition='contado',
+            payment_method__code='yape',
+            sale__date_joined__date=fecha_actual
+        ).aggregate(total=Sum('amount'))['total'] or 0
         
-        payments = PaymentsCtaCollect.objects.filter(date_joined__date=fecha_actual)
-        total_payments = sum(p.valor for p in payments if p.ctascollect.sale.employee == self.user and p.ctascollect.sale.payment_method == 'yape')
-        
-        return float(total_yape) + float(total_payments)
+        return float(total_yape)
 
     def get_plin(self):
         fecha_actual = date.today()
-        total_plin = Sale.objects.filter(
-            employee=self.user,
-            payment_condition='contado',
-            payment_method='plin',
-            date_joined__date=fecha_actual
-        ).aggregate(total=Sum('total'))['total'] or 0
+        total_plin = SalePayment.objects.filter(
+            sale__employee=self.user,
+            sale__payment_condition='contado',
+            payment_method__code='plin',
+            sale__date_joined__date=fecha_actual
+        ).aggregate(total=Sum('amount'))['total'] or 0
         
-        payments = PaymentsCtaCollect.objects.filter(date_joined__date=fecha_actual)
-        total_payments = sum(p.valor for p in payments if p.ctascollect.sale.employee == self.user and p.ctascollect.sale.payment_method == 'plin')
-        
-        return float(total_plin) + float(total_payments)
+        return float(total_plin)
 
     def get_transferencia(self):
         fecha_actual = date.today()
-        total_transfer = Sale.objects.filter(
-            employee=self.user,
-            payment_condition='contado',
-            payment_method='transferencia',
-            date_joined__date=fecha_actual
-        ).aggregate(total=Sum('total'))['total'] or 0
+        total_transfer = SalePayment.objects.filter(
+            sale__employee=self.user,
+            sale__payment_condition='contado',
+            payment_method__code='transferencia',
+            sale__date_joined__date=fecha_actual
+        ).aggregate(total=Sum('amount'))['total'] or 0
         
-        payments = PaymentsCtaCollect.objects.filter(date_joined__date=fecha_actual)
-        total_payments = sum(p.valor for p in payments if p.ctascollect.sale.employee == self.user and p.ctascollect.sale.payment_method == 'transferencia')
-        
-        return float(total_transfer) + float(total_payments)
+        return float(total_transfer)
 
     def get_deposito(self):
         fecha_actual = date.today()
-        total_deposito = Sale.objects.filter(
-            employee=self.user,
-            payment_condition='contado',
-            payment_method='deposito',
-            date_joined__date=fecha_actual
-        ).aggregate(total=Sum('total'))['total'] or 0
+        total_deposito = SalePayment.objects.filter(
+            sale__employee=self.user,
+            sale__payment_condition='contado',
+            payment_method__code='deposito',
+            sale__date_joined__date=fecha_actual
+        ).aggregate(total=Sum('amount'))['total'] or 0
         
-        payments = PaymentsCtaCollect.objects.filter(date_joined__date=fecha_actual)
-        total_payments = sum(p.valor for p in payments if p.ctascollect.sale.employee == self.user and p.ctascollect.sale.payment_method == 'deposito')
-        
-        return float(total_deposito) + float(total_payments)
+        return float(total_deposito)
 
     
     def toJSON(self):

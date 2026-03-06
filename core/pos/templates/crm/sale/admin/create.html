@@ -11,7 +11,7 @@
     <script src="{% static 'lib/bootstrap-touchspin-4.2.5/js/jquery.bootstrap-touchspin.js' %}"></script>
     <script src="{% static 'lib/tempusdominus-bootstrap-4.5.37.0/js/tempusdominus-bootstrap.js' %}"></script>
     <link rel="stylesheet" href="{% static 'lib/tempusdominus-bootstrap-4.5.37.0/css/tempusdominus-bootstrap.css' %}"/>
-    <script src="{% static 'crm/sale/admin/js/form.js' %}?v=5"></script>
+    <script src="{% static 'crm/sale/admin/js/form.js' %}?v=6"></script>
     <style>
         /* Estilos responsive para textarea y inputs */
         textarea {
@@ -62,7 +62,7 @@
                     {% csrf_token %}
                     <input type="hidden" id="action" name="action" value="{{ action }}">
                     <div class="row">
-                        <div class="col-md-12 col-lg-6 card p-3 pb-0">
+                        <div class="col-md-12 col-lg-5 card p-3 pb-0">
                             <h3 class="mb-0"><b><i class="fas fa-boxes"></i> Detalle de Cobranza</b></h3><br>
                             <div class="row">
                                 <div class="col-lg-12">
@@ -113,7 +113,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-12 col-lg-6 card p-3">
+                        <div class="col-md-12 col-lg-7 card p-3">
                             <h3 class="mb-0 pb-0"><b><i class="fas fa-file-invoice"></i> Factura</b></h3><br>
                             <div class="row">
                                 <div class="col-lg-12">
@@ -145,95 +145,70 @@
                                 </div>
                                 <div class="col-lg-6">
                                     <div class="form-group">
-                                        <label class="control-label">Forma de pago:</label>
-                                        {% if is_supervisor %}
-                                            {# Checkboxes para supervisor - selección múltiple #}
-                                            <input type="hidden" id="id_payment_method" name="payment_method" value="">
-                                            <div id="supervisor-payment-methods" class="d-flex flex-wrap mt-1">
-                                                <div class="custom-control custom-checkbox mr-3 mb-2">
-                                                    <input type="checkbox" class="custom-control-input chk-payment-method" id="chk_efectivo" value="efectivo">
-                                                    <label class="custom-control-label" for="chk_efectivo">Efectivo</label>
-                                                </div>
-                                                <div class="custom-control custom-checkbox mr-3 mb-2">
-                                                    <input type="checkbox" class="custom-control-input chk-payment-method" id="chk_yape" value="yape">
-                                                    <label class="custom-control-label" for="chk_yape">Yape</label>
-                                                </div>
-                                                <div class="custom-control custom-checkbox mr-3 mb-2">
-                                                    <input type="checkbox" class="custom-control-input chk-payment-method" id="chk_plin" value="plin">
-                                                    <label class="custom-control-label" for="chk_plin">Plin</label>
-                                                </div>
-                                                <div class="custom-control custom-checkbox mr-3 mb-2">
-                                                    <input type="checkbox" class="custom-control-input chk-payment-method" id="chk_transferencia" value="transferencia">
-                                                    <label class="custom-control-label" for="chk_transferencia">Transferencia</label>
-                                                </div>
-                                                <div class="custom-control custom-checkbox mr-3 mb-2">
-                                                    <input type="checkbox" class="custom-control-input chk-payment-method" id="chk_deposito" value="deposito">
-                                                    <label class="custom-control-label" for="chk_deposito">Depósito</label>
+                                        <label class="control-label">Pagos:</label>
+                                        <button type="button" class="btn btn-success btn-sm btn-block" id="btnAddPayment">
+                                            <i class="fas fa-plus"></i> Agregar Pago
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {# Contenedor de bloques de pago dinámicos #}
+                            <div id="paymentsContainer"></div>
+
+                            {# Template oculto para un bloque de pago #}
+                            <template id="paymentBlockTemplate">
+                                <div class="card card-outline card-info mb-2 payment-block" data-index="__INDEX__">
+                                    <div class="card-header py-1 d-flex justify-content-between align-items-center">
+                                        <span class="font-weight-bold">Pago #<span class="payment-number">__INDEX__</span></span>
+                                        <button type="button" class="btn btn-danger btn-xs btnRemovePayment">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                    <div class="card-body py-2">
+                                        <div class="row">
+                                            <div class="col-lg-4 col-md-6">
+                                                <div class="form-group mb-2">
+                                                    <label class="control-label">Monto:</label>
+                                                    <input type="number" step="0.01" min="0" class="form-control form-control-sm payment-amount" name="pay_amount" value="0.00">
                                                 </div>
                                             </div>
-                                        {% else %}
-                                            {{ form.payment_method }}
-                                        {% endif %}
+                                            <div class="col-lg-4 col-md-6">
+                                                <div class="form-group mb-2">
+                                                    <label class="control-label">Forma de Pago:</label>
+                                                    <select class="form-control form-control-sm payment-method-select" name="pay_method">
+                                                        <option value="">---------</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-4 col-md-6">
+                                                <div class="form-group mb-2">
+                                                    <label class="control-label">Moneda:</label>
+                                                    <select class="form-control form-control-sm payment-currency-select" name="pay_currency">
+                                                        <option value="">---------</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-lg-6 col-md-6">
+                                                <div class="form-group mb-2">
+                                                    <label class="control-label">Banco (opcional):</label>
+                                                    <select class="form-control form-control-sm payment-bank-select" name="pay_bank">
+                                                        <option value="">---------</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-6 col-md-6">
+                                                <div class="form-group mb-2">
+                                                    <label class="control-label">Nro Operación (opcional):</label>
+                                                    <input type="text" class="form-control form-control-sm payment-operation" name="pay_operation" placeholder="Nro de operación">
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-
-                            {# Fila de montos desglosados por forma de pago (solo supervisor) #}
-                            {% if is_supervisor %}
-                            <div class="row" id="rowSupervisorAmounts" style="display: none;">
-                                <div class="col-lg-12">
-                                    <div class="d-flex flex-wrap" id="supervisor-amounts-container">
-                                        <div class="form-group mr-3 mb-2 supervisor-amount-group" id="group_efectivo_amount" style="display:none;">
-                                            <label class="control-label">Monto Efectivo:</label>
-                                            <input type="number" step="0.01" min="0" class="form-control supervisor-amount-input" id="efectivo_amount" name="efectivo_amount" value="0.00">
-                                        </div>
-                                        <div class="form-group mr-3 mb-2 supervisor-amount-group" id="group_yape_amount" style="display:none;">
-                                            <label class="control-label">Monto Yape:</label>
-                                            <input type="number" step="0.01" min="0" class="form-control supervisor-amount-input" id="yape_amount" name="yape_amount" value="0.00">
-                                        </div>
-                                        <div class="form-group mr-3 mb-2 supervisor-amount-group" id="group_plin_amount" style="display:none;">
-                                            <label class="control-label">Monto Plin:</label>
-                                            <input type="number" step="0.01" min="0" class="form-control supervisor-amount-input" id="plin_amount" name="plin_amount" value="0.00">
-                                        </div>
-                                        <div class="form-group mr-3 mb-2 supervisor-amount-group" id="group_transferencia_amount" style="display:none;">
-                                            <label class="control-label">Monto Transferencia:</label>
-                                            <input type="number" step="0.01" min="0" class="form-control supervisor-amount-input" id="transferencia_amount" name="transferencia_amount" value="0.00">
-                                        </div>
-                                        <div class="form-group mr-3 mb-2 supervisor-amount-group" id="group_deposito_amount" style="display:none;">
-                                            <label class="control-label">Monto Depósito:</label>
-                                            <input type="number" step="0.01" min="0" class="form-control supervisor-amount-input" id="deposito_amount" name="deposito_amount" value="0.00">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            {% endif %}
-
-                             <div class="row" id="rowOperationNumber" style="display: none;">
-                                <div class="col-lg-12">
-                                    <div class="form-group">
-                                        <label class="control-label">Nro de Operación:</label>
-                                        {{ form.operation_number|add_class:"form-control" }}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="row" id="rowOperationDate" style="display: none;">
-                                <div class="col-lg-12">
-                                    <div class="form-group">
-                                        <label class="control-label">Fecha de Operación:</label>
-                                        {{ form.operation_date|add_class:"form-control" }}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="row" id="rowPaymentBank" style="display: none;">
-                                <div class="col-lg-12">
-                                    <div class="form-group">
-                                        <label class="control-label">Banco:</label>
-                                        {{ form.payment_bank }}
-                                    </div>
-                                </div>
-                            </div>
+                            </template>
                             
                             <div class="row">
                                 <div class="col-lg-6">
@@ -440,7 +415,10 @@
     </div>
     <script type="application/javascript">
         var client_default = `{{ client_default|safe }}`
-        var is_supervisor = {{ is_supervisor|yesno:"true,false" }};
+        // Datos para bloques dinámicos de pagos
+        var paymentMethodsData = {{ payment_methods|safe }};
+        var currenciesData = {{ currencies|safe }};
+        var paymentBanksData = {{ payment_banks|safe }};
         vents.details.igv = parseFloat('{{ igv }}');
         $(function () {
             vents.list_products();

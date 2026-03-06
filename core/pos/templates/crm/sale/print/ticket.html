@@ -143,14 +143,18 @@
         {% endif %}
         {#<b>Forma de pago:</b> {{ sale.get_payment_condition_display }}<br>#}
         {% if sale.payment_condition == 'contado' %}
-            <b>Forma de pago:</b> {{ sale.get_payment_method_display }}<br>
-            {% if sale.payment_bank %}
-                <b>Banco:</b> {{ sale.payment_bank.name }}<br>
-            {% endif %}
-            {% if sale.payment_method in 'yape,plin,transferencia,deposito' and sale.operation_number %}
-                <b>Nro de Operación:</b> {{ sale.operation_number }}<br>
-                <b>Fecha de Operación:</b> {{ sale.operation_date }}<br>
-            {% endif %}
+            <b>Forma de pago:</b>
+            {% for p in sale.payments.all %}
+                {{ p.payment_method.name }}{% if not forloop.last %}, {% endif %}
+            {% endfor %}<br>
+            {% for p in sale.payments.all %}
+                {% if p.bank %}
+                    <b>Banco:</b> {{ p.bank.name }}<br>
+                {% endif %}
+                {% if p.operation_number %}
+                    <b>Nro de Operación:</b> {{ p.operation_number }}<br>
+                {% endif %}
+            {% endfor %}
         {% else %}
             <b>Fecha limite de credito:</b> {{ sale.end_credit|date:'c' }}<br>
         {% endif %}
@@ -208,18 +212,14 @@
     <p><b>Comentario:</b> {{ sale.comment }}</p>
     {% if sale.payment_condition == 'contado' %}
         <p class="text-uppercase font-weight-bold text-center" style="font-size: 6px; margin: 1px 0; line-height: 1.1;">
-            {#*** Estimado cliente no olvide que ***#}
             <br>
-            {% if sale.payment_method == 'efectivoss' %}
-                Usted va a pagar un total de {{ sale.cash }}<br>
-                Por lo tanto debe recibir un vuelto de {{ sale.change }}<br>
-            {% elif sale.payment_method == 'plinn' %}
-                Se le va a descontar de su tarjeta un monto de {{ sale.amount_debited }}<br>
-            {% elif sale.payment_method == 'efectivo_tarjeta' %}
-                Usted va a pagar en efectivo un total de {{ sale.cash }}<br>
-                Y se le va a descontar de su tarjeta un monto de {{ sale.amount_debited }}<br>
+            {% for p in sale.payments.all %}
+                {{ p.payment_method.name }}: {{ p.amount }}<br>
+            {% endfor %}
+            {% if sale.cash %}
+                Efectivo recibido: {{ sale.cash }}<br>
+                Vuelto: {{ sale.change }}<br>
             {% endif %}
-            {#Total de productos {{ sale.saledetail_set.all.count }}#}
         </p>
     {% endif %}
     <br>

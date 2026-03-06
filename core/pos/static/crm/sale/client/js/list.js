@@ -155,18 +155,17 @@ $(function () {
             invoice.push({'id': 'Descuento', 'name': row.dscto + ' %'});
             invoice.push({'id': 'Total Descuento', 'name': 'S/.' + row.total_dscto});
             invoice.push({'id': 'Total a pagar', 'name': 'S/.' + row.total});
-            if (row.payment_method.id === 'efectivo') {
-                invoice.push({'id': 'Efectivo', 'name': 'S/.' + row.cash});
-                invoice.push({'id': 'Vuelto', 'name': 'S/.' + row.change});
-            } else if (row.payment_method.id === 'tarjeta_debito_credito') {
-                invoice.push({'id': 'Número de tarjeta', 'name': row.card_number});
-                invoice.push({'id': 'Titular de tarjeta', 'name': row.titular});
-                invoice.push({'id': 'Monto a debitar', 'name': 'S/.' + row.amount_debited});
-            } else if (row.payment_method.id === 'efectivo_tarjeta') {
-                invoice.push({'id': 'Efectivo', 'name': 'S/.' + row.cash});
-                invoice.push({'id': 'Número de tarjeta', 'name': row.card_number});
-                invoice.push({'id': 'Titular de tarjeta', 'name': row.titular});
-                invoice.push({'id': 'Monto a debitar', 'name': 'S/.' + row.amount_debited});
+            // Mostrar detalle de pagos
+            if (row.payments && row.payments.length > 0) {
+                $.each(row.payments, function (i, p) {
+                    invoice.push({'id': p.payment_method.name, 'name': 'S/.' + p.amount});
+                    if (p.bank && p.bank.name) {
+                        invoice.push({'id': 'Banco', 'name': p.bank.name});
+                    }
+                    if (p.operation_number) {
+                        invoice.push({'id': 'Nro. Operación', 'name': p.operation_number});
+                    }
+                });
             }
 
             $('#tblInvoice').DataTable({

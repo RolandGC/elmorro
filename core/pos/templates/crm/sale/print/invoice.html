@@ -59,7 +59,10 @@
         <b>Fecha de venta:</b> {{ sale.date_joined|date:'c' }}<br>
         <b>Forma de pago:</b> {{ sale.get_payment_condition_display }}<br>
         {% if sale.payment_condition == 'contado' %}
-            <b>Método de pago:</b> {{ sale.get_payment_method_display }}<br>
+            <b>Método de pago:</b>
+            {% for p in sale.payments.all %}
+                {{ p.payment_method.name }}{% if not forloop.last %}, {% endif %}
+            {% endfor %}<br>
         {% else %}
             <b>Fecha limite de credito:</b> {{ sale.end_credit|date:'c' }}<br>
         {% endif %}
@@ -106,14 +109,12 @@
                     <p class="text-uppercase text-center mb-0 pb-0">
                         ****** estimado cliente no olvide que ******
                         <br>
-                        {% if sale.payment_method == 'efectivo' %}
-                            Usted va a pagar en efectivo un total de {{ sale.cash }}<br>
-                            Por lo tanto debe recibir un vuelto de {{ sale.change }}<br>
-                        {% elif sale.payment_method == 'tarjeta_debito_credito' %}
-                            Se le va a descontar de su tarjeta un monto de {{ sale.amount_debited }}<br>
-                        {% elif sale.payment_method == 'efectivo_tarjeta' %}
-                            Usted va a pagar en efectivo un total de {{ sale.cash }}<br>
-                            Y se le va a descontar de su tarjeta un monto de {{ sale.amount_debited }}<br>
+                        {% for p in sale.payments.all %}
+                            {{ p.payment_method.name }}: {{ p.amount }}<br>
+                        {% endfor %}
+                        {% if sale.cash %}
+                            Efectivo recibido: {{ sale.cash }}<br>
+                            Vuelto: {{ sale.change }}<br>
                         {% endif %}
                         Total de productos {{ sale.saledetail_set.all.count }}
                     </p>

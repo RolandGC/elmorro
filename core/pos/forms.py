@@ -315,52 +315,49 @@ class BoxForm(ModelForm):
         if user:
             try:
                 from datetime import date
+                from core.pos.models import Expenses, SalePayment
                 
                 fecha_actual = date.today()
                 
-                # Calcular efectivo
-                total_efectivo = Sale.objects.filter(
-                    employee=user,
-                    payment_condition='contado',
-                    payment_method='efectivo',
-                    date_joined__date=fecha_actual
-                ).aggregate(total=Sum('total'))['total'] or 0
+                # Calcular montos desde SalePayment agrupado por método de pago
+                total_efectivo = SalePayment.objects.filter(
+                    sale__employee=user,
+                    sale__payment_condition='contado',
+                    payment_method__code='efectivo',
+                    sale__date_joined__date=fecha_actual
+                ).aggregate(total=Sum('amount'))['total'] or 0
                 self.initial['efectivo'] = round(float(total_efectivo), 2)
                 
-                # Calcular yape
-                total_yape = Sale.objects.filter(
-                    employee=user,
-                    payment_condition='contado',
-                    payment_method='yape',
-                    date_joined__date=fecha_actual
-                ).aggregate(total=Sum('total'))['total'] or 0
+                total_yape = SalePayment.objects.filter(
+                    sale__employee=user,
+                    sale__payment_condition='contado',
+                    payment_method__code='yape',
+                    sale__date_joined__date=fecha_actual
+                ).aggregate(total=Sum('amount'))['total'] or 0
                 self.initial['yape'] = round(float(total_yape), 2)
                 
-                # Calcular plin
-                total_plin = Sale.objects.filter(
-                    employee=user,
-                    payment_condition='contado',
-                    payment_method='plin',
-                    date_joined__date=fecha_actual
-                ).aggregate(total=Sum('total'))['total'] or 0
+                total_plin = SalePayment.objects.filter(
+                    sale__employee=user,
+                    sale__payment_condition='contado',
+                    payment_method__code='plin',
+                    sale__date_joined__date=fecha_actual
+                ).aggregate(total=Sum('amount'))['total'] or 0
                 self.initial['plin'] = round(float(total_plin), 2)
                 
-                # Calcular transferencia
-                total_transfer = Sale.objects.filter(
-                    employee=user,
-                    payment_condition='contado',
-                    payment_method='transferencia',
-                    date_joined__date=fecha_actual
-                ).aggregate(total=Sum('total'))['total'] or 0
+                total_transfer = SalePayment.objects.filter(
+                    sale__employee=user,
+                    sale__payment_condition='contado',
+                    payment_method__code='transferencia',
+                    sale__date_joined__date=fecha_actual
+                ).aggregate(total=Sum('amount'))['total'] or 0
                 self.initial['transferencia'] = round(float(total_transfer), 2)
                 
-                # Calcular deposito
-                total_deposito = Sale.objects.filter(
-                    employee=user,
-                    payment_condition='contado',
-                    payment_method='deposito',
-                    date_joined__date=fecha_actual
-                ).aggregate(total=Sum('total'))['total'] or 0
+                total_deposito = SalePayment.objects.filter(
+                    sale__employee=user,
+                    sale__payment_condition='contado',
+                    payment_method__code='deposito',
+                    sale__date_joined__date=fecha_actual
+                ).aggregate(total=Sum('amount'))['total'] or 0
                 self.initial['deposito'] = round(float(total_deposito), 2)
                 
                 # Calcular total de pagos de métodos
@@ -371,7 +368,6 @@ class BoxForm(ModelForm):
                         float(total_deposito))
                 
                 # Calcular gastos del día
-                from core.pos.models import Expenses
                 total_gastos = Expenses.objects.filter(
                     user=user,
                     date_joined__date=fecha_actual
@@ -532,8 +528,6 @@ class SaleForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['client'].queryset = Client.objects.none()
-        # Establecer la fecha actual como valor inicial para operation_date
-        self.fields['operation_date'].initial = date.today()
         # Hacer el campo total obligatorio
         self.fields['total'].required = True
         # self.initial['client'] = '2'
@@ -544,7 +538,6 @@ class SaleForm(ModelForm):
         widgets = {
             'client': forms.Select(attrs={'class': 'custom-select select2'}),
             'payment_condition': forms.Select(attrs={'class': 'form-control select2', 'style': 'width: 100%;'}),
-            'payment_method': forms.Select(attrs={'class': 'form-control select2 custom-select', 'style': 'width: 100%;'}),
             'type_voucher': forms.Select(attrs={'class': 'form-control select2', 'style': 'width: 100%;'}),
             'date_joined': forms.DateTimeInput(format='%Y-%m-%dT%H:%M', attrs={
                 'class': 'form-control',
@@ -558,13 +551,6 @@ class SaleForm(ModelForm):
                 'value': datetime.now().strftime('%Y-%m-%d'),
                 'data-toggle': 'datetimepicker',
                 'data-target': '#end_credit'
-            }),
-            'operation_date': forms.DateInput(format='%Y-%m-%d', attrs={
-                'class': 'form-control',
-                'id': 'operation_date',
-                'type': 'date',
-                'data-toggle': 'datetimepicker',
-                'data-target': '#operation_date'
             }),
             'subtotal': forms.TextInput(attrs={
                 'class': 'form-control form-control-sm',
@@ -619,15 +605,6 @@ class SaleForm(ModelForm):
                 'class': 'form-control',
                 'autocomplete': 'off',
                 'readonly': True
-            }),
-            'operation_number': forms.TextInput(attrs={
-                'class': 'form-control',
-                'autocomplete': 'off',
-                'placeholder': 'Ingrese el número de operación'
-            }),
-            'payment_bank': forms.Select(attrs={
-                'class': 'form-control select2',
-                'style': 'width: 100%;'
             }),
             'comment': forms.Textarea(attrs={
                 'rows': 4,

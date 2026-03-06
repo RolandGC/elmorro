@@ -124,23 +124,9 @@ class SaleAdminCreateView(PermissionMixin, CreateView):
                             if timezone.is_naive(parsed):
                                 parsed = timezone.make_aware(parsed)
                             sale.date_joined = parsed
-                    sale.payment_method = request.POST['payment_method']
                     sale.payment_condition = request.POST['payment_condition']
                     sale.type_voucher = request.POST['type_voucher']
-                    # Guardar el banco de pago si se selecciona
-                    payment_bank_id = request.POST.get('payment_bank', '').strip()
-                    if payment_bank_id:
-                        sale.payment_bank_id = int(payment_bank_id)
-                    # Guardar montos desglosados si es supervisor con pagos múltiples
-                    is_supervisor = request.user.groups.filter(name='Supervisor').exists()
-                    if is_supervisor:
-                        sale.efectivo_amount = float(request.POST.get('efectivo_amount', 0) or 0)
-                        sale.yape_amount = float(request.POST.get('yape_amount', 0) or 0)
-                        sale.plin_amount = float(request.POST.get('plin_amount', 0) or 0)
-                        sale.transferencia_amount = float(request.POST.get('transferencia_amount', 0) or 0)
-                        sale.deposito_amount = float(request.POST.get('deposito_amount', 0) or 0)
                     sale.igv = float(Company.objects.first().igv) / 100
-                    # sale.dscto = float(request.POST['dscto']) / 100
                     sale.dscto = float(request.POST['dscto'])
                     sale.comment = request.POST.get('comment', '')
                     # Usar el total ingresado por el usuario
@@ -168,6 +154,21 @@ class SaleAdminCreateView(PermissionMixin, CreateView):
 
                     sale.calculate_invoice()
 
+                    # Crear registros de SalePayment desde el JSON de pagos
+                    payments_json = request.POST.get('payments', '[]')
+                    payments_list = json.loads(payments_json)
+                    for pay in payments_list:
+                        sp = SalePayment()
+                        sp.sale_id = sale.id
+                        sp.amount = float(pay.get('amount', 0))
+                        sp.payment_method_id = int(pay.get('payment_method', 0))
+                        sp.currency_id = int(pay.get('currency', 0))
+                        bank_id = pay.get('bank', '')
+                        if bank_id:
+                            sp.bank_id = int(bank_id)
+                        sp.operation_number = pay.get('operation_number', '')
+                        sp.save()
+
                     if sale.payment_condition == 'credito':
                         sale.end_credit = request.POST['end_credit']
                         sale.cash = 0.00
@@ -194,16 +195,8 @@ class SaleAdminCreateView(PermissionMixin, CreateView):
                         ctascollect.validate_debt()
                         
                     elif sale.payment_condition == 'contado':
-                        # Detectar métodos de pago (puede ser múltiple separado por comas en supervisor)
-                        methods = [m.strip() for m in sale.payment_method.split(',')]
-                        if 'efectivo' in methods:
-                            sale.cash = float(request.POST['cash'])
-                            sale.change = float(sale.cash) - sale.total
-                        if any(m in methods for m in ['yape', 'plin', 'transferencia', 'deposito']):
-                            sale.operation_number = request.POST.get('operation_number', '')
-                            operation_date = request.POST.get('operation_date', '')
-                            if operation_date:
-                                sale.operation_date = operation_date
+                        sale.cash = float(request.POST.get('cash', 0) or 0)
+                        sale.change = float(sale.cash) - float(sale.total) if sale.cash > 0 else 0
                         sale.save()
 
                     data = {'id': sale.id}
@@ -280,8 +273,10 @@ class SaleAdminCreateView(PermissionMixin, CreateView):
         client_default = Client.objects.filter(user__full_name='NN NN').first()
         context['client_default'] = json.dumps(client_default.toJSON()) if client_default else 'null'
         context['igv'] = Company.objects.first().get_igv()
-        # Flag para modo supervisor (formas de pago múltiples)
-        context['is_supervisor'] = self.request.user.groups.filter(name='Supervisor').exists()
+        # Datos para los bloques dinámicos de pagos
+        context['payment_methods'] = json.dumps([pm.toJSON() for pm in PaymentMethodModel.objects.filter(is_active=True)])
+        context['currencies'] = json.dumps([c.toJSON() for c in Currency.objects.filter(is_active=True)])
+        context['payment_banks'] = json.dumps([b.toJSON() for b in PaymentBank.objects.all()])
         return context
 
 

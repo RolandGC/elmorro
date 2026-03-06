@@ -91,50 +91,46 @@ class BoxCreateView(PermissionMixin, CreateView):
             user = self.request.user
             fecha_actual = date.today()
             
-            from core.pos.models import Sale, Expenses, PaymentsCtaCollect
+            from core.pos.models import Expenses, SalePayment
             
-            total_efectivo = Sale.objects.filter(
-                employee=user,
-                payment_condition='contado',
-                payment_method='efectivo',
-                date_joined__date=fecha_actual
-            ).aggregate(total=Sum('total'))['total'] or 0
+            total_efectivo = SalePayment.objects.filter(
+                sale__employee=user,
+                sale__payment_condition='contado',
+                payment_method__code='efectivo',
+                sale__date_joined__date=fecha_actual
+            ).aggregate(total=Sum('amount'))['total'] or 0
             data['efectivo'] = round(float(total_efectivo), 2)
             
-            # Calcular yape
-            total_yape = Sale.objects.filter(
-                employee=user,
-                payment_condition='contado',
-                payment_method='yape',
-                date_joined__date=fecha_actual
-            ).aggregate(total=Sum('total'))['total'] or 0
+            total_yape = SalePayment.objects.filter(
+                sale__employee=user,
+                sale__payment_condition='contado',
+                payment_method__code='yape',
+                sale__date_joined__date=fecha_actual
+            ).aggregate(total=Sum('amount'))['total'] or 0
             data['yape'] = round(float(total_yape), 2)
             
-            # Calcular plin
-            total_plin = Sale.objects.filter(
-                employee=user,
-                payment_condition='contado',
-                payment_method='plin',
-                date_joined__date=fecha_actual
-            ).aggregate(total=Sum('total'))['total'] or 0
+            total_plin = SalePayment.objects.filter(
+                sale__employee=user,
+                sale__payment_condition='contado',
+                payment_method__code='plin',
+                sale__date_joined__date=fecha_actual
+            ).aggregate(total=Sum('amount'))['total'] or 0
             data['plin'] = round(float(total_plin), 2)
             
-            # Calcular transferencia
-            total_transfer = Sale.objects.filter(
-                employee=user,
-                payment_condition='contado',
-                payment_method='transferencia',
-                date_joined__date=fecha_actual
-            ).aggregate(total=Sum('total'))['total'] or 0
+            total_transfer = SalePayment.objects.filter(
+                sale__employee=user,
+                sale__payment_condition='contado',
+                payment_method__code='transferencia',
+                sale__date_joined__date=fecha_actual
+            ).aggregate(total=Sum('amount'))['total'] or 0
             data['transferencia'] = round(float(total_transfer), 2)
             
-            # Calcular deposito
-            total_deposito = Sale.objects.filter(
-                employee=user,
-                payment_condition='contado',
-                payment_method='deposito',
-                date_joined__date=fecha_actual
-            ).aggregate(total=Sum('total'))['total'] or 0
+            total_deposito = SalePayment.objects.filter(
+                sale__employee=user,
+                sale__payment_condition='contado',
+                payment_method__code='deposito',
+                sale__date_joined__date=fecha_actual
+            ).aggregate(total=Sum('amount'))['total'] or 0
             data['deposito'] = round(float(total_deposito), 2)
             
             # Calcular total de pagos de métodos
@@ -274,50 +270,46 @@ class BoxUpdateView(PermissionMixin, UpdateView):
             user = self.request.user
             fecha_actual = date.today()
             
-            from core.pos.models import Sale, Expenses, PaymentsCtaCollect
+            from core.pos.models import Expenses, SalePayment
             
-            total_efectivo = Sale.objects.filter(
-                employee=user,
-                payment_condition='contado',
-                payment_method='efectivo',
-                date_joined__date=fecha_actual
-            ).aggregate(total=Sum('total'))['total'] or 0
+            total_efectivo = SalePayment.objects.filter(
+                sale__employee=user,
+                sale__payment_condition='contado',
+                payment_method__code='efectivo',
+                sale__date_joined__date=fecha_actual
+            ).aggregate(total=Sum('amount'))['total'] or 0
             data['efectivo'] = round(float(total_efectivo), 2)
             
-            # Calcular yape
-            total_yape = Sale.objects.filter(
-                employee=user,
-                payment_condition='contado',
-                payment_method='yape',
-                date_joined__date=fecha_actual
-            ).aggregate(total=Sum('total'))['total'] or 0
+            total_yape = SalePayment.objects.filter(
+                sale__employee=user,
+                sale__payment_condition='contado',
+                payment_method__code='yape',
+                sale__date_joined__date=fecha_actual
+            ).aggregate(total=Sum('amount'))['total'] or 0
             data['yape'] = round(float(total_yape), 2)
             
-            # Calcular plin
-            total_plin = Sale.objects.filter(
-                employee=user,
-                payment_condition='contado',
-                payment_method='plin',
-                date_joined__date=fecha_actual
-            ).aggregate(total=Sum('total'))['total'] or 0
+            total_plin = SalePayment.objects.filter(
+                sale__employee=user,
+                sale__payment_condition='contado',
+                payment_method__code='plin',
+                sale__date_joined__date=fecha_actual
+            ).aggregate(total=Sum('amount'))['total'] or 0
             data['plin'] = round(float(total_plin), 2)
             
-            # Calcular transferencia
-            total_transfer = Sale.objects.filter(
-                employee=user,
-                payment_condition='contado',
-                payment_method='transferencia',
-                date_joined__date=fecha_actual
-            ).aggregate(total=Sum('total'))['total'] or 0
+            total_transfer = SalePayment.objects.filter(
+                sale__employee=user,
+                sale__payment_condition='contado',
+                payment_method__code='transferencia',
+                sale__date_joined__date=fecha_actual
+            ).aggregate(total=Sum('amount'))['total'] or 0
             data['transferencia'] = round(float(total_transfer), 2)
             
-            # Calcular deposito
-            total_deposito = Sale.objects.filter(
-                employee=user,
-                payment_condition='contado',
-                payment_method='deposito',
-                date_joined__date=fecha_actual
-            ).aggregate(total=Sum('total'))['total'] or 0
+            total_deposito = SalePayment.objects.filter(
+                sale__employee=user,
+                sale__payment_condition='contado',
+                payment_method__code='deposito',
+                sale__date_joined__date=fecha_actual
+            ).aggregate(total=Sum('amount'))['total'] or 0
             data['deposito'] = round(float(total_deposito), 2)
             
             # Calcular total de pagos de métodos

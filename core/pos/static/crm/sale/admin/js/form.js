@@ -6,19 +6,15 @@ var fvClient;
 var select_client;
 var input_birthdate;
 var select_paymentcondition;
-var select_paymentmethod;
-var select_paymentbank;
-var original_bank_options;
 var input_cash;
 let input_initial;
 var input_cardnumber;
-var input_amountdebited;
 var input_titular;
 var input_change;
 var input_amount;
 var amount_user_edited = false;
 var total_user_edited = false;
-var supervisorMode = false;
+var paymentBlockCounter = 0;
 
 var tblSearchProducts;
 var tblProducts;
@@ -357,16 +353,10 @@ document.addEventListener('DOMContentLoaded', function (e) {
 document.addEventListener('DOMContentLoaded', function (e) {
     function validateChange() {
         var cash = parseFloat(input_cash.val())
-        var method_payment = select_paymentmethod.val();
         var total = parseFloat(vents.details.total);
 
-        if (method_payment === 'efectivo') {
-            if (cash < total) {
-                return {valid: false, message: 'El efectivo debe ser mayor o igual al total a pagar'};
-            }
-        } else if (method_payment === 'efectivo_tarjeta') {
-            var amount_debited = (total - cash);
-            input_amountdebited.val(amount_debited.toFixed(2));
+        if (cash < total) {
+            return {valid: false, message: 'El efectivo debe ser mayor o igual al total a pagar'};
         }
         return {valid: true};
     }
@@ -435,41 +425,6 @@ document.addEventListener('DOMContentLoaded', function (e) {
                         },
                     }
                 },
-                payment_method: {
-                    validators: {
-                        notEmpty: {
-                            message: 'Seleccione un método de pago'
-                        },
-                    }
-                },
-                payment_bank: {
-                    validators: {
-                        notEmpty: {
-                            enabled: false,
-                            message: 'Seleccione un banco'
-                        },
-                    }
-                },
-                operation_number: {
-                    validators: {
-                        notEmpty: {
-                            enabled: false,
-                            message: 'Ingrese el número de operación'
-                        },
-                    }
-                },
-                operation_date: {
-                    validators: {
-                        notEmpty: {
-                            enabled: false,
-                            message: 'La fecha de operación es obligatoria'
-                        },
-                        date: {
-                            format: 'YYYY-MM-DD',
-                            message: 'La fecha no es válida'
-                        }
-                    }
-                },
                 type_voucher: {
                     validators: {
                         notEmpty: {
@@ -502,18 +457,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
                         },
                     }
                 },
-                amount_debited: {
-                    validators: {
-                        notEmpty: {
-                            enabled: false,
-                        },
-                        numeric: {
-                            message: 'El valor no es un número',
-                            thousandsSeparator: '',
-                            decimalSeparator: '.'
-                        },
-                    }
-                },
+
                 cash: {
                     validators: {
                         notEmpty: {
@@ -581,21 +525,26 @@ document.addEventListener('DOMContentLoaded', function (e) {
         .on('core.form.valid', function () {
             var parameters = new FormData($(fvSale.form)[0]);
             parameters.append('action', $('input[name="action"]').val());
-            // Supervisor: recoger formas de pago de checkboxes y montos individuales
-            if (supervisorMode) {
-                var checkedMethods = [];
-                $('.chk-payment-method:checked').each(function() {
-                    checkedMethods.push($(this).val());
-                });
-                parameters.append('payment_method', checkedMethods.join(','));
-                parameters.append('efectivo_amount', $('#efectivo_amount').val() || '0.00');
-                parameters.append('yape_amount', $('#yape_amount').val() || '0.00');
-                parameters.append('plin_amount', $('#plin_amount').val() || '0.00');
-                parameters.append('transferencia_amount', $('#transferencia_amount').val() || '0.00');
-                parameters.append('deposito_amount', $('#deposito_amount').val() || '0.00');
-            } else {
-                parameters.append('payment_method', select_paymentmethod.val());
-            }
+            // Recoger datos de bloques de pago dinámicos
+            var paymentsArray = [];
+            $('.payment-block').each(function () {
+                var block = $(this);
+                var amount = block.find('.payment-amount').val() || '0.00';
+                var method = block.find('.payment-method-select').val();
+                var currency = block.find('.payment-currency-select').val();
+                var bank = block.find('.payment-bank-select').val();
+                var operation = block.find('.payment-operation').val();
+                if (method && currency && parseFloat(amount) > 0) {
+                    paymentsArray.push({
+                        amount: amount,
+                        payment_method: method,
+                        currency: currency,
+                        bank: bank || '',
+                        operation_number: operation || ''
+                    });
+                }
+            });
+            parameters.append('payments', JSON.stringify(paymentsArray));
             parameters.append('payment_condition', select_paymentcondition.val());
             parameters.append('end_credit', input_endcredit.val());
             parameters.append('cash', input_cash.val());
@@ -604,7 +553,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
             parameters.append('titular', input_titular.val());
             parameters.append('initial', input_initial.val());
             parameters.append('dscto', $('input[name="dscto"]').val() || '0.00');
-            parameters.append('amount_debited', input_amountdebited.val());
+
             // Agregar el total ingresado por el usuario
             parameters.set('total', $('input[name="total"]').val());
             // attach date_joined (supports datetime-local input)
@@ -612,8 +561,6 @@ document.addEventListener('DOMContentLoaded', function (e) {
             parameters.append('date_joined', date_joined_val);
             console.log('date_joined sent:', date_joined_val);
             console.log('total sent:', $('input[name="total"]').val());
-            // attach operation_number for Yape/Plin/Transferencia/Depósito
-            parameters.append('operation_number', $('input[name="operation_number"]').val() || '');
             parameters.append('comment', $('textarea[name="comment"]').val());
             console.log(parameters)
             if (vents.details.products.length === 0) {
@@ -687,10 +634,6 @@ $(function () {
     input_endcredit = $('input[name="end_credit"]');
     input_initial = $('input[name="initial"]');
     select_paymentcondition = $('select[name="payment_condition"]');
-    select_paymentmethod = $('select[name="payment_method"]');
-    select_paymentbank = $('select[name="payment_bank"]');
-    // Cache original bank options so we can restore/filter reliably (works with Select2)
-    original_bank_options = select_paymentbank.find('option').clone();
     input_amount = $('input[name="amount"]');
     // When user edits the amount manually, respect it and stop auto-overwriting
     input_amount.on('input change', function () {
@@ -717,7 +660,6 @@ $(function () {
     });
     
     input_cardnumber = $('input[name="card_number"]');
-    input_amountdebited = $('input[name="amount_debited"]');
     input_cash = $('input[name="cash"]');
     input_change = $('input[name="change"]').length > 0 ? $('input[name="change"]') : {val: () => '0.00'};
     input_titular = $('input[name="titular"]');
@@ -981,90 +923,76 @@ $(function () {
             hideRowsVents([{'pos': 0, 'enable': false}, {'pos': 1, 'enable': false}, {'pos': 2, 'enable': false}]);
             fvSale.disableValidator('card_number');
             fvSale.disableValidator('titular');
-            fvSale.disableValidator('amount_debited');
             fvSale.disableValidator('cash');
             fvSale.disableValidator('change');
             switch (id) {
                 case "contado":
                     fvSale.disableValidator('end_credit');
-                    if (!supervisorMode) {
-                        select_paymentmethod.prop('disabled', false).val('efectivo').trigger('change');
-                    } else {
-                        // Supervisor: refrescar visibilidad según checkboxes actuales
-                        updateSupervisorFieldVisibility();
-                    }
                     input_initial.prop('disabled', true)
                     $('.rowInitial').hide();
+                    hideRowsVents([{'pos': 0, 'enable': true}]);
                     break;
                 case "credito":
                     fvSale.enableValidator('initial');
                     hideRowsVents([{'pos': 2, 'enable': true}]);
-                    if (!supervisorMode) {
-                        select_paymentmethod.find('option[value="tarjeta_debito_credito"]').remove();
-                    }
                     input_initial.prop('disabled', false)
                     $('.rowInitial').show();
                     break;
             }
         });
 
-    select_paymentmethod.on('change', function () {
-        if (!supervisorMode) updateOperationNumberVisibility();
-    }).on('select2:select', function () {
-        if (!supervisorMode) updateOperationNumberVisibility();
-    }).on('select2:unselect', function () {
-        if (!supervisorMode) updateOperationNumberVisibility();
-    });
+    // --- Bloques dinámicos de pago ---
+    function addPaymentBlock() {
+        paymentBlockCounter++;
+        var template = document.getElementById('paymentBlockTemplate');
+        var html = template.innerHTML.replace(/__INDEX__/g, paymentBlockCounter);
+        $('#paymentsContainer').append(html);
 
-    // --- Supervisor: manejo de checkboxes de formas de pago ---
-    if (typeof is_supervisor !== 'undefined' && is_supervisor) {
-        supervisorMode = true;
-        console.log('[Supervisor] Modo supervisor activado');
-        console.log('[Supervisor] Checkboxes encontrados:', $('.chk-payment-method').length);
-        $('.chk-payment-method').on('change', function () {
-            console.log('[Supervisor] Checkbox cambiado:', $(this).val(), 'checked:', $(this).is(':checked'));
-            var checkedMethods = [];
-            $('.chk-payment-method:checked').each(function () {
-                checkedMethods.push($(this).val());
+        var block = $('#paymentsContainer .payment-block').last();
+
+        // Poblar select de formas de pago
+        var methodSelect = block.find('.payment-method-select');
+        if (typeof paymentMethodsData !== 'undefined') {
+            $.each(paymentMethodsData, function (i, pm) {
+                methodSelect.append('<option value="' + pm.id + '">' + pm.name + '</option>');
             });
-            // Actualizar hidden input
-            $('#id_payment_method').val(checkedMethods.join(','));
-            // Mostrar/ocultar inputs de monto por forma de pago
-            var allMethods = ['efectivo', 'yape', 'plin', 'transferencia', 'deposito'];
-            allMethods.forEach(function (method) {
-                if (checkedMethods.indexOf(method) !== -1) {
-                    $('#group_' + method + '_amount').show();
-                } else {
-                    $('#group_' + method + '_amount').hide();
-                    $('#' + method + '_amount').val('0.00');
-                }
+        }
+
+        // Poblar select de monedas
+        var currencySelect = block.find('.payment-currency-select');
+        if (typeof currenciesData !== 'undefined') {
+            $.each(currenciesData, function (i, c) {
+                currencySelect.append('<option value="' + c.id + '">' + c.name + ' (' + c.symbol + ')</option>');
             });
-            // Mostrar/ocultar contenedor de montos
-            if (checkedMethods.length > 0) {
-                $('#rowSupervisorAmounts').show();
-            } else {
-                $('#rowSupervisorAmounts').hide();
+            // Si solo hay una moneda, seleccionarla por defecto
+            if (currenciesData.length === 1) {
+                currencySelect.val(currenciesData[0].id);
             }
-            updateSupervisorFieldVisibility();
-            // Recalcular total al cambiar checkboxes (algún monto pudo volver a 0)
-            updateSupervisorTotal();
+        }
+
+        // Poblar select de bancos
+        var bankSelect = block.find('.payment-bank-select');
+        if (typeof paymentBanksData !== 'undefined') {
+            $.each(paymentBanksData, function (i, b) {
+                bankSelect.append('<option value="' + b.id + '">' + b.name + '</option>');
+            });
+        }
+
+        // Listener para recalcular total de pagos
+        block.find('.payment-amount').on('input change', function () {
+            recalcPaymentsTotal();
         });
 
-        // Calcular total en tiempo real al escribir montos individuales
-        $(document).on('input change', '.supervisor-amount-input', function () {
-            updateSupervisorTotal();
-        });
+        return block;
     }
 
-    function updateSupervisorTotal() {
+    function recalcPaymentsTotal() {
         var sum = 0;
-        $('.chk-payment-method:checked').each(function () {
-            var method = $(this).val();
-            var val = parseFloat($('#' + method + '_amount').val());
+        $('.payment-block .payment-amount').each(function () {
+            var val = parseFloat($(this).val());
             if (!isNaN(val)) sum += val;
         });
         sum = parseFloat(sum.toFixed(2));
-        // Actualizar total, amount, cash y estado interno
         $('input[name="total"]').val(sum.toFixed(2));
         $('input[name="amount"]').val(sum.toFixed(2));
         $('input[name="subtotal"]').val(sum.toFixed(2));
@@ -1074,143 +1002,18 @@ $(function () {
         total_user_edited = true;
     }
 
-    function updateSupervisorFieldVisibility() {
-        var checkedMethods = [];
-        $('.chk-payment-method:checked').each(function () {
-            checkedMethods.push($(this).val());
+    $('#btnAddPayment').on('click', function () {
+        addPaymentBlock();
+    });
+
+    $(document).on('click', '.btnRemovePayment', function () {
+        $(this).closest('.payment-block').remove();
+        // Renumerar bloques
+        $('.payment-block').each(function (i) {
+            $(this).find('.payment-number').text(i + 1);
         });
-        var hasEfectivo = checkedMethods.indexOf('efectivo') !== -1;
-        var isCredit = select_paymentcondition.val() === 'credito';
-
-        // En modo supervisor NO mostramos Nro Operación, Fecha Operación ni Banco
-        // Esa lógica solo aplica al selector simple (no múltiple)
-        $('#rowOperationNumber').hide();
-        $('#rowOperationDate').hide();
-        $('#rowPaymentBank').hide();
-
-        // Efectivo recibido / cambio
-        if (hasEfectivo) {
-            try { fvSale.enableValidator('change'); } catch (e) {}
-            hideRowsVents([{'pos': 0, 'enable': true}, {'pos': 1, 'enable': false}, {'pos': 2, 'enable': isCredit}]);
-        } else {
-            try { fvSale.disableValidator('change'); } catch (e) {}
-            hideRowsVents([{'pos': 0, 'enable': false}, {'pos': 1, 'enable': false}, {'pos': 2, 'enable': isCredit}]);
-        }
-    }
-
-    function updateOperationNumberVisibility() {
-        var id = select_paymentmethod.val();
-        var isCredit = select_paymentcondition.val() === "credito";
-        hideRowsVents([{'pos': 0, 'enable': false}, {'pos': 1, 'enable': false}, {'pos': 2, 'enable': isCredit}]);
-        input_cash.val(input_cash.val());
-        input_amountdebited.val('0.00');
-        
-        // Show/hide operation number and operation date fields for Yape, Plin, Transferencia and Depósito
-        if (id === 'yape' || id === 'plin' || id === 'transferencia' || id === 'deposito') {
-            $('#rowOperationNumber').show();
-            fvSale.enableValidator('operation_number');
-            $('#rowOperationDate').show();
-            fvSale.enableValidator('operation_date');
-        } else {
-            $('#rowOperationNumber').hide();
-            fvSale.disableValidator('operation_number');
-            $('#rowOperationDate').hide();
-            fvSale.disableValidator('operation_date');
-        }
-
-        // Show/hide payment bank field only for Transferencia and Depósito
-        if (id === 'transferencia' || id === 'deposito' || id === 'yape') {
-            $('#rowPaymentBank').show();
-            fvSale.enableValidator('payment_bank');
-            
-            // Filter banks based on payment method
-            filterBanksByMethod(id);
-        } else {
-            $('#rowPaymentBank').hide();
-            fvSale.disableValidator('payment_bank');
-            // Reset filter to show all banks when hiding
-            resetBankFilter();
-        }
-
-        switch (id) {
-            case "efectivo":
-                fvSale.enableValidator('change');
-                fvSale.disableValidator('card_number');
-                fvSale.disableValidator('titular');
-                fvSale.disableValidator('amount_debited');
-                input_cash.trigger("touchspin.updatesettings", {max: 100000000});
-                hideRowsVents([{'pos': 0, 'enable': true}]);
-                
-                break;
-            case "yape":
-            case "plin":
-            case "transferencia":
-            case "deposito":
-                fvSale.disableValidator('change');
-                fvSale.disableValidator('card_number');
-                fvSale.disableValidator('titular');
-                fvSale.disableValidator('amount_debited');
-                break;
-        }
-    }
-
-    function filterBanksByMethod(method) {
-        console.log('Filtering banks for method:', method);
-        // Keep the current selected bank value (if any)
-        var currentValue = select_paymentbank.val();
-        // Rebuild options from the cached original options to avoid Select2 inconsistencies
-        var placeholder = original_bank_options.filter(function() { return $(this).val() === ''; });
-        select_paymentbank.empty();
-        if (placeholder.length) {
-            select_paymentbank.append(placeholder.clone());
-        }
-
-        original_bank_options.each(function() {
-            var opt = $(this);
-            var val = opt.val();
-            if (val === '') return; // skip placeholder (already added)
-            var text = opt.text().toLowerCase();
-            var keep = false;
-            if (method === 'yape') {
-                // Require both 'yape' and 'qr' present in the name (case-insensitive)
-                keep = (text.indexOf('yape') !== -1 || text.indexOf('qr') !== -1);
-            } else if (method === 'plin') {
-                keep = (text.indexOf('plin') !== -1);
-            } else if (method === 'transferencia' || method === 'deposito') {
-                // Show all banks except those that are specific to Yape (contain 'yape' or 'qr')
-                keep = !(text.indexOf('yape') !== -1 || text.indexOf('qr') !== -1);
-            }
-            if (keep) {
-                select_paymentbank.append(opt.clone());
-            }
-        });
-
-        // If the previously selected value is no longer present, clear selection
-        if (currentValue && select_paymentbank.find('option[value="' + currentValue + '"]').length === 0) {
-            select_paymentbank.val('').trigger('change');
-        } else {
-            // re-apply current value to keep it if still present
-            select_paymentbank.val(currentValue).trigger('change');
-        }
-    }
-
-    function resetBankFilter() {
-        /**
-         * Reset bank filter to show all options
-         */
-        // Restore original options and refresh Select2
-        if (original_bank_options) {
-            select_paymentbank.empty().append(original_bank_options.clone());
-            select_paymentbank.val(select_paymentbank.find('option[value="' + select_paymentbank.val() + '"]').length ? select_paymentbank.val() : '').trigger('change');
-        }
-    }
-    
-    // Initial visibility check when page loads
-    if (supervisorMode) {
-        updateSupervisorFieldVisibility();
-    } else {
-        updateOperationNumberVisibility();
-    }
+        recalcPaymentsTotal();
+    });
     input_initial.on('change', function() {
         console.log('Change event detected for input_initial');
     });
@@ -1225,22 +1028,12 @@ $(function () {
             maxboostedstep: 10,
         })
         .off('change').on('change touchspin.on.min touchspin.on.max', function () {
-        var paymentmethod = select_paymentmethod.val();
         fvSale.revalidateField('cash');
         var total = parseFloat(vents.details.total);
-        switch (paymentmethod) {
-            case "efectivo_tarjeta":
-                fvSale.revalidateField('amount_debited');
-                fvSale.revalidateField('change');
-                //input_change.val('0.00');
-                break;
-            case "efectivo":
-                var cash = parseFloat($(this).val());
-                var change = cash - total;
-                input_change.val(change.toFixed(2));
-                fvSale.revalidateField('change');
-                break;
-        }
+        var cash = parseFloat($(this).val());
+        var change = cash - total;
+        input_change.val(change.toFixed(2));
+        try { fvSale.revalidateField('change'); } catch (e) {}
         return false;
     })
         .keypress(function (e) {
