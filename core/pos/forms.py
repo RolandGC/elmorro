@@ -697,6 +697,7 @@ class CompanyForm(ModelForm):
             'website': forms.TextInput(attrs={'placeholder': 'Ingrese una dirección web'}),
             'desc': forms.Textarea(attrs={'placeholder': 'Ingrese una descripción', 'rows': 3, 'cols': 3}),
             'igv': forms.TextInput(),
+            'exchange_rate': forms.TextInput(attrs={'placeholder': 'Tasa de cambio (ej: 3.95)'}),
         }
 
     def save(self, commit=True):

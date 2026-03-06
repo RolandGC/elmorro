@@ -8,7 +8,7 @@ from django.shortcuts import render
 from django.views.decorators.csrf import requires_csrf_token
 from django.views.generic import TemplateView
 
-from core.pos.models import Product, Sale, Client, Provider, Category, Purchase, Company
+from core.pos.models import Product, Sale, Client, Provider, Category, Purchase, Company, User
 from core.reports.choices import months
 from core.security.models import Dashboard
 
@@ -69,6 +69,9 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         context['category'] = Category.objects.filter().count()
         context['product'] = Product.objects.all().count()
         context['sale'] = Sale.objects.filter().order_by('-id')[0:10]
+        context['users'] = User.objects.all().count()
+        context['sales'] = Sale.objects.filter(date_joined__month=datetime.now().month, date_joined__year=datetime.now().year).aggregate(
+            resp=Coalesce(Sum('total'), 0.00, output_field=FloatField()))['resp']
         return context
 
 
