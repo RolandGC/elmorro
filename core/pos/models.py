@@ -194,7 +194,7 @@ class Company(models.Model):
     website = models.CharField(max_length=250, verbose_name='Página web')
     desc = models.CharField(max_length=500, null=True, blank=True, verbose_name='Descripción')
     image = models.ImageField(null=True, blank=True, upload_to='company/%Y/%m/%d', verbose_name='Logo')
-    # igv = models.DecimalField(default=0.00, decimal_places=2, max_digits=9, verbose_name='Igv')
+    igv = models.DecimalField(default=0.00, decimal_places=2, max_digits=9, verbose_name='Igv')
     exchange_rate = models.DecimalField(default=1.00, decimal_places=4, max_digits=9, verbose_name='Tasa de Cambio')
 
     def __str__(self):

@@ -9,6 +9,7 @@ from django.template.loader import get_template
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, DeleteView, FormView
 from weasyprint import HTML, CSS
+from decimal import Decimal
 
 from core.pos.forms import *
 from core.reports.forms import ReportForm
@@ -195,8 +196,8 @@ class SaleAdminCreateView(PermissionMixin, CreateView):
                         ctascollect.validate_debt()
                         
                     elif sale.payment_condition == 'contado':
-                        sale.cash = float(request.POST.get('cash', 0) or 0)
-                        sale.change = float(sale.cash) - float(sale.total) if sale.cash > 0 else 0
+                        sale.cash = float( 0)
+                        sale.change = float(0)
                         sale.save()
 
                     data = {'id': sale.id}
@@ -273,6 +274,10 @@ class SaleAdminCreateView(PermissionMixin, CreateView):
         client_default = Client.objects.filter(user__full_name='NN NN').first()
         context['client_default'] = json.dumps(client_default.toJSON()) if client_default else 'null'
         context['igv'] = Company.objects.first().get_igv()
+        # Tasa de cambio de la compañía (para conversiones visuales)
+        #context['exchange_rate'] = Company.objects.first().exchange_rate
+        context['exchange_rate'] = str(Company.objects.first().exchange_rate)
+        
         # Datos para los bloques dinámicos de pagos
         context['payment_methods'] = json.dumps([pm.toJSON() for pm in PaymentMethodModel.objects.filter(is_active=True)])
         context['currencies'] = json.dumps([c.toJSON() for c in Currency.objects.filter(is_active=True)])

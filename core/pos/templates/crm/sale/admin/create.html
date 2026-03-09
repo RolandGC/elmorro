@@ -11,6 +11,10 @@
     <script src="{% static 'lib/bootstrap-touchspin-4.2.5/js/jquery.bootstrap-touchspin.js' %}"></script>
     <script src="{% static 'lib/tempusdominus-bootstrap-4.5.37.0/js/tempusdominus-bootstrap.js' %}"></script>
     <link rel="stylesheet" href="{% static 'lib/tempusdominus-bootstrap-4.5.37.0/css/tempusdominus-bootstrap.css' %}"/>
+        <script>
+            // Exponer tasa de cambio desde el contexto de Django antes de cargar form.js
+            window.companyExchangeRate = parseFloat('{{ exchange_rate|default:"1.00" }}') || 1.0;
+        </script>
     <script src="{% static 'crm/sale/admin/js/form.js' %}?v=6"></script>
     <style>
         /* Estilos responsive para textarea y inputs */
@@ -167,13 +171,15 @@
                                     </div>
                                     <div class="card-body py-2">
                                         <div class="row">
-                                            <div class="col-lg-4 col-md-6">
+                                            <div class="col-lg-6 col-md-6">
                                                 <div class="form-group mb-2">
-                                                    <label class="control-label">Monto:</label>
-                                                    <input type="number" step="0.01" min="0" class="form-control form-control-sm payment-amount" name="pay_amount" value="0.00">
+                                                    <label class="control-label">Moneda:</label>
+                                                    <select class="form-control form-control-sm payment-currency-select" name="pay_currency">
+                                                        <option value="">---------</option>
+                                                    </select>
                                                 </div>
                                             </div>
-                                            <div class="col-lg-4 col-md-6">
+                                            <div class="col-lg-6 col-md-6">
                                                 <div class="form-group mb-2">
                                                     <label class="control-label">Forma de Pago:</label>
                                                     <select class="form-control form-control-sm payment-method-select" name="pay_method">
@@ -181,12 +187,24 @@
                                                     </select>
                                                 </div>
                                             </div>
-                                            <div class="col-lg-4 col-md-6">
+                                        </div>
+                                        <div class="row mt-1">
+                                            <div class="col-lg-6 col-md-6">
                                                 <div class="form-group mb-2">
-                                                    <label class="control-label">Moneda:</label>
-                                                    <select class="form-control form-control-sm payment-currency-select" name="pay_currency">
-                                                        <option value="">---------</option>
-                                                    </select>
+                                                    <label class="control-label">Monto:</label>
+                                                    <input type="number" step="0.01" min="0" class="form-control form-control-sm payment-amount" name="pay_amount" value="0.00">
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-6 col-md-6">
+                                                <div class="form-group mb-2">
+                                                    <label class="control-label">Equivalente (visual):</label>
+                                                    <div class="input-group">
+                                                        <select class="form-control form-control-sm payment-eq-currency-select" style="max-width:120px;">
+                                                            <option value="">---------</option>
+                                                        </select>
+                                                        <input type="number" step="0.01" min="0" class="form-control form-control-sm payment-amount-equiv" name="pay_amount_equiv" value="0.00">
+                                                    </div>
+                                                    <small class="text-muted">Solo visual: al ingresar aquí se actualizará el Monto (guardado) según la tasa de cambio.</small>
                                                 </div>
                                             </div>
                                         </div>
@@ -225,12 +243,12 @@
                                 </div>
                             </div>
                             <div class="row rowVents">
-                                <div class="col-lg-6">
-                                    <div class="form-group">
-                                        <label>Efectivo recibido:</label>
-                                        {{ form.cash }}
-                                    </div>
-                                </div>
+                                {#<div class="col-lg-6">#}
+                                    {#<div class="form-group">#}
+                                        {#<label>Efectivo recibido:</label>#}
+                                        {#{{ form.cash }}#}
+                                    {#</div>#}
+                                {#</div>#}
                                 {#<div class="col-lg-6">#}
                                     {#<div class="form-group">#}
                                         {#<label>Cambio:</label>#}
@@ -420,6 +438,7 @@
         var currenciesData = {{ currencies|safe }};
         var paymentBanksData = {{ payment_banks|safe }};
         vents.details.igv = parseFloat('{{ igv }}');
+        var companyExchangeRate = parseFloat('{{ exchange_rate|default:"1.00" }}') || 1.0;
         $(function () {
             vents.list_products();
         });
