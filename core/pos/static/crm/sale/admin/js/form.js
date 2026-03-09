@@ -25,6 +25,9 @@ var inputs_vents;
 
 var lastClickedButtonId;
 
+// Company exchange rate provided by template (exposed as window.companyExchangeRate)
+var companyExchangeRate = (typeof window.companyExchangeRate !== 'undefined') ? parseFloat(window.companyExchangeRate) : 1.0;
+
 // Helper function to safely format numbers and avoid NaN
 function safeToFixed(value, decimals = 2) {
     var num = parseFloat(value);
@@ -529,7 +532,13 @@ document.addEventListener('DOMContentLoaded', function (e) {
             var paymentsArray = [];
             $('.payment-block').each(function () {
                 var block = $(this);
-                var amount = block.find('.payment-amount').val() || '0.00';
+                var rawAmount = block.find('.payment-amount').val();
+                var amount = '0.00';
+                if (typeof rawAmount !== 'undefined' && rawAmount !== null && String(rawAmount).toLowerCase() !== 'undefined' && String(rawAmount).trim() !== '') {
+                    // sanitize numeric string; fallback to 0.00 if invalid
+                    var parsed = parseFloat(rawAmount);
+                    amount = !isNaN(parsed) ? String(rawAmount) : '0.00';
+                }
                 var method = block.find('.payment-method-select').val();
                 var currency = block.find('.payment-currency-select').val();
                 var bank = block.find('.payment-bank-select').val();
@@ -978,6 +987,98 @@ $(function () {
             });
         }
 
+        // Poblar select de monedas equivalentes (para la entrada visual)
+        var eqCurrencySelect = block.find('.payment-eq-currency-select');
+        if (typeof currenciesData !== 'undefined') {
+            $.each(currenciesData, function (i, c) {
+                eqCurrencySelect.append('<option value="' + c.id + '" data-code="' + c.code + '">' + c.name + ' (' + c.symbol + ')</option>');
+            });
+            if (currenciesData.length === 1) {
+                eqCurrencySelect.val(currenciesData[0].id);
+            }
+        }
+        // Si cambia la moneda (primaria o equivalente), poner montos a cero si ya hay números
+        block.find('.payment-currency-select, .payment-eq-currency-select').on('change', function () {
+            var currentAmt = parseFloat(block.find('.payment-amount').val()) || 0;
+            var currentEq = parseFloat(block.find('.payment-amount-equiv').val()) || 0;
+            if (currentAmt > 0 || currentEq > 0) {
+                block.find('.payment-amount').val('0.00');
+                block.find('.payment-amount-equiv').val('0.00');
+                recalcPaymentsTotal();
+            }
+        });
+
+        // Listener para el input visual equivalente: convierte a monto original y actualiza el campo guardado
+        block.find('.payment-amount-equiv').on('input change', function () {
+            var equivVal = parseFloat($(this).val()) || 0;
+            var primaryCurrencyId = block.find('.payment-currency-select').val();
+            var eqCurrencyId = block.find('.payment-eq-currency-select').val();
+            // Encontrar códigos
+            var primary = (typeof currenciesData !== 'undefined') ? currenciesData.find(x => String(x.id) === String(primaryCurrencyId)) : null;
+            var equiv = (typeof currenciesData !== 'undefined') ? currenciesData.find(x => String(x.id) === String(eqCurrencyId)) : null;
+            var rate = typeof companyExchangeRate !== 'undefined' ? parseFloat(companyExchangeRate) : 1;
+            var computed = equivVal;
+            console.log('ratessee', rate)
+            try {
+                // Si no hay moneda primaria seleccionada, asumimos que la entrada equiv es igual a la original
+                if (!primary || !equiv) {
+                    computed = equivVal;
+                } else if (String(primary.code).toUpperCase() === String(equiv.code).toUpperCase()) {
+                    computed = equivVal;
+                } else {
+                    // Si primary es moneda local (p.ej. PEN) y equiv es extranjera (p.ej. USD): original = equiv * rate
+                    // Si primary es extranjera y equiv es local: original = equiv / rate
+                    // Intentamos inferir con códigos comunes
+                    var primaryCode = String(primary.code).toUpperCase();
+                    var equivCode = String(equiv.code).toUpperCase();
+                    // Heurística: si primary is PEN or S/ treat as local
+                    if ((primaryCode === 'PEN' || primaryCode === 'SOL' || primaryCode === 'S/') && equivCode !== primaryCode) {
+                        computed = equivVal * rate;
+                    } else if ((equivCode === 'PEN' || equivCode === 'SOL' || equivCode === 'S/') && primaryCode !== equivCode) {
+                        computed = equivVal / rate;
+                    } else {
+                        // Fallback: multiply by rate
+                        computed = equivVal * rate;
+                    }
+                }
+            } catch (err) {
+                computed = equivVal;
+            }
+            // poner computed en el campo pay_amount (valor exacto sin redondeo)
+            block.find('.payment-amount').val(String(computed)).trigger('change');
+            recalcPaymentsTotal();
+        });
+
+        // También sincronizar cuando cambie el monto original para actualizar el equivalente (inversa)
+        block.find('.payment-amount').on('input change', function () {
+            var orig = parseFloat($(this).val()) || 0;
+            var primaryCurrencyId = block.find('.payment-currency-select').val();
+            var eqCurrencyId = block.find('.payment-eq-currency-select').val();
+            var primary = (typeof currenciesData !== 'undefined') ? currenciesData.find(x => String(x.id) === String(primaryCurrencyId)) : null;
+            var equiv = (typeof currenciesData !== 'undefined') ? currenciesData.find(x => String(x.id) === String(eqCurrencyId)) : null;
+            var rate = typeof companyExchangeRate !== 'undefined' ? parseFloat(companyExchangeRate) : 1;
+            var computedEq = orig;
+            if (!primary || !equiv) {
+                computedEq = orig;
+            } else if (String(primary.code).toUpperCase() === String(equiv.code).toUpperCase()) {
+                computedEq = orig;
+            } else {
+                var primaryCode = String(primary.code).toUpperCase();
+                var equivCode = String(equiv.code).toUpperCase();
+                if ((primaryCode === 'PEN' || primaryCode === 'SOL' || primaryCode === 'S/') && equivCode !== primaryCode) {
+                    // orig is local, equiv = orig / rate
+                    computedEq = orig / rate;
+                } else if ((equivCode === 'PEN' || equivCode === 'SOL' || equivCode === 'S/') && primaryCode !== equivCode) {
+                    // orig is foreign, equiv = orig * rate
+                    computedEq = orig * rate;
+                } else {
+                    computedEq = orig / rate;
+                }
+            }
+            block.find('.payment-amount-equiv').val(String(computedEq));
+            recalcPaymentsTotal();
+        });
+
         // Listener para recalcular total de pagos
         block.find('.payment-amount').on('input change', function () {
             recalcPaymentsTotal();
@@ -992,10 +1093,10 @@ $(function () {
             var val = parseFloat($(this).val());
             if (!isNaN(val)) sum += val;
         });
-        sum = parseFloat(sum.toFixed(2));
-        $('input[name="total"]').val(sum.toFixed(2));
-        $('input[name="amount"]').val(sum.toFixed(2));
-        $('input[name="subtotal"]').val(sum.toFixed(2));
+        // mantener el valor exacto sin redondear
+        $('input[name="total"]').val(String(sum));
+        $('input[name="amount"]').val(String(sum));
+        $('input[name="subtotal"]').val(String(sum));
         vents.details.subtotal = sum;
         vents.details.total = sum;
         amount_user_edited = true;
