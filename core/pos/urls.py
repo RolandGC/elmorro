@@ -22,6 +22,8 @@ from core.pos.views.crm.devolution.views import *
 from core.pos.views.admin.user_series.views import *
 from core.pos.views.admin.user_expense_series.views import *
 from core.pos.views.frm.paymentbank.views import *
+from core.pos.views.frm.currency.views import *
+from core.pos.views.frm.paymentmethod.views import *
 from core.pos.views.frm.user_sales_report.views import UserSalesReportView
 
 urlpatterns = [
@@ -121,6 +123,16 @@ urlpatterns = [
     path('frm/paymentbank/add/', PaymentBankCreateView.as_view(), name='paymentbank_create'),
     path('frm/paymentbank/update/<int:pk>/', PaymentBankUpdateView.as_view(), name='paymentbank_update'),
     path('frm/paymentbank/delete/<int:pk>/', PaymentBankDeleteView.as_view(), name='paymentbank_delete'),
+    # currency
+    path('frm/currency/', CurrencyListView.as_view(), name='currency_list'),
+    path('frm/currency/add/', CurrencyCreateView.as_view(), name='currency_create'),
+    path('frm/currency/update/<int:pk>/', CurrencyUpdateView.as_view(), name='currency_update'),
+    path('frm/currency/delete/<int:pk>/', CurrencyDeleteView.as_view(), name='currency_delete'),
+    # paymentmethod
+    path('frm/paymentmethod/', PaymentMethodListView.as_view(), name='paymentmethod_list'),
+    path('frm/paymentmethod/add/', PaymentMethodCreateView.as_view(), name='paymentmethod_create'),
+    path('frm/paymentmethod/update/<int:pk>/', PaymentMethodUpdateView.as_view(), name='paymentmethod_update'),
+    path('frm/paymentmethod/delete/<int:pk>/', PaymentMethodDeleteView.as_view(), name='paymentmethod_delete'),
     # user sales report
     path('frm/user/sales/report/', UserSalesReportView.as_view(), name='user_sales_report'),
 ]

@@ -417,6 +417,32 @@ for p in Permission.objects.filter(content_type__model=PaymentBank._meta.label.s
     module.permits.add(p)
 print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
 
+module, created = Module.objects.get_or_create(url='/pos/frm/currency/')
+module.moduletype_id = type_facturacion.id
+module.name = 'Monedas'
+module.is_active = True
+module.is_vertical = True
+module.is_visible = True
+module.icon = 'fas fa-coins'
+module.description = 'Permite administrar las monedas del sistema'
+module.save()
+for p in Permission.objects.filter(content_type__model=Currency._meta.label.split('.')[1].lower()):
+    module.permits.add(p)
+print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
+
+module, created = Module.objects.get_or_create(url='/pos/frm/paymentmethod/')
+module.moduletype_id = type_facturacion.id
+module.name = 'Formas de Pago'
+module.is_active = True
+module.is_vertical = True
+module.is_visible = True
+module.icon = 'fas fa-credit-card'
+module.description = 'Permite administrar las formas de pago'
+module.save()
+for p in Permission.objects.filter(content_type__model=PaymentMethodModel._meta.label.split('.')[1].lower()):
+    module.permits.add(p)
+print('{} {}'.format(module.name, '(creado)' if created else '(actualizado)'))
+
 # ===================== REPORTES MODULES =====================
 
 module, created = Module.objects.get_or_create(url='/reports/sale/')

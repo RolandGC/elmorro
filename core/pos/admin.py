@@ -1,5 +1,5 @@
 from django.contrib import admin
-from core.pos.models import Product, Sale, Box, Category, Client, DebtsPay, PaymentsCtaCollect, Devolution, SaleDetail, CtasCollect, Series, UserSeries, PaymentBank
+from core.pos.models import Product, Sale, Box, Category, Client, DebtsPay, PaymentsCtaCollect, Devolution, SaleDetail, CtasCollect, Series, UserSeries, PaymentBank, Currency, PaymentMethodModel, SalePayment
 # Register your models here.
 admin.site.register(Product)
 admin.site.register(Sale)
@@ -8,6 +8,9 @@ admin.site.register(Box)
 admin.site.register(Series)
 admin.site.register(UserSeries)
 admin.site.register(PaymentBank)
+admin.site.register(Currency)
+admin.site.register(PaymentMethodModel)
+admin.site.register(SalePayment)
 
 admin.site.register(Category)
 admin.site.register(Client)

@@ -767,3 +767,54 @@ class PaymentBankForm(ModelForm):
         except Exception as e:
             data['error'] = str(e)
         return data
+
+
+class CurrencyForm(ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['name'].widget.attrs['autofocus'] = True
+
+    class Meta:
+        model = Currency
+        fields = '__all__'
+        widgets = {
+            'name': forms.TextInput(attrs={'placeholder': 'Ingrese el nombre de la moneda'}),
+            'code': forms.TextInput(attrs={'placeholder': 'Ej: PEN, USD'}),
+            'symbol': forms.TextInput(attrs={'placeholder': 'Ej: S/, $'}),
+        }
+
+    def save(self, commit=True):
+        data = {}
+        try:
+            if self.is_valid():
+                super().save()
+            else:
+                data['error'] = self.errors
+        except Exception as e:
+            data['error'] = str(e)
+        return data
+
+
+class PaymentMethodForm(ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['name'].widget.attrs['autofocus'] = True
+
+    class Meta:
+        model = PaymentMethodModel
+        fields = '__all__'
+        widgets = {
+            'name': forms.TextInput(attrs={'placeholder': 'Ingrese el nombre de la forma de pago'}),
+            'code': forms.TextInput(attrs={'placeholder': 'Ej: efectivo, yape, plin'}),
+        }
+
+    def save(self, commit=True):
+        data = {}
+        try:
+            if self.is_valid():
+                super().save()
+            else:
+                data['error'] = self.errors
+        except Exception as e:
+            data['error'] = str(e)
+        return data
