@@ -7,7 +7,7 @@ from django.http import HttpResponse
 from django.http import JsonResponse
 from django.template.loader import get_template
 from django.urls import reverse_lazy
-from django.views.generic import CreateView, DeleteView, FormView
+from django.views.generic import CreateView, DeleteView, FormView, UpdateView
 from weasyprint import HTML, CSS
 from decimal import Decimal
 
@@ -271,6 +271,7 @@ class SaleAdminCreateView(PermissionMixin, CreateView):
         context['list_url'] = self.success_url
         context['title'] = 'Nuevo registro de una Cobranza'
         context['action'] = 'add'
+        context['form_url'] = reverse_lazy('sale_admin_create')
         client_default = Client.objects.filter(user__full_name='NN NN').first()
         context['client_default'] = json.dumps(client_default.toJSON()) if client_default else 'null'
         context['igv'] = Company.objects.first().get_igv()
@@ -282,6 +283,131 @@ class SaleAdminCreateView(PermissionMixin, CreateView):
         context['payment_methods'] = json.dumps([pm.toJSON() for pm in PaymentMethodModel.objects.filter(is_active=True)])
         context['currencies'] = json.dumps([c.toJSON() for c in Currency.objects.filter(is_active=True)])
         context['payment_banks'] = json.dumps([b.toJSON() for b in PaymentBank.objects.all()])
+        return context
+
+
+class SaleAdminUpdateView(SaleAdminCreateView):
+    permission_required = 'change_sale'
+
+    def get_form(self, form_class=None):
+        sale = Sale.objects.get(pk=self.kwargs['pk'])
+        form = SaleForm(instance=sale)
+        form.fields['client'].queryset = Client.objects.filter(id=sale.client_id)
+        return form
+
+    def post(self, request, *args, **kwargs):
+        action = request.POST['action']
+        data = {}
+        try:
+            if action == 'edit':
+                with transaction.atomic():
+                    sale = Sale.objects.get(pk=self.kwargs['pk'])
+                    sale.client_id = int(request.POST['client'])
+                    dj = request.POST.get('date_joined', '').strip()
+                    if dj:
+                        parsed = None
+                        for fmt in ('%Y-%m-%dT%H:%M', '%Y-%m-%d %H:%M', '%d/%m/%Y %H:%M'):
+                            try:
+                                parsed = datetime.strptime(dj, fmt)
+                                break
+                            except:
+                                continue
+                        if parsed:
+                            if timezone.is_naive(parsed):
+                                parsed = timezone.make_aware(parsed)
+                            sale.date_joined = parsed
+                    sale.payment_condition = request.POST['payment_condition']
+                    sale.type_voucher = request.POST['type_voucher']
+                    sale.igv = float(Company.objects.first().igv) / 100
+                    sale.dscto = float(request.POST['dscto'])
+                    sale.comment = request.POST.get('comment', '')
+                    sale.total = float(request.POST.get('total', 0.00))
+                    sale.save()
+
+                    # Restaurar stock de los detalles anteriores
+                    for old_det in sale.saledetail_set.all():
+                        old_det.product.stock += old_det.cant
+                        old_det.product.save()
+                    sale.saledetail_set.all().delete()
+
+                    # Crear nuevos detalles
+                    for i in json.loads(request.POST['products']):
+                        prod = Product.objects.get(pk=i['id'])
+                        det = SaleDetail()
+                        det.sale_id = sale.id
+                        det.product_id = prod.id
+                        det.price = float(i['price_current'])
+                        det.cant = int(i['cant'])
+                        det.subtotal = det.price * det.cant
+                        det.dscto = float(i['dscto'])
+                        det.total_dscto = det.dscto
+                        det.total = det.subtotal - det.total_dscto
+                        det.save()
+                        det.product.stock -= det.cant
+                        det.product.save()
+
+                    sale.calculate_invoice()
+
+                    # Recrear pagos
+                    sale.payments.all().delete()
+                    payments_list = json.loads(request.POST.get('payments', '[]'))
+                    for pay in payments_list:
+                        sp = SalePayment()
+                        sp.sale_id = sale.id
+                        sp.amount = float(pay.get('amount', 0))
+                        sp.payment_method_id = int(pay.get('payment_method', 0))
+                        sp.currency_id = int(pay.get('currency', 0))
+                        bank_id = pay.get('bank', '')
+                        if bank_id:
+                            sp.bank_id = int(bank_id)
+                        sp.operation_number = pay.get('operation_number', '')
+                        sp.save()
+
+                    if sale.payment_condition == 'credito':
+                        sale.end_credit = request.POST['end_credit']
+                        sale.cash = 0.00
+                        sale.change = 0.00
+                        sale.initial = float(request.POST['initial'])
+                        sale.save()
+                        ctascollect = CtasCollect.objects.filter(sale=sale).first()
+                        if not ctascollect:
+                            ctascollect = CtasCollect()
+                            ctascollect.sale_id = sale.id
+                            ctascollect.user_id = request.user.id
+                        ctascollect.date_joined = sale.date_joined
+                        ctascollect.end_date = sale.end_credit
+                        ctascollect.debt = sale.total
+                        ctascollect.saldo = sale.total
+                        ctascollect.save()
+                        payment_initial = PaymentsCtaCollect.objects.filter(ctascollect=ctascollect).first()
+                        if not payment_initial:
+                            payment_initial = PaymentsCtaCollect()
+                            payment_initial.ctascollect_id = ctascollect.id
+                        payment_initial.date_joined = sale.date_joined
+                        payment_initial.valor = sale.initial
+                        payment_initial.desc = 'Pago inicial'
+                        payment_initial.save()
+                        ctascollect.validate_debt()
+                    elif sale.payment_condition == 'contado':
+                        sale.cash = 0.00
+                        sale.change = 0.00
+                        sale.save()
+                        CtasCollect.objects.filter(sale=sale).delete()
+
+                    data = {'id': sale.id}
+            else:
+                return super().post(request, *args, **kwargs)
+        except Exception as e:
+            data['error'] = str(e)
+        return HttpResponse(json.dumps(data, cls=DjangoJSONEncoder), content_type='application/json')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Edición de una Cobranza'
+        context['action'] = 'edit'
+        context['form_url'] = reverse_lazy('sale_admin_update', kwargs={'pk': self.kwargs['pk']})
+        sale = Sale.objects.get(pk=self.kwargs['pk'])
+        context['sale_data'] = json.dumps(sale.toJSON(), cls=DjangoJSONEncoder)
         return context
 
 

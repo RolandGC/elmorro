@@ -111,6 +111,7 @@ urlpatterns = [
     # sale/admin
     path('crm/sale/admin/', SaleAdminListView.as_view(), name='sale_admin_list'),
     path('crm/sale/admin/add/', SaleAdminCreateView.as_view(), name='sale_admin_create'),
+    path('crm/sale/admin/update/<int:pk>/', SaleAdminUpdateView.as_view(), name='sale_admin_update'),
     path('crm/sale/admin/delete/<int:pk>/', SaleAdminDeleteView.as_view(), name='sale_admin_delete'),
     path('crm/sale/print/voucher/<int:pk>/', SalePrintVoucherView.as_view(), name='sale_print_ticket'),
     path('crm/sale/client/', SaleClientListView.as_view(), name='sale_client_list'),

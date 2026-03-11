@@ -1243,4 +1243,82 @@ $(function () {
 
     $('i[data-field="client"]').hide();
     $('i[data-field="searchproducts"]').hide();
+
+    // Precarga de datos para edición
+    if (window.saleDataForEdit) {
+        var saleData = window.saleDataForEdit;
+        console.log('=== PRECARGA EDICIÓN ===');
+
+        // Cargar cliente en select2
+        if (saleData.client && saleData.client.id) {
+            var clientText = saleData.client.user.full_name + ' / ' + saleData.client.user.dni;
+            var newOption = new Option(clientText, saleData.client.id, true, true);
+            select_client.append(newOption).trigger('change');
+        }
+
+        // Cargar tipo de comprobante (sin trigger para evitar errores de FormValidation)
+        if (saleData.type_voucher && saleData.type_voucher.id) {
+            $('select[name="type_voucher"]').val(saleData.type_voucher.id);
+        }
+
+        // Cargar productos desde sale_details
+        if (saleData.sale_details && saleData.sale_details.length > 0) {
+            $.each(saleData.sale_details, function (i, det) {
+                var product = det.product;
+                product.cant = det.cant;
+                product.price_current = det.price;
+                product.dscto = det.dscto;
+                vents.details.products.push(product);
+            });
+            vents.list_products();
+        }
+
+        // Cargar bloques de pago
+        if (saleData.payments && saleData.payments.length > 0) {
+            $.each(saleData.payments, function (i, payment) {
+                var block = addPaymentBlock();
+                block.find('.payment-currency-select').val(payment.currency.id);
+                block.find('.payment-method-select').val(payment.payment_method.id);
+                block.find('.payment-amount').val(payment.amount);
+                if (payment.bank && payment.bank.id) {
+                    block.find('.payment-bank-select').val(payment.bank.id);
+                }
+                if (payment.operation_number) {
+                    block.find('.payment-operation').val(payment.operation_number);
+                }
+            });
+            recalcPaymentsTotal();
+        }
+
+        // Cargar total y amount
+        $('input[name="total"]').val(saleData.total);
+        $('input[name="amount"]').val(saleData.total);
+        total_user_edited = true;
+        amount_user_edited = true;
+
+        // Cargar comentario
+        $('textarea[name="comment"]').val(saleData.comment || '');
+
+        // Cargar fecha (convertir de DD/MM/YYYY HH:MM a YYYY-MM-DDTHH:MM)
+        if (saleData.date_joined) {
+            var parts = saleData.date_joined.match(/(\d{2})\/(\d{2})\/(\d{4})\s(\d{2}):(\d{2})/);
+            if (parts) {
+                var isoDate = parts[3] + '-' + parts[2] + '-' + parts[1] + 'T' + parts[4] + ':' + parts[5];
+                $('input[name="date_joined"]').val(isoDate);
+            }
+        }
+
+        // Cargar campos de crédito si aplica
+        if (saleData.payment_condition.id === 'credito') {
+            input_endcredit.val(saleData.end_credit);
+            input_initial.val(saleData.initial);
+        }
+
+        // Cargar condición de pago AL FINAL con setTimeout para que FormValidation ya esté listo
+        setTimeout(function () {
+            if (saleData.payment_condition && saleData.payment_condition.id) {
+                select_paymentcondition.val(saleData.payment_condition.id).trigger('change');
+            }
+        }, 100);
+    }
 });

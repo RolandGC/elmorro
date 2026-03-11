@@ -573,6 +573,7 @@ class Sale(models.Model):
         permissions = (
             ('view_sale', 'Can view Ventas'),
             ('add_sale', 'Can add Ventas'),
+            ('change_sale', 'Can change Ventas'),
             ('delete_sale', 'Can delete Ventas'),
         )
         ordering = ['-id']

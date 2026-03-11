@@ -15,7 +15,7 @@
             // Exponer tasa de cambio desde el contexto de Django antes de cargar form.js
             window.companyExchangeRate = parseFloat('{{ exchange_rate|default:"1.00" }}') || 1.0;
         </script>
-    <script src="{% static 'crm/sale/admin/js/form.js' %}?v=6"></script>
+    <script src="{% static 'crm/sale/admin/js/form.js' %}?v=8"></script>
     <style>
         /* Estilos responsive para textarea y inputs */
         textarea {
@@ -49,7 +49,7 @@
 {% endblock %}
 
 {% block content %}
-    <form id="frmSale" method="post" data-url="{% url 'sale_admin_create' %}">
+    <form id="frmSale" method="post" data-url="{{ form_url }}">
         <div class="card {{ dshboard.card }}">
             <div class="card-header">
                 <h3 class="card-title">
@@ -343,11 +343,13 @@
             </div>
             <div class="card-footer">
                 <button type="submit" id="btnFacturarImprimir" class="btn btn-primary btn-flat btnCollect">
-                    <i class="fas fa-file-invoice-dollar"></i> Registrar e imprimir
+                    <i class="fas fa-file-invoice-dollar"></i> {% if action == 'edit' %}Guardar e imprimir{% else %}Registrar e imprimir{% endif %}
                 </button>
+                {% if action == 'add' %}
                 <button type="button" class="btn btn-warning btn-flat btnProforma">
                     <i class="fas fa-file-alt"></i> Crear Proforma
                 </button>
+                {% endif %}
                 <a href="{{ list_url }}" class="btn btn-danger btn-flat">
                     <i class="fas fa-times"></i> Cancelar
                 </a>
@@ -439,8 +441,13 @@
         var paymentBanksData = {{ payment_banks|safe }};
         vents.details.igv = parseFloat('{{ igv }}');
         var companyExchangeRate = parseFloat('{{ exchange_rate|default:"1.00" }}') || 1.0;
+        {% if sale_data %}
+        window.saleDataForEdit = {{ sale_data|safe }};
+        {% endif %}
         $(function () {
+            {% if not sale_data %}
             vents.list_products();
+            {% endif %}
         });
     </script>
 {% endblock %}
