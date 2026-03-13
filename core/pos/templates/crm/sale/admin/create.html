@@ -143,8 +143,8 @@
                             <div class="row">
                                 <div class="col-lg-6">
                                     <div class="form-group">
-                                        <label class="control-label">Método de pago:</label>
-                                        {{ form.payment_condition }}
+                                        <label class="control-label">Comprobante:</label>
+                                        {{ form.type_voucher }}
                                     </div>
                                 </div>
                                 <div class="col-lg-6">
@@ -163,9 +163,12 @@
                             {# Template oculto para un bloque de pago #}
                             <template id="paymentBlockTemplate">
                                 <div class="card card-outline card-info mb-2 payment-block" data-index="__INDEX__">
-                                    <div class="card-header py-1 d-flex justify-content-between align-items-center">
-                                        <span class="font-weight-bold">Pago #<span class="payment-number">__INDEX__</span></span>
-                                        <button type="button" class="btn btn-danger btn-xs btnRemovePayment">
+                                    <div class="card-header py-1 d-flex align-items-center">
+                                        <span class="font-weight-bold">
+                                            Pago #<span class="payment-number">__INDEX__</span>
+                                        </span>
+
+                                        <button type="button" class="btn btn-danger btn-xs btnRemovePayment ml-auto">
                                             <i class="fas fa-times"></i>
                                         </button>
                                     </div>
@@ -209,7 +212,7 @@
                                             </div>
                                         </div>
                                         <div class="row">
-                                            <div class="col-lg-6 col-md-6">
+                                            <div class="col-lg-6 col-md-6 payment-optional-field" style="display: none;">
                                                 <div class="form-group mb-2">
                                                     <label class="control-label">Banco (opcional):</label>
                                                     <select class="form-control form-control-sm payment-bank-select" name="pay_bank">
@@ -217,9 +220,9 @@
                                                     </select>
                                                 </div>
                                             </div>
-                                            <div class="col-lg-6 col-md-6">
+                                            <div class="col-lg-6 col-md-6 payment-optional-field" style="display: none;">
                                                 <div class="form-group mb-2">
-                                                    <label class="control-label">Nro Operación (opcional):</label>
+                                                    <label class="control-label">N° Operación (opcional):</label>
                                                     <input type="text" class="form-control form-control-sm payment-operation" name="pay_operation" placeholder="Nro de operación">
                                                 </div>
                                             </div>
@@ -229,18 +232,13 @@
                             </template>
                             
                             <div class="row">
-                                <div class="col-lg-6">
-                                    <div class="form-group">
-                                        <label class="control-label">Comprobante:</label>
-                                        {{ form.type_voucher }}
-                                    </div>
-                                </div>
-                                <div class="col-lg-6">
+                                
+                                {% comment %} <div class="col-lg-6">
                                     <div class="form-group">
                                         <label>Total a pagar:</label>
                                         {{ form.amount }}
                                     </div>
-                                </div>
+                                </div> {% endcomment %}
                             </div>
                             <div class="row rowVents">
                                 {#<div class="col-lg-6">#}
@@ -318,14 +316,14 @@
                                             {#<td>{{ form.total_igv }}</td>#}
                                         {#</tr>#}
                                         <tr>
-                                            <td><b>TOTAL A PAGAR</b></td>
-                                            <td>
-                                                <div class="form-group mb-0">
-                                                    {{ form.total }}
-                                                </div>
-                                            </td>
+                                            <td colspan="2"><b>RESUMEN DE PAGOS POR MONEDA:</b></td>
                                         </tr>
+                                        <tbody id="paymentsSummary">
+                                            <!-- Se llena dinámicamente con JavaScript -->
                                         </tbody>
+                                        {# Campo TOTAL A PAGAR oculto pero opcional en backend #}
+                                        
+                                        
                                     </table>
                                 </div>
                             </div>
@@ -444,10 +442,79 @@
         {% if sale_data %}
         window.saleDataForEdit = {{ sale_data|safe }};
         {% endif %}
+        
+        // Función para actualizar el resumen de pagos por moneda
+        function updatePaymentsSummary() {
+            const paymentSummary = {};
+            
+            // Recorrer todos los bloques de pago
+            document.querySelectorAll('.payment-block').forEach(block => {
+                const currencySelect = block.querySelector('.payment-currency-select');
+                const amountInput = block.querySelector('.payment-amount');
+                
+                if (currencySelect && amountInput) {
+                    const currencyValue = currencySelect.value;
+                    const amount = parseFloat(amountInput.value) || 0;
+                    
+                    if (currencyValue) {
+                        // Buscar el nombre de la moneda
+                        const currencyObj = currenciesData.find(c => c.id == currencyValue);
+                        const currencyName = currencyObj ? currencyObj.name : '';
+                        const currencySymbol = currencyObj ? currencyObj.symbol : '';
+                        
+                        if (!paymentSummary[currencyValue]) {
+                            paymentSummary[currencyValue] = {
+                                name: currencyName,
+                                symbol: currencySymbol,
+                                total: 0
+                            };
+                        }
+                        paymentSummary[currencyValue].total += amount;
+                    }
+                }
+            });
+            
+            // Actualizar la tabla resumen
+            const summaryContainer = document.getElementById('paymentsSummary');
+            if (summaryContainer) {
+                summaryContainer.innerHTML = '';
+                for (const [key, value] of Object.entries(paymentSummary)) {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td><b>${value.name}</b></td>
+                        <td>${value.symbol}${value.total.toFixed(2)}</td>
+                    `;
+                    summaryContainer.appendChild(row);
+                }
+            }
+        }
+        
+        // Actualizar resumen cuando se carga la página
         $(function () {
             {% if not sale_data %}
             vents.list_products();
             {% endif %}
+            
+            // Actualizar resumen inicial
+            updatePaymentsSummary();
+            
+            // Escuchar cambios en los pagos
+            $(document).on('change', '.payment-currency-select, .payment-amount', function() {
+                updatePaymentsSummary();
+            });
+            
+            // Escuchar cuando se agregan nuevos bloques de pago
+            const observer = new MutationObserver(function(mutations) {
+                updatePaymentsSummary();
+            });
+            
+            const paymentsContainer = document.getElementById('paymentsContainer');
+            if (paymentsContainer) {
+                observer.observe(paymentsContainer, {
+                    childList: true,
+                    subtree: true
+                });
+            }
         });
     </script>
 {% endblock %}

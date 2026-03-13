@@ -28,19 +28,34 @@ print('Company: {} {}'.format(company.name, '(creada)' if created else '(actuali
 
 # ===================== MODULE TYPES =====================
 
-type_security, created = ModuleType.objects.get_or_create(name='Seguridad')
+type_security, created = ModuleType.objects.get_or_create(
+    name='Seguridad',
+    defaults={'icon': 'fas fa-shield-alt'}
+)
 print('{} {}'.format(type_security.name, '(creado)' if created else '(actualizado)'))
 
-type_bodega, created = ModuleType.objects.get_or_create(name='Almacén')
+type_bodega, created = ModuleType.objects.get_or_create(
+    name='Almacén',
+    defaults={'icon': 'fas fa-warehouse'}
+)
 print('{} {}'.format(type_bodega.name, '(creado)' if created else '(actualizado)'))
 
-type_administrativo, created = ModuleType.objects.get_or_create(name='Administrativo')
+type_administrativo, created = ModuleType.objects.get_or_create(
+    name='Administrativo',
+    defaults={'icon': 'fas fa-user-tie'}
+)
 print('{} {}'.format(type_administrativo.name, '(creado)' if created else '(actualizado)'))
 
-type_facturacion, created = ModuleType.objects.get_or_create(name='Facturación')
+type_facturacion, created = ModuleType.objects.get_or_create(
+    name='Facturación',
+    defaults={'icon': 'fas fa-file-invoice-dollar'}
+)
 print('{} {}'.format(type_facturacion.name, '(creado)' if created else '(actualizado)'))
 
-type_reportes, created = ModuleType.objects.get_or_create(name='Reportes')
+type_reportes, created = ModuleType.objects.get_or_create(
+    name='Reportes',
+    defaults={'icon': 'fas fa-chart-bar'}
+)
 print('{} {}'.format(type_reportes.name, '(creado)' if created else '(actualizado)'))
 
 # ===================== SEGURIDAD MODULES =====================

@@ -974,6 +974,141 @@ class Box(models.Model):
     def __str__(self):
         return self.date_close.strftime('%Y-%m-%d')
 
+    def get_fecha_inicio(self):
+        """Obtiene la fecha de inicio del rango: desde el último cierre"""
+        if self.datetime_close:
+            return self.datetime_close
+        else:
+            # Si no hay datetime_close, usar el inicio del día
+            from datetime import datetime, time
+            fecha_actual = datetime.now()
+            return datetime.combine(fecha_actual.date(), time.min)
+
+    def get_efectivo_soles(self):
+        """Calcula efectivo en soles desde el último cierre"""
+        fecha_inicio = self.get_fecha_inicio()
+        fecha_fin = datetime.now()
+        
+        total = SalePayment.objects.filter(
+            sale__employee=self.user,
+            sale__date_joined__range=[fecha_inicio, fecha_fin],
+            payment_method__code='efectivo',
+            currency__code__in=['PEN', 'SOL']
+        ).aggregate(total=Sum('amount'))['total'] or 0
+        
+        return float(total)
+
+    def get_efectivo_dolares(self):
+        """Calcula efectivo en dólares desde el último cierre"""
+        fecha_inicio = self.get_fecha_inicio()
+        fecha_fin = datetime.now()
+        
+        total = SalePayment.objects.filter(
+            sale__employee=self.user,
+            sale__date_joined__range=[fecha_inicio, fecha_fin],
+            payment_method__code='efectivo',
+            currency__code__in=['USD', 'DOL']
+        ).aggregate(total=Sum('amount'))['total'] or 0
+        
+        return float(total)
+
+    def get_transferencia_soles(self):
+        """Calcula transferencia en soles desde el último cierre"""
+        fecha_inicio = self.get_fecha_inicio()
+        fecha_fin = datetime.now()
+        
+        total = SalePayment.objects.filter(
+            sale__employee=self.user,
+            sale__date_joined__range=[fecha_inicio, fecha_fin],
+            payment_method__code='transferencia',
+            currency__code__in=['PEN', 'SOL']
+        ).aggregate(total=Sum('amount'))['total'] or 0
+        
+        return float(total)
+
+    def get_transferencia_dolares(self):
+        """Calcula transferencia en dólares desde el último cierre"""
+        fecha_inicio = self.get_fecha_inicio()
+        fecha_fin = datetime.now()
+        
+        total = SalePayment.objects.filter(
+            sale__employee=self.user,
+            sale__date_joined__range=[fecha_inicio, fecha_fin],
+            payment_method__code='transferencia',
+            currency__code__in=['USD', 'DOL']
+        ).aggregate(total=Sum('amount'))['total'] or 0
+        
+        return float(total)
+
+    def get_deposito_soles(self):
+        """Calcula depósito en soles desde el último cierre"""
+        fecha_inicio = self.get_fecha_inicio()
+        fecha_fin = datetime.now()
+        
+        total = SalePayment.objects.filter(
+            sale__employee=self.user,
+            sale__date_joined__range=[fecha_inicio, fecha_fin],
+            payment_method__code='deposito',
+            currency__code__in=['PEN', 'SOL']
+        ).aggregate(total=Sum('amount'))['total'] or 0
+        
+        return float(total)
+
+    def get_deposito_dolares(self):
+        """Calcula depósito en dólares desde el último cierre"""
+        fecha_inicio = self.get_fecha_inicio()
+        fecha_fin = datetime.now()
+        
+        total = SalePayment.objects.filter(
+            sale__employee=self.user,
+            sale__date_joined__range=[fecha_inicio, fecha_fin],
+            payment_method__code='deposito',
+            currency__code__in=['USD', 'DOL']
+        ).aggregate(total=Sum('amount'))['total'] or 0
+        
+        return float(total)
+
+    def get_gastos(self):
+        """Calcula gastos en soles desde el último cierre"""
+        fecha_inicio = self.get_fecha_inicio()
+        fecha_fin = datetime.now()
+        
+        total = Expenses.objects.filter(
+            user=self.user,
+            date_joined__range=[fecha_inicio.date(), fecha_fin.date()]
+        ).aggregate(total=Sum('valor'))['total'] or 0
+        
+        return float(total)
+
+    def get_yape_soles(self):
+        """Calcula yape en soles desde el último cierre"""
+        fecha_inicio = self.get_fecha_inicio()
+        fecha_fin = datetime.now()
+        
+        total = SalePayment.objects.filter(
+            sale__employee=self.user,
+            sale__date_joined__range=[fecha_inicio, fecha_fin],
+            payment_method__code='yape',
+            currency__code__in=['PEN', 'SOL']
+        ).aggregate(total=Sum('amount'))['total'] or 0
+        
+        return float(total)
+
+    def get_plin_soles(self):
+        """Calcula plin en soles desde el último cierre"""
+        fecha_inicio = self.get_fecha_inicio()
+        fecha_fin = datetime.now()
+        
+        total = SalePayment.objects.filter(
+            sale__employee=self.user,
+            sale__date_joined__range=[fecha_inicio, fecha_fin],
+            payment_method__code='plin',
+            currency__code__in=['PEN', 'SOL']
+        ).aggregate(total=Sum('amount'))['total'] or 0
+        
+        return float(total)
+
+    # Métodos antiguos (compatibilidad)
     def get_efectivo(self):
         fecha_actual = date.today()
         # Sumar montos de SalePayment con método 'efectivo'
@@ -1048,15 +1183,17 @@ class Box(models.Model):
             item['hours_close'] = self.hours_close.strftime('%H:%M') if self.hours_close else ''
             item['datetime_close'] = ''
         
-        item['efectivo'] = format(self.efectivo, '.2f')
-        item['yape'] = format(self.yape, '.2f')
-        item['plin'] = format(self.plin, '.2f')
-        item['transferencia'] = format(self.transferencia, '.2f')
-        item['deposito'] = format(self.deposito, '.2f')
-        item['bills'] = format(self.bills, '.2f') if self.bills else '0.00'
-        item['initial_box'] = format(self.initial_box, '.2f')
-        item['box_final'] = format(self.box_final, '.2f')
-        item['options'] = ''  # Columna vacía para las opciones (será llenada por JavaScript)
+        # Agregar valores calculados por moneda
+        item['efectivo_soles'] = format(self.get_efectivo_soles(), '.2f')
+        item['efectivo_dolares'] = format(self.get_efectivo_dolares(), '.2f')
+        item['yape_soles'] = format(self.get_yape_soles(), '.2f')
+        item['plin_soles'] = format(self.get_plin_soles(), '.2f')
+        item['transferencia_soles'] = format(self.get_transferencia_soles(), '.2f')
+        item['transferencia_dolares'] = format(self.get_transferencia_dolares(), '.2f')
+        item['deposito_soles'] = format(self.get_deposito_soles(), '.2f')
+        item['deposito_dolares'] = format(self.get_deposito_dolares(), '.2f')
+        item['gastos'] = format(self.get_gastos(), '.2f')
+        
         return item
 
     class Meta:

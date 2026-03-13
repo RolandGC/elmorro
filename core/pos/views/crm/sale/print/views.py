@@ -35,6 +35,20 @@ class SalePrintVoucherView(LoginRequiredMixin, View):
         user_agent = request.META.get('HTTP_USER_AGENT', '').lower()
         return 'android' in user_agent or 'windows' in user_agent
 
+    def get_grouped_payments_by_currency(self, sale):
+        """Group payments by currency and sum amounts"""
+        payments_by_currency = {}
+        for payment in sale.payments.all():
+            currency_code = payment.currency.code
+            if currency_code not in payments_by_currency:
+                payments_by_currency[currency_code] = {
+                    'symbol': payment.currency.symbol,
+                    'name': payment.currency.name,
+                    'total': 0
+                }
+            payments_by_currency[currency_code]['total'] += float(payment.amount)
+        return payments_by_currency
+
     def get(self, request, *args, **kwargs):
         try:
             # Check if ZPL format is requested (for Android/Zebra printer)
@@ -54,6 +68,9 @@ class SalePrintVoucherView(LoginRequiredMixin, View):
                 context = {'sale': sale, 'company': company}
                 is_mobile_or_windows = self.is_mobile_or_windows(request)
                 context['is_android'] = is_mobile_or_windows
+                
+                # Add grouped payments by currency
+                context['payments_by_currency'] = self.get_grouped_payments_by_currency(sale)
                 
                 if sale.type_voucher == 'ticket':
                     template = get_template('crm/sale/print/ticket.html')

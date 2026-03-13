@@ -308,156 +308,46 @@ class PaymentsDebtsPayForm(ModelForm):
         }
 
 class BoxForm(ModelForm):
-    def __init__(self, *args, user=None, **kwargs):
-        super().__init__(*args, **kwargs)
-        
-        # Si se proporciona el usuario, calcular los valores iniciales
-        if user:
-            try:
-                from datetime import date
-                from core.pos.models import Expenses, SalePayment
-                
-                fecha_actual = date.today()
-                
-                # Calcular montos desde SalePayment agrupado por método de pago
-                total_efectivo = SalePayment.objects.filter(
-                    sale__employee=user,
-                    sale__payment_condition='contado',
-                    payment_method__code='efectivo',
-                    sale__date_joined__date=fecha_actual
-                ).aggregate(total=Sum('amount'))['total'] or 0
-                self.initial['efectivo'] = round(float(total_efectivo), 2)
-                
-                total_yape = SalePayment.objects.filter(
-                    sale__employee=user,
-                    sale__payment_condition='contado',
-                    payment_method__code='yape',
-                    sale__date_joined__date=fecha_actual
-                ).aggregate(total=Sum('amount'))['total'] or 0
-                self.initial['yape'] = round(float(total_yape), 2)
-                
-                total_plin = SalePayment.objects.filter(
-                    sale__employee=user,
-                    sale__payment_condition='contado',
-                    payment_method__code='plin',
-                    sale__date_joined__date=fecha_actual
-                ).aggregate(total=Sum('amount'))['total'] or 0
-                self.initial['plin'] = round(float(total_plin), 2)
-                
-                total_transfer = SalePayment.objects.filter(
-                    sale__employee=user,
-                    sale__payment_condition='contado',
-                    payment_method__code='transferencia',
-                    sale__date_joined__date=fecha_actual
-                ).aggregate(total=Sum('amount'))['total'] or 0
-                self.initial['transferencia'] = round(float(total_transfer), 2)
-                
-                total_deposito = SalePayment.objects.filter(
-                    sale__employee=user,
-                    sale__payment_condition='contado',
-                    payment_method__code='deposito',
-                    sale__date_joined__date=fecha_actual
-                ).aggregate(total=Sum('amount'))['total'] or 0
-                self.initial['deposito'] = round(float(total_deposito), 2)
-                
-                # Calcular total de pagos de métodos
-                total_pagos = (float(total_efectivo) + 
-                        float(total_yape) + 
-                        float(total_plin) + 
-                        float(total_transfer) + 
-                        float(total_deposito))
-                
-                # Calcular gastos del día
-                total_gastos = Expenses.objects.filter(
-                    user=user,
-                    date_joined__date=fecha_actual
-                ).aggregate(total=Sum('valor'))['total'] or 0
-                self.initial['bills'] = round(float(total_gastos), 2)
-                
-                # Calcular el total del box (pagos - gastos)
-                self.initial['box_final'] = round(total_pagos - float(total_gastos), 2)
-            except Exception as e:
-                # Si hay error en el cálculo, dejar los valores por defecto (0)
-                import traceback
-                traceback.print_exc()
+    """Formulario para Box - solo contiene campos de Django"""
     
     class Meta:
         model = Box
-        fields = ['datetime_close', 'efectivo', 'yape', 'plin', 'transferencia', 'deposito', 'initial_box', 'bills', 'box_final', 'desc']
+        fields = ['datetime_close', 'desc']
         widgets = {
             'datetime_close': forms.DateTimeInput(format='%Y-%m-%d %H:%M', attrs={
                 'type': 'datetime-local',
                 'class': 'form-control',
-                'value': datetime.now().strftime('%Y-%m-%dT%H:%M')
+                'value': datetime.now().strftime('%Y-%m-%dT%H:%M'),
+                'required': 'required'
             }),
-            'efectivo': forms.TextInput(
-                attrs = {
-                    'type': 'number',
-                    'step': '0.01',
-                    'readonly': 'readonly'
-                }
-            ),
-            'yape': forms.TextInput(
-                attrs = {
-                    'type': 'number',
-                    'step': '0.01',
-                    'readonly': 'readonly'
-                }
-            ),
-            'plin': forms.TextInput(
-                attrs = {
-                    'type': 'number',
-                    'step': '0.01',
-                    'readonly': 'readonly'
-                }
-            ),
-            'transferencia': forms.TextInput(
-                attrs = {
-                    'type': 'number',
-                    'step': '0.01',
-                    'readonly': 'readonly'
-                }
-            ),
-            'deposito': forms.TextInput(
-                attrs = {
-                    'type': 'number',
-                    'step': '0.01',
-                    'readonly': 'readonly'
-                }
-            ),
-            'initial_box': forms.TextInput(
-               attrs = {
-                   'type': 'number',
-                   'step': '0.01',
-                    'value': '0'
-                }
-            ),
-            'bills': forms.TextInput(
-               attrs = {
-                   'type': 'number',
-                   'step': '0.01',
-                   'readonly': 'readonly'
-                }
-            ),
-            'box_final': forms.TextInput(
-                attrs = {
-                    'type': 'number',
-                    'step': '0.01',
-                    'disabled': 'disabled'
-                }
-            ),
-            'desc': forms.TextInput(attrs={'placeholder': 'Ingrese descripción'})
+            'desc': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': '3',
+                'placeholder': 'Notas adicionales sobre el cierre de caja'
+            })
         }
-    def save(self, commit=True):
-        data = {}
-        try:
-            if self.is_valid():
-                super().save()
-            else:
-                data['error'] = self.errors
-        except Exception as e:
-            data['error'] = str(e)
-        return data
+    
+    def save(self, commit=True, **kwargs):
+        """Guardar el Box mapeando valores desde el POST request"""
+        box = self.instance
+        
+        # Obtener el request desde kwargs para acceder al POST
+        request = kwargs.get('request')
+        
+        if request:
+            # Mapear los campos personalizados desde POST a los campos del modelo
+            box.initial_box = float(request.POST.get('initial_box_soles', 0)) + float(request.POST.get('initial_box_dolares', 0))
+            box.efectivo = float(request.POST.get('efectivo_soles', 0)) + float(request.POST.get('efectivo_dolares', 0))
+            box.yape = float(request.POST.get('yape_soles', 0))
+            box.plin = float(request.POST.get('plin_soles', 0))
+            box.transferencia = float(request.POST.get('transferencia_soles', 0)) + float(request.POST.get('transferencia_dolares', 0))
+            box.deposito = float(request.POST.get('deposito_soles', 0)) + float(request.POST.get('deposito_dolares', 0))
+            box.bills = float(request.POST.get('bills_soles', 0))
+            box.box_final = float(request.POST.get('box_final_soles', 0)) + float(request.POST.get('box_final_dolares', 0))
+        
+        if commit:
+            box.save()
+        return box
 
 class BoxFormListView(forms.Form):
  date_range = forms.CharField(widget=forms.TextInput(attrs={
@@ -528,8 +418,9 @@ class SaleForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['client'].queryset = Client.objects.none()
-        # Hacer el campo total obligatorio
-        self.fields['total'].required = True
+        # Hacer los campos total y amount opcionales
+        self.fields['total'].required = False
+        self.fields['amount'].required = False
         # self.initial['client'] = '2'
 
     class Meta:

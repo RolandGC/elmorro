@@ -31,21 +31,25 @@
                 <div class="container-fluid">
                     <input type="hidden" name="action" id="action" value="{{ action }}">
                     {% csrf_token %}
-                    {# Forms Visible #}
-                    <div class="row">
-                        {% for field in form.visible_fields %}
-                            <div class="col-lg-6">
-                                <div class="form-group">
-                                    <label>{{ field.label }}:</label>
-                                    {% if field|is_checkbox %}
-                                         <br>{{ field }}
-                                    {% else %}
-                                        {{ field|add_class:'form-control'|attr:"autocomplete:off" }}
-                                    {% endif %}
+                    
+                    {% block form_fields %}
+                        {# Forms Visible #}
+                        <div class="row">
+                            {% for field in form.visible_fields %}
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label>{{ field.label }}:</label>
+                                        {% if field|is_checkbox %}
+                                             <br>{{ field }}
+                                        {% else %}
+                                            {{ field|add_class:'form-control'|attr:"autocomplete:off" }}
+                                        {% endif %}
+                                    </div>
                                 </div>
-                            </div>
-                        {% endfor %}
-                    </div>
+                            {% endfor %}
+                        </div>
+                    {% endblock form_fields %}
+                    
                     {% block btn %}
                     
                     {% endblock btn %}

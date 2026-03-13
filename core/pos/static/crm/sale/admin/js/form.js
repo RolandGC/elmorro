@@ -527,6 +527,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
         })
         .on('core.form.valid', function () {
             var parameters = new FormData($(fvSale.form)[0]);
+            var totalVal = parseFloat($('input[name="total"]').val());
             parameters.append('action', $('input[name="action"]').val());
             // Recoger datos de bloques de pago dinámicos
             var paymentsArray = [];
@@ -564,7 +565,8 @@ document.addEventListener('DOMContentLoaded', function (e) {
             parameters.append('dscto', $('input[name="dscto"]').val() || '0.00');
 
             // Agregar el total ingresado por el usuario
-            parameters.set('total', $('input[name="total"]').val());
+            parameters.set('total', !isNaN(totalVal) ? totalVal.toFixed(2) : '0.00');
+
             // attach date_joined (supports datetime-local input)
             var date_joined_val = $('input[name="date_joined"]').val() || $('#date_joined').val() || $('#id_date_joined').val() || '';
             parameters.append('date_joined', date_joined_val);
@@ -998,13 +1000,61 @@ $(function () {
             }
         }
         // Si cambia la moneda (primaria o equivalente), poner montos a cero si ya hay números
-        block.find('.payment-currency-select, .payment-eq-currency-select').on('change', function () {
+        // y seleccionar automáticamente la moneda opuesta
+        block.find('.payment-currency-select').on('change', function () {
+            var selectedCurrencyId = $(this).val();
+            var eqCurrencySelect = block.find('.payment-eq-currency-select');
+            
+            // Si se selecciona una moneda, seleccionar la opuesta automáticamente
+            if (selectedCurrencyId && typeof currenciesData !== 'undefined' && currenciesData.length > 1) {
+                var selectedCurrency = currenciesData.find(c => String(c.id) === String(selectedCurrencyId));
+                if (selectedCurrency) {
+                    // Buscar la moneda opuesta
+                    var selectedCode = String(selectedCurrency.code).toUpperCase();
+                    var isLocal = (selectedCode === 'PEN' || selectedCode === 'SOL' || selectedCode === 'S/');
+                    
+                    // Buscar una moneda diferente (opuesta)
+                    var oppositeCurrency = currenciesData.find(function(c) {
+                        var code = String(c.code).toUpperCase();
+                        var isOppLocal = (code === 'PEN' || code === 'SOL' || code === 'S/');
+                        return isOppLocal !== isLocal;
+                    });
+                    
+                    if (oppositeCurrency) {
+                        eqCurrencySelect.val(oppositeCurrency.id);
+                    }
+                }
+            }
+            
             var currentAmt = parseFloat(block.find('.payment-amount').val()) || 0;
             var currentEq = parseFloat(block.find('.payment-amount-equiv').val()) || 0;
             if (currentAmt > 0 || currentEq > 0) {
                 block.find('.payment-amount').val('0.00');
                 block.find('.payment-amount-equiv').val('0.00');
                 recalcPaymentsTotal();
+            }
+        });
+        
+        block.find('.payment-eq-currency-select').on('change', function () {
+            var currentAmt = parseFloat(block.find('.payment-amount').val()) || 0;
+            var currentEq = parseFloat(block.find('.payment-amount-equiv').val()) || 0;
+            if (currentAmt > 0 || currentEq > 0) {
+                block.find('.payment-amount').val('0.00');
+                block.find('.payment-amount-equiv').val('0.00');
+                recalcPaymentsTotal();
+            }
+        });
+        
+        // Listener para mostrar/ocultar campos de Banco y Nro Operación según forma de pago
+        block.find('.payment-method-select').on('change', function () {
+            var selectedMethodId = $(this).val();
+            var optionalFields = block.find('.payment-optional-field');
+            
+            // Si es efectivo (id=1), ocultar campos de banco y operación
+            if (String(selectedMethodId) === '1') {
+                optionalFields.hide();
+            } else {
+                optionalFields.show();
             }
         });
 
@@ -1277,8 +1327,8 @@ $(function () {
         if (saleData.payments && saleData.payments.length > 0) {
             $.each(saleData.payments, function (i, payment) {
                 var block = addPaymentBlock();
-                block.find('.payment-currency-select').val(payment.currency.id);
-                block.find('.payment-method-select').val(payment.payment_method.id);
+                block.find('.payment-currency-select').val(payment.currency.id).trigger('change');
+                block.find('.payment-method-select').val(payment.payment_method.id).trigger('change');
                 block.find('.payment-amount').val(payment.amount);
                 if (payment.bank && payment.bank.id) {
                     block.find('.payment-bank-select').val(payment.bank.id);

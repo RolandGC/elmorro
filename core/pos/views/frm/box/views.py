@@ -85,70 +85,107 @@ class BoxCreateView(PermissionMixin, CreateView):
         """Retorna los valores iniciales para el formulario"""
         data = {}
         try:
-            from datetime import date
+            from datetime import datetime
             from django.db.models import Sum
             
             user = self.request.user
-            fecha_actual = date.today()
+            fecha_actual = datetime.now()
             
             from core.pos.models import Expenses, SalePayment
             
-            total_efectivo = SalePayment.objects.filter(
+            # Obtener el último cierre de caja del usuario
+            ultimo_cierre = Box.objects.filter(user=user).order_by('-datetime_close').first()
+            
+            if ultimo_cierre and ultimo_cierre.datetime_close:
+                fecha_inicio = ultimo_cierre.datetime_close
+            else:
+                # Si no hay cierre anterior, usar el inicio del día
+                fecha_inicio = datetime.combine(fecha_actual.date(), datetime.min.time())
+            
+            # Obtener todos los pagos en el rango de fecha, agrupados por moneda y método
+            pagos = SalePayment.objects.filter(
                 sale__employee=user,
-                sale__payment_condition='contado',
-                payment_method__code='efectivo',
-                sale__date_joined__date=fecha_actual
-            ).aggregate(total=Sum('amount'))['total'] or 0
-            data['efectivo'] = round(float(total_efectivo), 2)
+                sale__date_joined__range=[fecha_inicio, fecha_actual]
+            ).values('currency__code', 'currency__name', 'currency__symbol', 'payment_method__code').annotate(total=Sum('amount'))
             
-            total_yape = SalePayment.objects.filter(
-                sale__employee=user,
-                sale__payment_condition='contado',
-                payment_method__code='yape',
-                sale__date_joined__date=fecha_actual
-            ).aggregate(total=Sum('amount'))['total'] or 0
-            data['yape'] = round(float(total_yape), 2)
+            # Crear diccionarios con montos por moneda y método
+            total_pagos = 0
+            monto_soles = 0.0
+            monto_dolares = 0.0
+            efectivo_soles = 0.0
+            efectivo_dolares = 0.0
+            yape_soles = 0.0
+            plin_soles = 0.0
+            transferencia_soles = 0.0
+            transferencia_dolares = 0.0
+            deposito_soles = 0.0
+            deposito_dolares = 0.0
             
-            total_plin = SalePayment.objects.filter(
-                sale__employee=user,
-                sale__payment_condition='contado',
-                payment_method__code='plin',
-                sale__date_joined__date=fecha_actual
-            ).aggregate(total=Sum('amount'))['total'] or 0
-            data['plin'] = round(float(total_plin), 2)
+            for pago in pagos:
+                codigo = pago['currency__code']
+                metodo = pago['payment_method__code']
+                monto = float(pago['total']) or 0
+                
+                total_pagos += monto
+                
+                # Identificar soles y dólares
+                es_soles = codigo.upper() in ['PEN', 'SOL']
+                es_dolares = codigo.upper() in ['USD', 'DOL']
+                
+                # Agregar al total general
+                if es_soles:
+                    monto_soles += monto
+                elif es_dolares:
+                    monto_dolares += monto
+                
+                # Agregar por método de pago
+                if metodo and metodo.lower() == 'efectivo':
+                    if es_soles:
+                        efectivo_soles += monto
+                    elif es_dolares:
+                        efectivo_dolares += monto
+                elif metodo and metodo.lower() == 'yape':
+                    if es_soles:
+                        yape_soles += monto
+                elif metodo and metodo.lower() == 'plin':
+                    if es_soles:
+                        plin_soles += monto
+                elif metodo and metodo.lower() == 'transferencia':
+                    if es_soles:
+                        transferencia_soles += monto
+                    elif es_dolares:
+                        transferencia_dolares += monto
+                elif metodo and metodo.lower() == 'deposito':
+                    if es_soles:
+                        deposito_soles += monto
+                    elif es_dolares:
+                        deposito_dolares += monto
             
-            total_transfer = SalePayment.objects.filter(
-                sale__employee=user,
-                sale__payment_condition='contado',
-                payment_method__code='transferencia',
-                sale__date_joined__date=fecha_actual
-            ).aggregate(total=Sum('amount'))['total'] or 0
-            data['transferencia'] = round(float(total_transfer), 2)
+            # Guardar montos separados por moneda y método
+            data['monto_soles'] = round(monto_soles, 2)
+            data['monto_dolares'] = round(monto_dolares, 2)
+            data['initial_box_soles'] = 0.0
+            data['initial_box_dolares'] = 0.0
+            data['efectivo_soles'] = round(efectivo_soles, 2)
+            data['efectivo_dolares'] = round(efectivo_dolares, 2)
+            data['yape_soles'] = round(yape_soles, 2)
+            data['plin_soles'] = round(plin_soles, 2)
+            data['transferencia_soles'] = round(transferencia_soles, 2)
+            data['transferencia_dolares'] = round(transferencia_dolares, 2)
+            data['deposito_soles'] = round(deposito_soles, 2)
+            data['deposito_dolares'] = round(deposito_dolares, 2)
             
-            total_deposito = SalePayment.objects.filter(
-                sale__employee=user,
-                sale__payment_condition='contado',
-                payment_method__code='deposito',
-                sale__date_joined__date=fecha_actual
-            ).aggregate(total=Sum('amount'))['total'] or 0
-            data['deposito'] = round(float(total_deposito), 2)
-            
-            # Calcular total de pagos de métodos
-            total_pagos = (float(total_efectivo) + 
-                    float(total_yape) + 
-                    float(total_plin) + 
-                    float(total_transfer) + 
-                    float(total_deposito))
-            
-            # Calcular gastos del día
+            # Calcular gastos del período (siempre en soles)
             total_gastos = Expenses.objects.filter(
                 user=user,
-                date_joined=fecha_actual
+                date_joined__range=[fecha_inicio.date(), fecha_actual.date()]
             ).aggregate(total=Sum('valor'))['total'] or 0
             data['bills'] = round(float(total_gastos), 2)
             
-            # Calcular el total del box (pagos - gastos)
-            data['box_final'] = round(total_pagos - float(total_gastos), 2)
+            # Mantener campos antiguos para compatibilidad (todos en 0)
+            data['efectivo'] = 0
+            data['transferencia'] = 0
+            data['deposito'] = 0
         except Exception as e:
             import traceback
             traceback.print_exc()
@@ -162,7 +199,8 @@ class BoxCreateView(PermissionMixin, CreateView):
         try:
             if action == 'get_initial_values':
                 return self.get_initial_values()
-            elif action == 'add':
+            elif action == 'add' or not action:
+                # El formulario se envía normalmente (sin action específica)
                 from datetime import datetime
                 box = Box()
                 box.user = request.user
@@ -178,24 +216,44 @@ class BoxCreateView(PermissionMixin, CreateView):
                 else:
                     box.datetime_close = datetime.now()
                 
-                box.efectivo = float(request.POST.get('efectivo', 0))
-                box.yape = float(request.POST.get('yape', 0))
-                box.plin = float(request.POST.get('plin', 0))
-                box.transferencia = float(request.POST.get('transferencia', 0))
-                box.deposito = float(request.POST.get('deposito', 0))
-                box.bills = float(request.POST.get('bills', 0))
-                box.initial_box = float(request.POST.get('initial_box', 0))
+                # Manejar los nuevos campos de moneda dual
+                initial_box_soles = float(request.POST.get('initial_box_soles', 0)) or 0
+                initial_box_dolares = float(request.POST.get('initial_box_dolares', 0)) or 0
+                efectivo_soles = float(request.POST.get('efectivo_soles', 0)) or 0
+                efectivo_dolares = float(request.POST.get('efectivo_dolares', 0)) or 0
+                transferencia_soles = float(request.POST.get('transferencia_soles', 0)) or 0
+                transferencia_dolares = float(request.POST.get('transferencia_dolares', 0)) or 0
+                deposito_soles = float(request.POST.get('deposito_soles', 0)) or 0
+                deposito_dolares = float(request.POST.get('deposito_dolares', 0)) or 0
+                bills_soles = float(request.POST.get('bills_soles', 0)) or 0
                 
-                # Calcular box_final automáticamente: efectivo + yape + plin + transferencia + deposito + initial_box - bills
-                box.box_final = float(box.efectivo) + float(box.yape) + float(box.plin) + float(box.transferencia) + float(box.deposito) + float(box.initial_box) - float(box.bills)
+                # Asignar valores al modelo
+                box.initial_box = initial_box_soles + initial_box_dolares
+                box.efectivo = efectivo_soles + efectivo_dolares
+                box.transferencia = transferencia_soles + transferencia_dolares
+                box.deposito = deposito_soles + deposito_dolares
+                box.yape = float(request.POST.get('yape', 0)) or 0
+                box.plin = float(request.POST.get('plin', 0)) or 0
+                box.bills = bills_soles
+                
+                # Calcular box_final: efectivo + transferencia + deposito + initial_box - bills
+                box.box_final = (efectivo_soles + efectivo_dolares + 
+                               transferencia_soles + transferencia_dolares + 
+                               deposito_soles + deposito_dolares + 
+                               initial_box_soles + initial_box_dolares - 
+                               bills_soles)
                 
                 box.desc = request.POST.get('desc', '')
                 box.save()
+                data['status'] = 'ok'
+                data['message'] = 'Cierre de caja guardado exitosamente'
             elif action == 'validate_data':
                 return self.validate_data()
             else:
                 data['error'] = 'No ha ingresado datos'
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             data['error'] = str(e)
         return HttpResponse(json.dumps(data), content_type='application/json')
 
@@ -264,70 +322,67 @@ class BoxUpdateView(PermissionMixin, UpdateView):
         """Retorna los valores iniciales para el formulario"""
         data = {}
         try:
-            from datetime import date
+            from datetime import datetime
             from django.db.models import Sum
             
             user = self.request.user
-            fecha_actual = date.today()
+            fecha_actual = datetime.now()
             
             from core.pos.models import Expenses, SalePayment
             
-            total_efectivo = SalePayment.objects.filter(
+            # Obtener el último cierre de caja del usuario
+            ultimo_cierre = Box.objects.filter(user=user).order_by('-datetime_close').first()
+            
+            if ultimo_cierre and ultimo_cierre.datetime_close:
+                fecha_inicio = ultimo_cierre.datetime_close
+            else:
+                # Si no hay cierre anterior, usar el inicio del día
+                fecha_inicio = datetime.combine(fecha_actual.date(), datetime.min.time())
+            
+            # Obtener todos los pagos en el rango de fecha, agrupados por moneda
+            pagos = SalePayment.objects.filter(
                 sale__employee=user,
-                sale__payment_condition='contado',
-                payment_method__code='efectivo',
-                sale__date_joined__date=fecha_actual
-            ).aggregate(total=Sum('amount'))['total'] or 0
-            data['efectivo'] = round(float(total_efectivo), 2)
+                sale__date_joined__range=[fecha_inicio, fecha_actual]
+            ).values('currency__code', 'currency__name', 'currency__symbol').annotate(total=Sum('amount'))
             
-            total_yape = SalePayment.objects.filter(
-                sale__employee=user,
-                sale__payment_condition='contado',
-                payment_method__code='yape',
-                sale__date_joined__date=fecha_actual
-            ).aggregate(total=Sum('amount'))['total'] or 0
-            data['yape'] = round(float(total_yape), 2)
+            # Crear diccionario con montos por moneda
+            montos_por_moneda = {}
+            total_pagos = 0
+            for pago in pagos:
+                codigo = pago['currency__code']
+                nombre = pago['currency__name']
+                simbolo = pago['currency__symbol']
+                monto = float(pago['total']) or 0
+                
+                montos_por_moneda[codigo] = {
+                    'nombre': nombre,
+                    'simbolo': simbolo,
+                    'monto': round(monto, 2)
+                }
+                total_pagos += monto
             
-            total_plin = SalePayment.objects.filter(
-                sale__employee=user,
-                sale__payment_condition='contado',
-                payment_method__code='plin',
-                sale__date_joined__date=fecha_actual
-            ).aggregate(total=Sum('amount'))['total'] or 0
-            data['plin'] = round(float(total_plin), 2)
+            # Guardar resumen de monedas en formato legible
+            data['montos_por_moneda'] = montos_por_moneda
+            data['resumen_monedas'] = ', '.join([
+                f"{v['simbolo']} {v['monto']:.2f}" for v in montos_por_moneda.values()
+            ]) if montos_por_moneda else 'Sin pagos'
             
-            total_transfer = SalePayment.objects.filter(
-                sale__employee=user,
-                sale__payment_condition='contado',
-                payment_method__code='transferencia',
-                sale__date_joined__date=fecha_actual
-            ).aggregate(total=Sum('amount'))['total'] or 0
-            data['transferencia'] = round(float(total_transfer), 2)
-            
-            total_deposito = SalePayment.objects.filter(
-                sale__employee=user,
-                sale__payment_condition='contado',
-                payment_method__code='deposito',
-                sale__date_joined__date=fecha_actual
-            ).aggregate(total=Sum('amount'))['total'] or 0
-            data['deposito'] = round(float(total_deposito), 2)
-            
-            # Calcular total de pagos de métodos
-            total_pagos = (float(total_efectivo) + 
-                    float(total_yape) + 
-                    float(total_plin) + 
-                    float(total_transfer) + 
-                    float(total_deposito))
-            
-            # Calcular gastos del día
+            # Calcular gastos del período
             total_gastos = Expenses.objects.filter(
                 user=user,
-                date_joined=fecha_actual
+                date_joined__range=[fecha_inicio.date(), fecha_actual.date()]
             ).aggregate(total=Sum('valor'))['total'] or 0
             data['bills'] = round(float(total_gastos), 2)
             
             # Calcular el total del box (pagos - gastos)
             data['box_final'] = round(total_pagos - float(total_gastos), 2)
+            
+            # Mantener campos antiguos para compatibilidad (todos en 0)
+            data['efectivo'] = 0
+            data['yape'] = 0
+            data['plin'] = 0
+            data['transferencia'] = 0
+            data['deposito'] = 0
         except Exception as e:
             import traceback
             traceback.print_exc()

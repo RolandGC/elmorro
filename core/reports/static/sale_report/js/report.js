@@ -133,14 +133,35 @@ function generateReport(all) {
             class: 'text-center',
             render: function(data, type, row) {
                 return data;
-            },
+            }
+        }, {
             targets: [-1],
             orderable: false,
             class: 'text-center',
             render: function(data, type, row) {
-                return 'S/.' + parseFloat(data).toFixed(2);
+                // Agrupar pagos por moneda
+                var montosPorMoneda = {};
+                if (row.payments && Array.isArray(row.payments)) {
+                    $.each(row.payments, function(index, payment) {
+                        var symbol = payment.currency.symbol;
+                        var amount = parseFloat(payment.amount) || 0;
+                        
+                        if (!montosPorMoneda[symbol]) {
+                            montosPorMoneda[symbol] = 0;
+                        }
+                        montosPorMoneda[symbol] += amount;
+                    });
+                }
+                
+                // Formatear como "S/ 20.00, $100.00"
+                var resultado = [];
+                $.each(montosPorMoneda, function(symbol, total) {
+                    resultado.push(symbol + ' ' + parseFloat(total).toFixed(2));
+                });
+                
+                return resultado.length > 0 ? resultado.join(', ') : 'S/. 0.00';
             }
-        }, ],
+        }],
         rowCallback: function(row, data, index) {
 
         },
