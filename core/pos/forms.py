@@ -308,7 +308,11 @@ class PaymentsDebtsPayForm(ModelForm):
         }
 
 class BoxForm(ModelForm):
-    """Formulario para Box - solo contiene campos de Django"""
+
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
     
     class Meta:
         model = Box
