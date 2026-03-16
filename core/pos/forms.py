@@ -308,15 +308,16 @@ class PaymentsDebtsPayForm(ModelForm):
         }
 
 class BoxForm(ModelForm):
-
-
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
     
     class Meta:
         model = Box
-        fields = ['datetime_close', 'desc']
+        fields = [
+            'datetime_close', 'desc', 'initial_box', 'efectivo', 'yape', 'plin',
+            'transferencia', 'deposito', 'bills', 'box_final'
+        ]
         widgets = {
             'datetime_close': forms.DateTimeInput(format='%Y-%m-%d %H:%M', attrs={
                 'type': 'datetime-local',
@@ -328,7 +329,47 @@ class BoxForm(ModelForm):
                 'class': 'form-control',
                 'rows': '3',
                 'placeholder': 'Notas adicionales sobre el cierre de caja'
-            })
+            }),
+            'initial_box': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'readonly': 'readonly'
+            }),
+            'efectivo': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'readonly': 'readonly'
+            }),
+            'yape': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'readonly': 'readonly'
+            }),
+            'plin': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'readonly': 'readonly'
+            }),
+            'transferencia': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'readonly': 'readonly'
+            }),
+            'deposito': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'readonly': 'readonly'
+            }),
+            'bills': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'readonly': 'readonly'
+            }),
+            'box_final': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'readonly': 'readonly'
+            }),
         }
     
     def save(self, commit=True, **kwargs):

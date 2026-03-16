@@ -1169,6 +1169,45 @@ class Box(models.Model):
         return float(total_deposito)
 
     
+    def calculate_totals(self):
+        """
+        Calculate the total amounts for soles and dollars.
+        Soles total = sum of soles - expenses.
+        Dollars total = sum of dollars (no subtraction).
+        """
+        self.box_final_soles = (
+            self.efectivo + self.yape + self.plin + self.transferencia + self.deposito - self.bills
+        )
+        self.box_final_dolares = (
+            self.efectivo_dolares + self.transferencia_dolares + self.deposito_dolares
+        )
+        self.save()
+
+    def calculate_payment_totals(self):
+        """
+        Calculate payment totals grouped by currency and payment method.
+        """
+        from core.pos.models import SalePayment
+
+        # Get all payments related to this box
+        payments = SalePayment.objects.filter(sale__box=self)
+
+        # Initialize totals
+        total_soles = 0.0
+        total_dolares = 0.0
+
+        # Calculate totals
+        for payment in payments:
+            if payment.currency.code == 'PEN':  # Soles
+                total_soles += payment.amount
+            elif payment.currency.code == 'USD':  # Dólares
+                total_dolares += payment.amount
+
+        return {
+            'total_soles': total_soles,
+            'total_dolares': total_dolares
+        }
+
     def toJSON(self):
         item = model_to_dict(self)
         item['date_joined'] = self.date_joined.strftime('%Y-%m-%d')
