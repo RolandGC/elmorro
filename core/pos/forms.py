@@ -311,12 +311,24 @@ class BoxForm(ModelForm):
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
-    
+
+        # Calcular valores iniciales dinámicamente
+        if self.instance and self.user:
+            self.fields['efectivo_soles'].initial = self.get_efectivo_soles()
+            self.fields['efectivo_dolares'].initial = self.get_efectivo_dolares()
+            self.fields['transferencia_soles'].initial = self.get_transferencia_soles()
+            self.fields['transferencia_dolares'].initial = self.get_transferencia_dolares()
+            self.fields['deposito_soles'].initial = self.get_deposito_soles()
+            self.fields['deposito_dolares'].initial = self.get_deposito_dolares()
+            self.fields['yape'].initial = self.get_yape_soles()
+            self.fields['plin'].initial = self.get_plin_soles()
+            self.fields['bills'].initial = self.get_gastos()
+
     class Meta:
         model = Box
         fields = [
-            'datetime_close', 'desc', 'initial_box', 'efectivo', 'yape', 'plin',
-            'transferencia', 'deposito', 'bills', 'box_final'
+            'datetime_close', 'desc', 'initial_box_soles', 'initial_box_dolares', 'efectivo_soles', 'efectivo_dolares', 'yape', 'plin',
+            'transferencia_soles', 'transferencia_dolares', 'deposito_soles', 'deposito_dolares', 'bills', 'box_final_soles', 'box_final_dolares'
         ]
         widgets = {
             'datetime_close': forms.DateTimeInput(format='%Y-%m-%d %H:%M', attrs={
@@ -330,12 +342,23 @@ class BoxForm(ModelForm):
                 'rows': '3',
                 'placeholder': 'Notas adicionales sobre el cierre de caja'
             }),
-            'initial_box': forms.NumberInput(attrs={
+            'initial_box_soles': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
-                'readonly': 'readonly'
+                #'readonly': 'readonly'
             }),
-            'efectivo': forms.NumberInput(attrs={
+            'initial_box_dolares': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                #'readonly': 'readonly'
+            }),
+            'efectivo_soles': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'readonly': 'readonly',
+                'style': 'color: red;'
+            }),
+            'efectivo_dolares': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
                 'readonly': 'readonly'
@@ -350,12 +373,22 @@ class BoxForm(ModelForm):
                 'step': '0.01',
                 'readonly': 'readonly'
             }),
-            'transferencia': forms.NumberInput(attrs={
+            'transferencia_soles': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
                 'readonly': 'readonly'
             }),
-            'deposito': forms.NumberInput(attrs={
+            'transferencia_dolares': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'readonly': 'readonly'
+            }),
+            'deposito_soles': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'readonly': 'readonly'
+            }),
+            'deposito_dolares': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
                 'readonly': 'readonly'
@@ -365,34 +398,151 @@ class BoxForm(ModelForm):
                 'step': '0.01',
                 'readonly': 'readonly'
             }),
-            'box_final': forms.NumberInput(attrs={
+            'box_final_soles': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'readonly': 'readonly'
+            }),
+            'box_final_dolares': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
                 'readonly': 'readonly'
             }),
         }
     
-    def save(self, commit=True, **kwargs):
-        """Guardar el Box mapeando valores desde el POST request"""
-        box = self.instance
+    def get_fecha_inicio(self):
+        """Obtiene la fecha de inicio del rango: desde el último cierre"""
+        if self.instance.datetime_close:
+            return self.instance.datetime_close
+        else:
+            from datetime import datetime, time
+            fecha_actual = datetime.now()
+            return datetime.combine(fecha_actual.date(), time.min)
+
+    def get_efectivo_soles(self):
+        """Calcula efectivo en soles desde el último cierre"""
+        fecha_inicio = self.get_fecha_inicio()
+        fecha_fin = datetime.now()
+
+        total = SalePayment.objects.filter(
+            sale__employee=self.user,
+            # sale__date_joined__range=[fecha_inicio, fecha_fin],
+            payment_method__code='efectivo',
+            currency__code__in=['PEN', 'SOL']
+        ).aggregate(total=Sum('amount'))['total'] or 0
+
+        return float(total)
+
+    def get_efectivo_dolares(self):
+        """Calcula efectivo en dólares desde el último cierre"""
+        fecha_inicio = self.get_fecha_inicio()
+        fecha_fin = datetime.now()
+
+        total = SalePayment.objects.filter(
+            sale__employee=self.user,
+            # sale__date_joined__range=[fecha_inicio, fecha_fin],
+            payment_method__code='efectivo',
+            currency__code__in=['USD', 'DÓLAR']
+        ).aggregate(total=Sum('amount'))['total'] or 0
+
+        return float(total)
+    
+    def get_transferencia_soles(self):
+        """Calcula transferencia en soles desde el último cierre"""
+        fecha_inicio = self.get_fecha_inicio()
+        fecha_fin = datetime.now()
+
+        total = SalePayment.objects.filter(
+            sale__employee=self.user,
+            # sale__date_joined__range=[fecha_inicio, fecha_fin],
+            payment_method__code='transferencia',
+            currency__code__in=['PEN', 'SOL']
+        ).aggregate(total=Sum('amount'))['total'] or 0
+
+        return float(total)
+    
+    def get_transferencia_dolares(self):
+        """Calcula transferencia en dólares desde el último cierre"""
+        fecha_inicio = self.get_fecha_inicio()
+        fecha_fin = datetime.now()
+
+        total = SalePayment.objects.filter(
+            sale__employee=self.user,
+            # sale__date_joined__range=[fecha_inicio, fecha_fin],
+            payment_method__code='transferencia',
+            currency__code__in=['USD', 'DÓLAR']
+        ).aggregate(total=Sum('amount'))['total'] or 0
+
+        return float(total)
+
+    def get_deposito_soles(self):
+        """Calcula depósito en soles desde el último cierre"""
+        fecha_inicio = self.get_fecha_inicio()
+        fecha_fin = datetime.now()
+
+        total = SalePayment.objects.filter(
+            sale__employee=self.user,
+            #sale__date_joined__range=[fecha_inicio, fecha_fin],
+            payment_method__code='deposito',
+            currency__code__in=['PEN', 'SOL']
+        ).aggregate(total=Sum('amount'))['total'] or 0
+
+        return float(total)
+    
+    def get_deposito_dolares(self):
+        """Calcula depósito en dólares desde el último cierre"""
+        fecha_inicio = self.get_fecha_inicio()
+        fecha_fin = datetime.now()
+
+        total = SalePayment.objects.filter(
+            sale__employee=self.user,
+            #sale__date_joined__range=[fecha_inicio, fecha_fin],
+            payment_method__code='deposito',
+            currency__code__in=['USD', 'DÓLAR']
+        ).aggregate(total=Sum('amount'))['total'] or 0
+
+        return float(total)
+
+    def get_yape_soles(self):
+        """Calcula yape en soles desde el último cierre"""
+        fecha_inicio = self.get_fecha_inicio()
+        fecha_fin = datetime.now()
+
+        total = SalePayment.objects.filter(
+            # sale__employee=self.user,
+            # sale__date_joined__range=[fecha_inicio, fecha_fin],
+            payment_method__code='yape',
+            # currency__code__in=['PEN', 'SOL']
+        ).aggregate(total=Sum('amount'))['total'] or 0
         
-        # Obtener el request desde kwargs para acceder al POST
-        request = kwargs.get('request')
-        
-        if request:
-            # Mapear los campos personalizados desde POST a los campos del modelo
-            box.initial_box = float(request.POST.get('initial_box_soles', 0)) + float(request.POST.get('initial_box_dolares', 0))
-            box.efectivo = float(request.POST.get('efectivo_soles', 0)) + float(request.POST.get('efectivo_dolares', 0))
-            box.yape = float(request.POST.get('yape_soles', 0))
-            box.plin = float(request.POST.get('plin_soles', 0))
-            box.transferencia = float(request.POST.get('transferencia_soles', 0)) + float(request.POST.get('transferencia_dolares', 0))
-            box.deposito = float(request.POST.get('deposito_soles', 0)) + float(request.POST.get('deposito_dolares', 0))
-            box.bills = float(request.POST.get('bills_soles', 0))
-            box.box_final = float(request.POST.get('box_final_soles', 0)) + float(request.POST.get('box_final_dolares', 0))
-        
-        if commit:
-            box.save()
-        return box
+        return float(total)
+
+    def get_plin_soles(self):
+        """Calcula plin en soles desde el último cierre"""
+        fecha_inicio = self.get_fecha_inicio()
+        fecha_fin = datetime.now()
+
+        total = SalePayment.objects.filter(
+            sale__employee=self.user,
+            sale__date_joined__range=[fecha_inicio, fecha_fin],
+            payment_method__code='plin',
+            currency__code__in=['PEN', 'SOL']
+        ).aggregate(total=Sum('amount'))['total'] or 0
+
+        return float(total)
+
+    def get_gastos(self):
+        """Calcula gastos en soles desde el último cierre"""
+        fecha_inicio = self.get_fecha_inicio()
+        fecha_fin = datetime.now()
+
+        total = Expenses.objects.filter(
+            user=self.user,
+            date_joined__range=[fecha_inicio.date(), fecha_fin.date()]
+        ).aggregate(total=Sum('valor'))['total'] or 0
+
+        return float(total)
+    
 
 class BoxFormListView(forms.Form):
  date_range = forms.CharField(widget=forms.TextInput(attrs={

@@ -225,23 +225,24 @@ class BoxCreateView(PermissionMixin, CreateView):
                 transferencia_dolares = float(request.POST.get('transferencia_dolares', 0)) or 0
                 deposito_soles = float(request.POST.get('deposito_soles', 0)) or 0
                 deposito_dolares = float(request.POST.get('deposito_dolares', 0)) or 0
-                bills_soles = float(request.POST.get('bills_soles', 0)) or 0
+                bills = float(request.POST.get('bills', 0)) or 0
+                box_final_soles = float(request.POST.get('box_final_soles', 0)) or 0
+                box_final_dolares = float(request.POST.get('box_final_dolares', 0)) or 0
                 
                 # Asignar valores al modelo
-                box.initial_box = initial_box_soles + initial_box_dolares
-                box.efectivo = efectivo_soles + efectivo_dolares
-                box.transferencia = transferencia_soles + transferencia_dolares
-                box.deposito = deposito_soles + deposito_dolares
+                box.initial_box_soles = initial_box_soles
+                box.initial_box_dolares = initial_box_dolares
+                box.efectivo_soles = efectivo_soles
+                box.efectivo_dolares = efectivo_dolares
+                box.transferencia_soles = transferencia_soles
+                box.transferencia_dolares = transferencia_dolares
+                box.deposito_soles = deposito_soles
+                box.deposito_dolares = deposito_dolares
                 box.yape = float(request.POST.get('yape', 0)) or 0
                 box.plin = float(request.POST.get('plin', 0)) or 0
-                box.bills = bills_soles
-                
-                # Calcular box_final: efectivo + transferencia + deposito + initial_box - bills
-                box.box_final = (efectivo_soles + efectivo_dolares + 
-                               transferencia_soles + transferencia_dolares + 
-                               deposito_soles + deposito_dolares + 
-                               initial_box_soles + initial_box_dolares - 
-                               bills_soles)
+                box.bills = bills
+                box.box_final_dolares = box_final_dolares
+                box.box_final_soles = box_final_soles
                 
                 box.desc = request.POST.get('desc', '')
                 box.save()

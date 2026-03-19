@@ -11,10 +11,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const efectivoDolares = document.querySelector('#id_efectivo_dolares');
 
     // Campos de Yape (Solo Soles) - NO EDITABLE
-    const yapeSoles = document.querySelector('#id_yape_soles');
+    const yapeSoles = document.querySelector('#id_yape');
 
     // Campos de Plin (Solo Soles) - NO EDITABLE
-    const plinSoles = document.querySelector('#id_plin_soles');
+    const plinSoles = document.querySelector('#id_plin');
 
     // Campos de Transferencia (Soles y Dólares) - NO EDITABLES
     const transferenciaSoles = document.querySelector('#id_transferencia_soles');
@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const depositoDolares = document.querySelector('#id_deposito_dolares');
 
     // Campo de Gastos (Solo Soles) - NO EDITABLE
-    const billsSoles = document.querySelector('#id_bills_soles');
+    const billsSoles = document.querySelector('#id_bills');
 
     // Campos de Caja Final (Soles y Dólares)
     const boxFinalSoles = document.querySelector('#id_box_final_soles');
@@ -97,101 +97,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Obtener valores iniciales vía AJAX
-    function fetchInitialValues() {
-        const formData = new FormData();
-        formData.append('action', 'get_initial_values');
-
-        let url = window.getInitialValuesUrl || form.action || window.location.href;
-
-        console.log('📡 Solicitando valores iniciales de caja a:', url);
-
-        fetch(url, {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-CSRFToken': csrftoken
-            }
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('HTTP error, status = ' + response.status);
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log('✅ Datos recibidos del backend:', data);
-
-            if (data.error) {
-                console.error('❌ Error en get_initial_values:', data.error);
-                return;
-            }
-
-            // Llenar campos de Caja Inicial
-            if (initialBoxSoles && data.initial_box_soles !== undefined) {
-                initialBoxSoles.value = parseFloat(data.initial_box_soles).toFixed(2);
-                console.log('✓ Caja Inicial SOLES:', data.initial_box_soles);
-            }
-            if (initialBoxDolares && data.initial_box_dolares !== undefined) {
-                initialBoxDolares.value = parseFloat(data.initial_box_dolares).toFixed(2);
-                console.log('✓ Caja Inicial DÓLARES:', data.initial_box_dolares);
-            }
-
-            // Llenar campos de Efectivo
-            if (efectivoSoles && data.efectivo_soles !== undefined) {
-                efectivoSoles.value = parseFloat(data.efectivo_soles).toFixed(2);
-                console.log('✓ Efectivo SOLES:', data.efectivo_soles);
-            }
-            if (efectivoDolares && data.efectivo_dolares !== undefined) {
-                efectivoDolares.value = parseFloat(data.efectivo_dolares).toFixed(2);
-                console.log('✓ Efectivo DÓLARES:', data.efectivo_dolares);
-            }
-
-            // Llenar campo de Yape
-            if (yapeSoles && data.yape_soles !== undefined) {
-                yapeSoles.value = parseFloat(data.yape_soles).toFixed(2);
-                console.log('✓ Yape SOLES:', data.yape_soles);
-            }
-
-            // Llenar campo de Plin
-            if (plinSoles && data.plin_soles !== undefined) {
-                plinSoles.value = parseFloat(data.plin_soles).toFixed(2);
-                console.log('✓ Plin SOLES:', data.plin_soles);
-            }
-
-            // Llenar campos de Transferencia
-            if (transferenciaSoles && data.transferencia_soles !== undefined) {
-                transferenciaSoles.value = parseFloat(data.transferencia_soles).toFixed(2);
-                console.log('✓ Transferencia SOLES:', data.transferencia_soles);
-            }
-            if (transferenciaDolares && data.transferencia_dolares !== undefined) {
-                transferenciaDolares.value = parseFloat(data.transferencia_dolares).toFixed(2);
-                console.log('✓ Transferencia DÓLARES:', data.transferencia_dolares);
-            }
-
-            // Llenar campos de Depósito
-            if (depositoSoles && data.deposito_soles !== undefined) {
-                depositoSoles.value = parseFloat(data.deposito_soles).toFixed(2);
-                console.log('✓ Depósito SOLES:', data.deposito_soles);
-            }
-            if (depositoDolares && data.deposito_dolares !== undefined) {
-                depositoDolares.value = parseFloat(data.deposito_dolares).toFixed(2);
-                console.log('✓ Depósito DÓLARES:', data.deposito_dolares);
-            }
-
-            // Llenar campo de Gastos (siempre en Soles)
-            if (billsSoles && data.bills !== undefined) {
-                billsSoles.value = parseFloat(data.bills).toFixed(2);
-                console.log('✓ Gastos (Soles):', data.bills);
-            }
-
-            // Recalcular caja final
-            updateBoxFinal();
-        })
-        .catch(error => {
-            console.error('❌ Error al obtener valores iniciales:', error);
-        });
-    }
 
     function getCookie(name) {
         let cookieValue = null;
@@ -209,7 +114,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Cargar valores iniciales
-    fetchInitialValues();
+    //fetchInitialValues();
 
     // Esperar a que los elementos estén listos y recalcular
     setTimeout(() => {
@@ -260,61 +165,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             },
             initial_box_dolares: {
-                validators: {
-                    numeric: { message: 'Debe ser un valor numérico' }
-                }
-            },
-            efectivo_soles: {
-                validators: {
-                    numeric: { message: 'Debe ser un valor numérico' }
-                }
-            },
-            efectivo_dolares: {
-                validators: {
-                    numeric: { message: 'Debe ser un valor numérico' }
-                }
-            },
-            yape_soles: {
-                validators: {
-                    numeric: { message: 'Debe ser un valor numérico' }
-                }
-            },
-            plin_soles: {
-                validators: {
-                    numeric: { message: 'Debe ser un valor numérico' }
-                }
-            },
-            transferencia_soles: {
-                validators: {
-                    numeric: { message: 'Debe ser un valor numérico' }
-                }
-            },
-            transferencia_dolares: {
-                validators: {
-                    numeric: { message: 'Debe ser un valor numérico' }
-                }
-            },
-            deposito_soles: {
-                validators: {
-                    numeric: { message: 'Debe ser un valor numérico' }
-                }
-            },
-            deposito_dolares: {
-                validators: {
-                    numeric: { message: 'Debe ser un valor numérico' }
-                }
-            },
-            bills_soles: {
-                validators: {
-                    numeric: { message: 'Debe ser un valor numérico' }
-                }
-            },
-            box_final_soles: {
-                validators: {
-                    numeric: { message: 'Debe ser un valor numérico' }
-                }
-            },
-            box_final_dolares: {
                 validators: {
                     numeric: { message: 'Debe ser un valor numérico' }
                 }
