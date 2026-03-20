@@ -30,17 +30,19 @@ function getData(all) {
         columns: [
             { data: "id" },
             { data: "datetime_close" },
-            { data: "efectivo_soles" },
-            { data: "efectivo_dolares" },
-            { data: "yape" },
-            { data: "plin" },
-            { data: "transferencia_soles" },
-            { data: "transferencia_dolares" },
-            { data: "deposito_soles" },
-            { data: "deposito_dolares" },
+            // { data: "efectivo_soles" },
+            // { data: "efectivo_dolares" },
+            // { data: "yape" },
+            // { data: "plin" },
+            // { data: "transferencia_soles" },
+            // { data: "transferencia_dolares" },
+            // { data: "deposito_soles" },
+            // { data: "deposito_dolares" },
+            { data: "initial_box_soles" },
+            { data: "initial_box_dolares" },
+            { data: "box_final_soles" },
+            { data: "box_final_dolares" },
             { data: "bills" },
-            { data: "initial_box" },
-            { data: "box_final" },
             { data: "desc" },
             { data: "options" },
         ],
@@ -69,7 +71,7 @@ function getData(all) {
                 targets: [3],
                 class: 'text-center',
                 render: function(data, type, row) {
-                    return 'S/.' + data
+                    return '$' + data
                 }
             },
             {
@@ -83,7 +85,7 @@ function getData(all) {
                 targets: [5],
                 class: 'text-center',
                 render: function(data, type, row) {
-                    return 'S/.' + data
+                    return '$' + data
                 }
             },
             {
@@ -95,33 +97,12 @@ function getData(all) {
             },
             {
                 targets: [7],
-                class: 'text-center',
-                render: function(data, type, row) {
-                    return 'S/.' + data
-                }
-            },
-            {
-                targets: [8],
-                class: 'text-center',
-                render: function(data, type, row) {
-                    return 'S/.' + data
-                }
-            },
-            {
-                targets: [9],
-                class: 'text-center',
-                render: function(data, type, row) {
-                    return 'S/.' + data
-                }
-            },
-            {
-                targets: [10],
                 render: function(data, type, row) {
                     return data || '-'
                 }
             },
             {
-                targets: [11],
+                targets: [8],
                 class: 'text-center',
                 orderable: false,
                 render: function(data, type, row) {

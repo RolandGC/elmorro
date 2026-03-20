@@ -186,64 +186,72 @@
 
       <div class="section-label">DETALLE DE CAJA</div>
       <div class="expense-detail">
+        <!-- CAJA INICIAL -->
+        <div class="detail-row">
+          <div class="detail-label">Caja Inicial Soles:</div>
+          <div class="detail-value">S/ {{ box.initial_box_soles|floatformat:2 }}</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Caja Inicial Dólares:</div>
+          <div class="detail-value">$ {{ box.initial_box_dolares|floatformat:2 }}</div>
+        </div>
+        
         <!-- EFECTIVO -->
         <div class="detail-row">
-          <div class="detail-label">Efectivo S/:</div>
+          <div class="detail-label">Efectivo Soles:</div>
           <div class="detail-value">S/ {{ box.efectivo_soles|floatformat:2 }}</div>
         </div>
         <div class="detail-row">
-          <div class="detail-label">Efectivo $:</div>
+          <div class="detail-label">Efectivo Dólares:</div>
           <div class="detail-value">$ {{ box.efectivo_dolares|floatformat:2 }}</div>
         </div>
         
         <!-- YAPE (solo soles) -->
         <div class="detail-row">
           <div class="detail-label">Yape:</div>
-          <div class="detail-value">S/ {{ box.yape_soles|floatformat:2 }}</div>
+          <div class="detail-value">S/ {{ box.yape|floatformat:2 }}</div>
         </div>
         
         <!-- PLIN (solo soles) -->
         <div class="detail-row">
           <div class="detail-label">Plin:</div>
-          <div class="detail-value">S/ {{ box.plin_soles|floatformat:2 }}</div>
+          <div class="detail-value">S/ {{ box.plin|floatformat:2 }}</div>
         </div>
         
         <!-- TRANSFERENCIA -->
         <div class="detail-row">
-          <div class="detail-label">Transferencia S/:</div>
+          <div class="detail-label">Transferencia Soles:</div>
           <div class="detail-value">S/ {{ box.transferencia_soles|floatformat:2 }}</div>
         </div>
         <div class="detail-row">
-          <div class="detail-label">Transferencia $:</div>
+          <div class="detail-label">Transferencia Dólares:</div>
           <div class="detail-value">$ {{ box.transferencia_dolares|floatformat:2 }}</div>
         </div>
         
         <!-- DEPOSITO -->
         <div class="detail-row">
-          <div class="detail-label">Depósito S/:</div>
+          <div class="detail-label">Depósito Soles:</div>
           <div class="detail-value">S/ {{ box.deposito_soles|floatformat:2 }}</div>
         </div>
         <div class="detail-row">
-          <div class="detail-label">Depósito $:</div>
+          <div class="detail-label">Depósito Dólares:</div>
           <div class="detail-value">$ {{ box.deposito_dolares|floatformat:2 }}</div>
         </div>
         
-        <!-- GASTOS (solo soles) -->
+        <!-- EGRESOS (solo soles) -->
         <div class="detail-row">
-          <div class="detail-label">Gastos:</div>
-          <div class="detail-value">S/ {{ box.gastos|floatformat:2 }}</div>
-        </div>
-        
-        <!-- CAJA INICIAL -->
-        <div class="detail-row">
-          <div class="detail-label">Caja Inicial:</div>
-          <div class="detail-value">S/ {{ box.initial_box|floatformat:2 }}</div>
+          <div class="detail-label">Egresos:</div>
+          <div class="detail-value">S/ {{ box.bills|floatformat:2 }}</div>
         </div>
         
         <!-- CAJA FINAL -->
         <div class="detail-row">
-          <div class="detail-label">Caja Final:</div>
-          <div class="detail-value">S/ {{ box.box_final|floatformat:2 }}</div>
+          <div class="detail-label" style="font-weight: bold; font-size: 9px;">CAJA FINAL SOLES:</div>
+          <div class="detail-value" style="font-weight: bold; font-size: 9px;">S/ {{ box.box_final_soles|floatformat:2 }}</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label" style="font-weight: bold; font-size: 9px;">CAJA FINAL DÓLARES:</div>
+          <div class="detail-value" style="font-weight: bold; font-size: 9px;">$ {{ box.box_final_dolares|floatformat:2 }}</div>
         </div>
       </div>
 

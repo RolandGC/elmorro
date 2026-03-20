@@ -975,7 +975,7 @@ class Box(models.Model):
     deposito_soles = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name='Depósito (Soles)')
     deposito_dolares = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name='Depósito (Dólares)')
     
-    bills = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Gastos del Día', null=True, blank=True)
+    bills = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Egresos', null=True, blank=True)
     box_final_soles = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name='Caja final (Soles)')
     box_final_dolares = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name='Caja final (Dólares)')
     
@@ -1008,6 +1008,13 @@ class Box(models.Model):
         item['deposito_soles'] = format(self.deposito_soles, '.2f')
         item['deposito_dolares'] = format(self.deposito_dolares, '.2f')
         item['bills'] = format(self.bills, '.2f')
+        item['initial_box_soles'] = format(self.initial_box_soles or 0, '.2f')
+        item['initial_box_dolares'] = format(self.initial_box_dolares or 0, '.2f')
+        item['box_final_soles'] = format(self.box_final_soles or 0, '.2f')
+        item['box_final_dolares'] = format(self.box_final_dolares or 0, '.2f')
+        
+        # Campo opciones para DataTables (se renderiza en JavaScript)
+        item['options'] = ''
         
         return item
     
