@@ -985,7 +985,7 @@ class Box(models.Model):
     hours_close = models.TimeField(default=current_time, verbose_name='Hora de Cierre', null=True, blank=True)
     datetime_close = models.DateTimeField(verbose_name='Fecha y Hora de Cierre', null=True, blank=True)
     
-    initial_box_soles = models.DecimalField(max_digits=10, decimal_places=2, default=0, blank=True, null=True, verbose_name='Caja inicial (Soles)')
+    initial_box_soles = models.DecimalField(max_digits=10, decimal_places=2, default=0.0, blank=True, null=True, verbose_name='Caja inicial (Soles)')
     initial_box_dolares = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name='Caja inicial (Dólares)')
     
     efectivo_dolares = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name='Efectivo (Dólares)')

@@ -278,6 +278,60 @@ class BoxPrintTicketView(LoginRequiredMixin, View):
                 'box': box,
                 'company': company
             }
+            # Agregar resúmenes de pagos (por moneda, efectivo y no efectivo)
+            try:
+                from datetime import datetime
+                from core.pos.models import SalePayment
+                # Determinar fecha de inicio: cierre anterior del mismo usuario
+                prev_box = Box.objects.filter(user=box.user, datetime_close__lt=box.datetime_close).order_by('-datetime_close').first()
+                if prev_box and prev_box.datetime_close:
+                    fecha_inicio = prev_box.datetime_close
+                else:
+                    fecha_inicio = datetime.combine(box.datetime_close.date(), datetime.min.time())
+
+                pagos = SalePayment.objects.filter(
+                    sale__employee=box.user,
+                    sale__date_joined__range=[fecha_inicio, box.datetime_close]
+                )
+
+                payments_by_currency = {}
+                payments_cash_by_currency = {}
+                payments_non_cash_by_currency = {}
+
+                for payment in pagos:
+                    currency_code = payment.currency.code
+                    if currency_code not in payments_by_currency:
+                        payments_by_currency[currency_code] = {
+                            'symbol': payment.currency.symbol,
+                            'name': payment.currency.name,
+                            'total': 0
+                        }
+                    payments_by_currency[currency_code]['total'] += float(payment.amount)
+
+                    method_code = payment.payment_method.code if payment.payment_method else ''
+                    if method_code == 'efectivo':
+                        if currency_code not in payments_cash_by_currency:
+                            payments_cash_by_currency[currency_code] = {
+                                'symbol': payment.currency.symbol,
+                                'name': payment.currency.name,
+                                'total': 0
+                            }
+                        payments_cash_by_currency[currency_code]['total'] += float(payment.amount)
+                    else:
+                        if currency_code not in payments_non_cash_by_currency:
+                            payments_non_cash_by_currency[currency_code] = {
+                                'symbol': payment.currency.symbol,
+                                'name': payment.currency.name,
+                                'total': 0
+                            }
+                        payments_non_cash_by_currency[currency_code]['total'] += float(payment.amount)
+
+                context['payments_by_currency'] = payments_by_currency
+                context['payments_cash_by_currency'] = payments_cash_by_currency
+                context['payments_non_cash_by_currency'] = payments_non_cash_by_currency
+            except Exception:
+                # No interrumpir la generación del PDF si ocurre un error al agregar resúmenes
+                logger.exception('Error building payments summary for box print')
             template = get_template('frm/box/print/ticket.html')
             html_template = template.render(context).encode(encoding="UTF-8")
             url_css = os.path.join(settings.BASE_DIR, 'static/lib/bootstrap-4.6.0/css/bootstrap.min.css')

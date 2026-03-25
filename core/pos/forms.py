@@ -327,8 +327,8 @@ class BoxForm(ModelForm):
     class Meta:
         model = Box
         fields = [
-            'datetime_close', 'desc', 'initial_box_soles', 'initial_box_dolares', 'efectivo_soles', 'efectivo_dolares', 'yape', 'plin',
-            'transferencia_soles', 'transferencia_dolares', 'deposito_soles', 'deposito_dolares', 'bills', 'box_final_soles', 'box_final_dolares'
+            'datetime_close', 'desc', 'initial_box_soles', 'initial_box_dolares', 'efectivo_soles', 'efectivo_dolares','transferencia_soles', 'transferencia_dolares',
+            'deposito_soles', 'deposito_dolares', 'yape', 'plin', 'bills','box_final_dolares', 'box_final_soles'
         ]
         widgets = {
             'datetime_close': forms.DateTimeInput(format='%Y-%m-%d %H:%M', attrs={
@@ -355,8 +355,7 @@ class BoxForm(ModelForm):
             'efectivo_soles': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
-                'readonly': 'readonly',
-                'style': 'color: red;'
+                'readonly': 'readonly'
             }),
             'efectivo_dolares': forms.NumberInput(attrs={
                 'class': 'form-control',

@@ -8,7 +8,7 @@
     <style>
       @page {
         width: 64mm;
-        height: 145mm;
+        height: 165mm;
         margin: 0;
         padding: 0;
       }
@@ -27,7 +27,7 @@
       }
       .content {
         width: 64mm;
-        height: 145mm;
+        height: 165mm;
         padding: 5px;
         page-break-inside: avoid;
       }
@@ -175,13 +175,6 @@
             -
           {% endif %}
         </p>
-        <p>
-          <b>Fecha Registro:</b> {% if box.date_joined %}
-            {{ box.date_joined|date:'d/m/Y' }}
-          {% else %}
-            -
-          {% endif %}
-        </p>
       </div>
 
       <div class="section-label">DETALLE DE CAJA</div>
@@ -192,68 +185,117 @@
           <div class="detail-value">S/ {{ box.initial_box_soles|floatformat:2 }}</div>
         </div>
         <div class="detail-row">
-          <div class="detail-label">Caja Inicial Dólares:</div>
-          <div class="detail-value">$ {{ box.initial_box_dolares|floatformat:2 }}</div>
-        </div>
-        
-        <!-- EFECTIVO -->
-        <div class="detail-row">
           <div class="detail-label">Efectivo Soles:</div>
           <div class="detail-value">S/ {{ box.efectivo_soles|floatformat:2 }}</div>
         </div>
-        <div class="detail-row">
-          <div class="detail-label">Efectivo Dólares:</div>
-          <div class="detail-value">$ {{ box.efectivo_dolares|floatformat:2 }}</div>
-        </div>
-        
-        <!-- YAPE (solo soles) -->
-        <div class="detail-row">
-          <div class="detail-label">Yape:</div>
-          <div class="detail-value">S/ {{ box.yape|floatformat:2 }}</div>
-        </div>
-        
-        <!-- PLIN (solo soles) -->
-        <div class="detail-row">
-          <div class="detail-label">Plin:</div>
-          <div class="detail-value">S/ {{ box.plin|floatformat:2 }}</div>
-        </div>
-        
-        <!-- TRANSFERENCIA -->
         <div class="detail-row">
           <div class="detail-label">Transferencia Soles:</div>
           <div class="detail-value">S/ {{ box.transferencia_soles|floatformat:2 }}</div>
         </div>
         <div class="detail-row">
-          <div class="detail-label">Transferencia Dólares:</div>
-          <div class="detail-value">$ {{ box.transferencia_dolares|floatformat:2 }}</div>
-        </div>
-        
-        <!-- DEPOSITO -->
-        <div class="detail-row">
           <div class="detail-label">Depósito Soles:</div>
           <div class="detail-value">S/ {{ box.deposito_soles|floatformat:2 }}</div>
         </div>
+         <!-- YAPE (solo soles) -->
         <div class="detail-row">
-          <div class="detail-label">Depósito Dólares:</div>
-          <div class="detail-value">$ {{ box.deposito_dolares|floatformat:2 }}</div>
+          <div class="detail-label">Yape:</div>
+          <div class="detail-value">S/ {{ box.yape|floatformat:2 }}</div>
         </div>
-        
+        <!-- PLIN (solo soles) -->
+        <div class="detail-row">
+          <div class="detail-label">Plin:</div>
+          <div class="detail-value">S/ {{ box.plin|floatformat:2 }}</div>
+        </div>
         <!-- EGRESOS (solo soles) -->
         <div class="detail-row">
           <div class="detail-label">Egresos:</div>
           <div class="detail-value">S/ {{ box.bills|floatformat:2 }}</div>
         </div>
         
-        <!-- CAJA FINAL -->
         <div class="detail-row">
+          <div class="detail-label">Caja Inicial Dólares:</div>
+          <div class="detail-value">$ {{ box.initial_box_dolares|floatformat:2 }}</div>
+        </div>
+        
+        <!-- EFECTIVO -->
+        
+        <div class="detail-row">
+          <div class="detail-label">Efectivo Dólares:</div>
+          <div class="detail-value">$ {{ box.efectivo_dolares|floatformat:2 }}</div>
+        </div>
+        
+       
+        <!-- TRANSFERENCIA -->
+        
+        <div class="detail-row">
+          <div class="detail-label">Transferencia Dólares:</div>
+          <div class="detail-value">$ {{ box.transferencia_dolares|floatformat:2 }}</div>
+        </div>
+        
+        <!-- DEPOSITO -->
+        
+        <div class="detail-row">
+          <div class="detail-label">Depósito Dólares:</div>
+          <div class="detail-value">$ {{ box.deposito_dolares|floatformat:2 }}</div>
+        </div>
+        
+        <!-- CAJA FINAL -->
+        {% comment %} <div class="detail-row">
           <div class="detail-label" style="font-weight: bold; font-size: 9px;">CAJA FINAL SOLES:</div>
           <div class="detail-value" style="font-weight: bold; font-size: 9px;">S/ {{ box.box_final_soles|floatformat:2 }}</div>
         </div>
         <div class="detail-row">
           <div class="detail-label" style="font-weight: bold; font-size: 9px;">CAJA FINAL DÓLARES:</div>
           <div class="detail-value" style="font-weight: bold; font-size: 9px;">$ {{ box.box_final_dolares|floatformat:2 }}</div>
-        </div>
+        </div> {% endcomment %}
       </div>
+
+      <br>
+
+      <table class="table table-borderless table-sm" style="margin-top: 2px;">
+        <tbody>
+        {# --- Resumen Efectivo --- #}
+        {% if payments_cash_by_currency %}
+        <tr>
+          <td colspan="2" style="padding-top: 5px;"><b>Resumen Efectivo:</b></td>
+        </tr>
+        {% for code, payment_info in payments_cash_by_currency.items %}
+        <tr style="line-height: 1;">
+          <td class="float-left"><b>{{ payment_info.name }}</b></td>
+          <td class="text-right">{{ payment_info.symbol }} {{ payment_info.total|floatformat:2 }}</td>
+        </tr>
+        {% endfor %}
+        <tr><td colspan="2" style="height:5px;"></td></tr>
+        {% endif %}
+
+        {# --- Resumen Bancos --- #}
+        {% if payments_non_cash_by_currency %}
+        <tr>
+          <td colspan="2" style="padding-top: 5px;"><b>Resumen Bancos:</b></td>
+        </tr>
+        {% for code, payment_info in payments_non_cash_by_currency.items %}
+        <tr style="line-height: 1;">
+          <td class="float-left"><b>{{ payment_info.name }}</b></td>
+          <td class="text-right">{{ payment_info.symbol }} {{ payment_info.total|floatformat:2 }}</td>
+        </tr>
+        {% endfor %}
+        <tr><td colspan="2" style="height:5px;"></td></tr>
+        {% endif %}
+
+        {# --- Resumen Total --- #}
+        {% if payments_by_currency %}
+        <tr>
+          <td colspan="2" style="padding-top: 5px;"><b>RESUMEN TOTAL:</b></td>
+        </tr>
+        {% for code, payment_info in payments_by_currency.items %}
+        <tr style="line-height: 1;">
+          <td class="float-left"><b>{{ payment_info.name }}</b></td>
+          <td class="text-right" style="font-weight: bold;">{{ payment_info.symbol }} {{ payment_info.total|floatformat:2 }}</td>
+        </tr>
+        {% endfor %}
+        {% endif %}
+        </tbody>
+      </table>
 
       {% if box.desc %}
         <div class="section-label">DESCRIPCIÓN</div>
