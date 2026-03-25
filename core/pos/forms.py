@@ -625,11 +625,11 @@ class SaleForm(ModelForm):
             'client': forms.Select(attrs={'class': 'custom-select select2'}),
             'payment_condition': forms.Select(attrs={'class': 'form-control select2', 'style': 'width: 100%;'}),
             'type_voucher': forms.Select(attrs={'class': 'form-control select2', 'style': 'width: 100%;'}),
-            'date_joined': forms.DateTimeInput(format='%Y-%m-%dT%H:%M', attrs={
+            'date_joined': forms.DateInput(format='%Y-%m-%d', attrs={
                 'class': 'form-control',
-                'type': 'datetime-local',
+                'type': 'date',
                 'id': 'date_joined',
-                'value': datetime.now().strftime('%Y-%m-%dT%H:%M')
+                'value': datetime.now().strftime('%Y-%m-%d')
             }),
             'end_credit': forms.DateInput(format='%Y-%m-%d', attrs={
                 'class': 'form-control datetimepicker-input',

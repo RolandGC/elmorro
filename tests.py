@@ -15,7 +15,7 @@ dashboard.save()
 print('Dashboard: {} {}'.format(dashboard.name, '(creado)' if created else '(actualizado)'))
 
 # Crear o actualizar Company
-company, created = Company.objects.update_or_create(name='El Morro S.A.C.')
+company, created = Company.objects.update_or_create(name='Grupo El Morro')
 company.ruc = '20532482683'
 company.email = 'area.ti@elmorro.com.pe'
 company.phone = '46200233'

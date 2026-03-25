@@ -544,13 +544,15 @@ document.addEventListener('DOMContentLoaded', function (e) {
                 var currency = block.find('.payment-currency-select').val();
                 var bank = block.find('.payment-bank-select').val();
                 var operation = block.find('.payment-operation').val();
+                var date_joined = block.find('.payment-date').val();
                 if (method && currency && parseFloat(amount) > 0) {
                     paymentsArray.push({
                         amount: amount,
                         payment_method: method,
                         currency: currency,
                         bank: bank || '',
-                        operation_number: operation || ''
+                        operation_number: operation || '',
+                        date_joined: date_joined || ''
                     });
                 }
             });
@@ -567,8 +569,8 @@ document.addEventListener('DOMContentLoaded', function (e) {
             // Agregar el total ingresado por el usuario
             parameters.set('total', !isNaN(totalVal) ? totalVal.toFixed(2) : '0.00');
 
-            // attach date_joined (supports datetime-local input)
-            var date_joined_val = $('input[name="date_joined"]').val() || $('#date_joined').val() || $('#id_date_joined').val() || '';
+            // attach main sale date_joined (prefer the form widget by id; exclude payment block inputs)
+            var date_joined_val = $('#date_joined').val() || $('#id_date_joined').val() || $('input[name="date_joined"]').not('.payment-date').first().val() || '';
             parameters.append('date_joined', date_joined_val);
             console.log('date_joined sent:', date_joined_val);
             console.log('total sent:', $('input[name="total"]').val());
@@ -591,9 +593,9 @@ document.addEventListener('DOMContentLoaded', function (e) {
                     console.log()
                     dialog_action('Notificación', '¿Desea Imprimir el Comprobante?', function () {
                         window.open('/pos/crm/sale/print/voucher/' + request.id + '/', '_blank');
-                        location.href = urlrefresh;
+                        location.href = '/pos/crm/sale/admin/';
                     }, function () {
-                        location.href = urlrefresh;
+                        location.href = '/pos/crm/sale/admin/';
                     });
 
                 },
@@ -1060,7 +1062,12 @@ $(function () {
 
         // Listener para el input visual equivalente: convierte a monto original y actualiza el campo guardado
         block.find('.payment-amount-equiv').on('input change', function () {
-            var equivVal = parseFloat($(this).val()) || 0;
+            var val = $(this).val().trim();
+            // Si el campo está vacío, permitir que se borre sin recalcular
+            if (val === '') {
+                return;
+            }
+            var equivVal = parseFloat(val) || 0;
             var primaryCurrencyId = block.find('.payment-currency-select').val();
             var eqCurrencyId = block.find('.payment-eq-currency-select').val();
             // Encontrar códigos
@@ -1094,12 +1101,12 @@ $(function () {
             } catch (err) {
                 computed = equivVal;
             }
-            // poner computed en el campo pay_amount (valor exacto sin redondeo)
-            block.find('.payment-amount').val(String(computed)).trigger('change');
+            // poner computed en el campo pay_amount con máximo 2 decimales (SIN trigger para evitar loops)
+            block.find('.payment-amount').val(parseFloat(computed).toFixed(2));
             recalcPaymentsTotal();
         });
 
-        // También sincronizar cuando cambie el monto original para actualizar el equivalente (inversa)
+        // Sincronizar cuando cambie el monto original para actualizar el equivalente (inversa)
         block.find('.payment-amount').on('input change', function () {
             var orig = parseFloat($(this).val()) || 0;
             var primaryCurrencyId = block.find('.payment-currency-select').val();
@@ -1129,9 +1136,17 @@ $(function () {
             recalcPaymentsTotal();
         });
 
-        // Listener para recalcular total de pagos
-        block.find('.payment-amount').on('input change', function () {
-            recalcPaymentsTotal();
+        // Listener para redondear el monto al perder el foco
+        block.find('.payment-amount').on('blur', function () {
+            var val = $(this).val().trim();
+            if (val === '') {
+                $(this).val('');
+            } else {
+                var numVal = parseFloat(val);
+                if (!isNaN(numVal)) {
+                    $(this).val(parseFloat(numVal).toFixed(2));
+                }
+            }
         });
 
         return block;
@@ -1336,6 +1351,17 @@ $(function () {
                 if (payment.operation_number) {
                     block.find('.payment-operation').val(payment.operation_number);
                 }
+                // Cargar fecha de pago si viene en el pago (formato DD/MM/YYYY esperado desde toJSON)
+                if (payment.date_joined) {
+                    var date = moment(payment.date_joined, ['DD/MM/YYYY', 'YYYY-MM-DD', moment.ISO_8601]);
+
+                    if (date.isValid()) {
+                        block.find('.payment-date').val(date.format('YYYY-MM-DD'));
+                        block.find('.payment-date-picker').datetimepicker('date', date);
+                    } else {
+                        console.warn('Fecha inválida:', payment.date_joined);
+                    }
+                }
             });
             recalcPaymentsTotal();
         }
@@ -1351,10 +1377,12 @@ $(function () {
 
         // Cargar fecha (convertir de DD/MM/YYYY HH:MM a YYYY-MM-DDTHH:MM)
         if (saleData.date_joined) {
-            var parts = saleData.date_joined.match(/(\d{2})\/(\d{2})\/(\d{4})\s(\d{2}):(\d{2})/);
-            if (parts) {
-                var isoDate = parts[3] + '-' + parts[2] + '-' + parts[1] + 'T' + parts[4] + ':' + parts[5];
-                $('input[name="date_joined"]').val(isoDate);
+            var date = moment(saleData.date_joined, ['DD/MM/YYYY HH:mm', 'DD/MM/YYYY', 'YYYY-MM-DD', moment.ISO_8601]);
+            if (date.isValid()) {
+                var isoDate = date.format('YYYY-MM-DD');
+                $('#date_joined').val(isoDate);
+            } else {
+                console.warn('Fecha de venta inválida:', saleData.date_joined);
             }
         }
 

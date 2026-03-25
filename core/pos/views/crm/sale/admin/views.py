@@ -111,16 +111,12 @@ class SaleAdminCreateView(PermissionMixin, CreateView):
                     dj = request.POST.get('date_joined', '').strip()
                     if dj:
                         parsed = None
-                        try:
-                            parsed = datetime.strptime(dj, '%Y-%m-%dT%H:%M')
-                        except:
+                        for fmt in ('%Y-%m-%dT%H:%M', '%Y-%m-%d %H:%M', '%d/%m/%Y %H:%M', '%Y-%m-%d'):
                             try:
-                                parsed = datetime.strptime(dj, '%Y-%m-%d %H:%M')
+                                parsed = datetime.strptime(dj, fmt)
+                                break
                             except:
-                                try:
-                                    parsed = datetime.strptime(dj, '%d/%m/%Y %H:%M')
-                                except:
-                                    parsed = None
+                                continue
                         if parsed:
                             if timezone.is_naive(parsed):
                                 parsed = timezone.make_aware(parsed)
@@ -164,10 +160,28 @@ class SaleAdminCreateView(PermissionMixin, CreateView):
                         sp.amount = float(pay.get('amount', 0))
                         sp.payment_method_id = int(pay.get('payment_method', 0))
                         sp.currency_id = int(pay.get('currency', 0))
-                        bank_id = pay.get('bank', '')
-                        if bank_id:
+                        
+                        # Validar que si payment_method.id != 1, bank es obligatorio
+                        if sp.payment_method_id != 1:
+                            bank_id = pay.get('bank', '')
+                            if not bank_id:
+                                raise ValueError('El banco es obligatorio para esta forma de pago')
                             sp.bank_id = int(bank_id)
+                        else:
+                            bank_id = pay.get('bank', '')
+                            if bank_id:
+                                sp.bank_id = int(bank_id)
+                        
                         sp.operation_number = pay.get('operation_number', '')
+                        
+                        # Guardar la fecha de pago
+                        date_joined = pay.get('date_joined', '')
+                        if date_joined:
+                            try:
+                                sp.date_joined = datetime.strptime(date_joined, '%Y-%m-%d').date()
+                            except Exception:
+                                pass
+                        
                         sp.save()
 
                     if sale.payment_condition == 'credito':
@@ -306,7 +320,7 @@ class SaleAdminUpdateView(SaleAdminCreateView):
                     dj = request.POST.get('date_joined', '').strip()
                     if dj:
                         parsed = None
-                        for fmt in ('%Y-%m-%dT%H:%M', '%Y-%m-%d %H:%M', '%d/%m/%Y %H:%M'):
+                        for fmt in ('%Y-%m-%dT%H:%M', '%Y-%m-%d %H:%M', '%d/%m/%Y %H:%M', '%Y-%m-%d'):
                             try:
                                 parsed = datetime.strptime(dj, fmt)
                                 break
@@ -357,10 +371,28 @@ class SaleAdminUpdateView(SaleAdminCreateView):
                         sp.amount = float(pay.get('amount', 0))
                         sp.payment_method_id = int(pay.get('payment_method', 0))
                         sp.currency_id = int(pay.get('currency', 0))
-                        bank_id = pay.get('bank', '')
-                        if bank_id:
+                        
+                        # Validar que si payment_method.id != 1, bank es obligatorio
+                        if sp.payment_method_id != 1:
+                            bank_id = pay.get('bank', '')
+                            if not bank_id:
+                                raise ValueError('El banco es obligatorio para esta forma de pago')
                             sp.bank_id = int(bank_id)
+                        else:
+                            bank_id = pay.get('bank', '')
+                            if bank_id:
+                                sp.bank_id = int(bank_id)
+                        
                         sp.operation_number = pay.get('operation_number', '')
+                        
+                        # Guardar la fecha de pago
+                        date_joined = pay.get('date_joined', '')
+                        if date_joined:
+                            try:
+                                sp.date_joined = datetime.strptime(date_joined, '%Y-%m-%d').date()
+                            except Exception:
+                                pass
+                        
                         sp.save()
 
                     if sale.payment_condition == 'credito':

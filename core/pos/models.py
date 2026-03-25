@@ -195,7 +195,7 @@ class Company(models.Model):
     desc = models.CharField(max_length=500, null=True, blank=True, verbose_name='Descripción')
     image = models.ImageField(null=True, blank=True, upload_to='company/%Y/%m/%d', verbose_name='Logo')
     igv = models.DecimalField(default=0.00, decimal_places=2, max_digits=9, verbose_name='Igv')
-    exchange_rate = models.DecimalField(default=1.00, decimal_places=4, max_digits=9, verbose_name='Tasa de Cambio')
+    exchange_rate = models.DecimalField(default=3.00, decimal_places=4, max_digits=9, verbose_name='Tasa de Cambio')
 
     def __str__(self):
         return self.name
@@ -480,10 +480,24 @@ class Sale(models.Model):
         item['employee'] = {} if self.employee is None else self.employee.toJSON()
         item['client'] = {} if self.client is None else self.client.toJSON()
         item['payment_condition'] = {'id': self.payment_condition, 'name': self.get_payment_condition_display()}
-        # Serializar pagos desde SalePayment
-        item['payments'] = [p.toJSON() for p in self.payments.all()]
-        # Generar resumen de formas de pago para compatibilidad
-        payment_names = [p.payment_method.name for p in self.payments.all()]
+        # Serializar pagos desde SalePayment (defensivo)
+        item['payments'] = []
+        payment_names = []
+        for p in self.payments.all():
+            try:
+                item['payments'].append(p.toJSON())
+            except Exception:
+                try:
+                    # Fallback minimal serialization to avoid crashing
+                    item['payments'].append({'id': p.id, 'amount': format(p.amount, '.2f')})
+                except Exception:
+                    item['payments'].append({'id': None})
+            try:
+                name = p.payment_method.name
+            except Exception:
+                name = ''
+            if name:
+                payment_names.append(name)
         item['payment_method'] = {'id': '', 'name': ', '.join(payment_names) if payment_names else 'Sin pago'}
         item['type_voucher'] = {'id': self.type_voucher, 'name': self.get_type_voucher_display()}
         item['subtotal'] = format(self.subtotal, '.2f')
@@ -620,18 +634,27 @@ class SalePayment(models.Model):
     currency = models.ForeignKey(Currency, on_delete=models.PROTECT, verbose_name='Moneda')
     bank = models.ForeignKey(PaymentBank, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Banco')
     operation_number = models.CharField(max_length=50, null=True, blank=True, verbose_name='Nro de Operación')
-    date_joined = models.DateTimeField(default=datetime.now, verbose_name='Fecha del Pago')
+    date_joined = models.DateField(default=date.today, verbose_name='Fecha del Pago')
 
     def __str__(self):
         return '{} - {} {}'.format(self.sale.nro(), self.currency.symbol, format(self.amount, '.2f'))
 
     def toJSON(self):
         item = model_to_dict(self, exclude=['sale'])
-        item['payment_method'] = self.payment_method.toJSON()
-        item['currency'] = self.currency.toJSON()
+        try:
+            item['payment_method'] = self.payment_method.toJSON()
+        except Exception:
+            item['payment_method'] = {}
+        try:
+            item['currency'] = self.currency.toJSON()
+        except Exception:
+            item['currency'] = {}
         item['bank'] = self.bank.toJSON() if self.bank else {}
         item['amount'] = format(self.amount, '.2f')
-        item['date_joined'] = self.date_joined.strftime('%d/%m/%Y %H:%M')
+        try:
+            item['date_joined'] = self.date_joined.strftime('%d/%m/%Y')
+        except Exception:
+            item['date_joined'] = ''
         return item
 
     class Meta:

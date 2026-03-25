@@ -1,3 +1,4 @@
+from multiprocessing import context
 import os
 import logging
 
@@ -48,7 +49,41 @@ class SalePrintVoucherView(LoginRequiredMixin, View):
                 }
             payments_by_currency[currency_code]['total'] += float(payment.amount)
         return payments_by_currency
+    
+    def get_grouped_cash_payments_by_currency(self, sale):
+        """Group ONLY cash payments by currency and sum amounts"""
+        payments_cash_by_currency = {}
 
+        for payment in sale.payments.all():
+            if payment.payment_method.code == 'efectivo':
+                currency_code = payment.currency.code
+
+                if currency_code not in payments_cash_by_currency:
+                    payments_cash_by_currency[currency_code] = {
+                        'symbol': payment.currency.symbol,
+                        'name': payment.currency.name,
+                        'total': 0
+                    }
+
+                payments_cash_by_currency[currency_code]['total'] += float(payment.amount)
+
+        return payments_cash_by_currency
+    
+    def get_grouped_non_cash_payments_by_currency(self, sale):
+        """Group all payments except cash by currency and sum amounts"""
+        payments_non_cash_by_currency = {}
+        for payment in sale.payments.all():
+            if payment.payment_method.code != 'efectivo':
+                currency_code = payment.currency.code
+                if currency_code not in payments_non_cash_by_currency:
+                    payments_non_cash_by_currency[currency_code] = {
+                        'symbol': payment.currency.symbol,
+                        'name': payment.currency.name,
+                        'total': 0
+                    }
+                payments_non_cash_by_currency[currency_code]['total'] += float(payment.amount)
+        return payments_non_cash_by_currency
+    
     def get(self, request, *args, **kwargs):
         try:
             # Check if ZPL format is requested (for Android/Zebra printer)
@@ -71,7 +106,8 @@ class SalePrintVoucherView(LoginRequiredMixin, View):
                 
                 # Add grouped payments by currency
                 context['payments_by_currency'] = self.get_grouped_payments_by_currency(sale)
-                
+                context['payments_cash_by_currency'] = self.get_grouped_cash_payments_by_currency(sale)
+                context['payments_non_cash_by_currency'] = self.get_grouped_non_cash_payments_by_currency(sale)                
                 if sale.type_voucher == 'ticket':
                     template = get_template('crm/sale/print/ticket.html')
                     # Use fixed height for Android/Windows (12cm = 120mm), dynamic for desktop

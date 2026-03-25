@@ -9,7 +9,7 @@
         @page {
             width: 64mm;
             {% if is_android %}
-            height: 135mm;
+            height: 175mm;
             {% else %}
             height: auto;
             {% endif %}
@@ -35,7 +35,7 @@
         .content {
             width: 64mm;
             {% if is_android %}
-            height: 135mm;
+            height: 175mm;
             {% endif %}
             padding: 5px;
             page-break-inside: avoid;
@@ -134,7 +134,7 @@
         <b></b>
         <b>Usuario:</b> {{ sale.employee.full_name }}<br>
         <b>Cliente:</b> {{ sale.client.user.full_name }}<br>
-        <b>Número de DNI:</b> {{ sale.client.user.dni }}<br>
+        <b>DNI o RUC cliente:</b> {{ sale.client.user.dni }}<br>
         <b>Hora y fecha de registro:</b>
         
         {% if sale.date_joined %}
@@ -167,9 +167,9 @@
     <table class="table table-borderless table-sm" style="margin-bottom: 0">
         <thead>
         <tr style="border-bottom: 1px double black;">
-            <th style="width: 18%;">Moneda</th>
-            <th style="width: 23%;">Monto</th>
-            <th style="width: 25%;">Forma P.</th>
+            <th style="width: 26%;">Monto</th>
+            <th style="width: 21%;">Frm Pag</th>
+            <th style="width: 27%;"> Fech Pag</th>
             {#<th style="width: 15%;">Dscto</th>#}
             <th style="width: 35%;" class="text-right">Banco</th>
         </tr>
@@ -177,27 +177,57 @@
         <tbody>
         {% for payment in sale.payments.all %}
             <tr style="line-height: 1.1;">
-                <td>{{payment.currency.name|default:"-" }}</td>
-                <td>{{ payment.amount|default:"-" }}</td>
+                <td>{{ payment.currency.symbol|default:"-" }} {{ payment.amount|default:"-" }}</td>
                 <td>{{ payment.payment_method.name|default:"-" }}</td>
-                {#<td>{{ det.total_dscto }}</td>#}
+
+                    <td>{{ payment.date_joined|date:"d/m/y" }}</td>
                 <td class="text-right">{{ payment.bank|default:"-" }}</td>
             </tr>
         {% endfor %}
         </tbody>
         <table class="table table-borderless table-sm" style="margin-top: 2px;">
     <tbody>
-    <br>
+    {# --- Resumen Efectivo --- #}
+    {% if payments_cash_by_currency %}
     <tr>
-        <td colspan="2"><b>RESUMEN:</b></td>
+        <td colspan="2" style="padding-top: 5px;"><b>Resumen Efectivo:</b></td>
+    </tr>
+    {% for code, payment_info in payments_cash_by_currency.items %}
+    <tr style="line-height: 1;">
+        <td class="float-left"><b>{{ payment_info.name }}</b></td>
+        <td class="text-right">{{ payment_info.symbol }} {{ payment_info.total|floatformat:2 }}</td>
+    </tr>
+    {% endfor %}
+    <tr><td colspan="2" style="height:5px;"></td></tr>
+    {% endif %}
+
+    {# --- Resumen Bancos --- #}
+    {% if payments_non_cash_by_currency %}
+    <tr>
+        <td colspan="2" style="padding-top: 5px;"><b>Resumen Bancos:</b></td>
+    </tr>
+    {% for code, payment_info in payments_non_cash_by_currency.items %}
+    <tr style="line-height: 1;">
+        <td class="float-left"><b>{{ payment_info.name }}</b></td>
+        <td class="text-right">{{ payment_info.symbol }} {{ payment_info.total|floatformat:2 }}</td>
+    </tr>
+    {% endfor %}
+    <tr><td colspan="2" style="height:5px;"></td></tr>
+    {% endif %}
+
+    {# --- Resumen Total --- #}
+    {% if payments_by_currency %}
+    <tr>
+        <td colspan="2" style="padding-top: 5px;"><b>RESUMEN TOTAL:</b></td>
     </tr>
     {% for code, payment_info in payments_by_currency.items %}
-        <tr style="line-height: 1;">
-            <td class="float-left"><b>{{ payment_info.name }}</b></td>
-            <td class="text-right">{{ payment_info.symbol }}{{ payment_info.total|floatformat:2 }}</td>
-        </tr>
+    <tr style="line-height: 1;">
+        <td class="float-left"><b>{{ payment_info.name }}</b></td>
+        <td class="text-right" style="font-weight: bold;">{{ payment_info.symbol }} {{ payment_info.total|floatformat:2 }}</td>
+    </tr>
     {% endfor %}
-    </tbody>
+    {% endif %}
+</tbody>
 </table>
     </table>
     <table class="table table-borderless table-sm" style="margin-top: 0">
@@ -254,10 +284,22 @@
         </div>
     </div>
     <br>
+    <br>
+    <br>
+    <div class="signatures">
+        <div class="signature">
+            -----------------------<br>
+            Revisado por<br>
+        </div>
+        <div class="signature">
+            -----------------------<br>
+            Revisado por<br>
+        </div>
+    </div>
+    <br>
     <p class="text-center border-dotted p-1" style="font-size: 9px; margin: 2px 0; padding: 1px; line-height: 1.1;">
         !Gracias por su preferencia!<br>
-        "Brindando atención eficiente y<br>
-        de calidad."
+        
     </p>
 </div>
 </body>

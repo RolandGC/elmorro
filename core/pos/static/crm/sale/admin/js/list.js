@@ -39,7 +39,7 @@ function getData(all) {
             { data: "id" },
         ],
         columnDefs: [{
-                targets: [3, 4, 5],
+                targets: [0, 1, 2, 3, 4],
                 class: 'text-center',
                 render: function(data, type, row) {
                     return data;
@@ -47,9 +47,30 @@ function getData(all) {
             },
             {
                 targets: [-2],
+                orderable: false,
                 class: 'text-center',
                 render: function(data, type, row) {
-                    return 'S/.' + parseFloat(data).toFixed(2);
+                    // Agrupar pagos por moneda (igual que en report.js)
+                    var montosPorMoneda = {};
+                    if (row.payments && Array.isArray(row.payments)) {
+                        $.each(row.payments, function(index, payment) {
+                            var symbol = payment.currency.symbol;
+                            var amount = parseFloat(payment.amount) || 0;
+                            
+                            if (!montosPorMoneda[symbol]) {
+                                montosPorMoneda[symbol] = 0;
+                            }
+                            montosPorMoneda[symbol] += amount;
+                        });
+                    }
+                    
+                    // Formatear como "S/ 20.00, $100.00"
+                    var resultado = [];
+                    $.each(montosPorMoneda, function(symbol, total) {
+                        resultado.push(symbol + ' ' + parseFloat(total).toFixed(2));
+                    });
+                    
+                    return resultado.length > 0 ? resultado.join(', ') : 'S/. 0.00';
                 }
             },
             {
@@ -88,18 +109,29 @@ $(function() {
                 // responsive: true,
                 // autoWidth: false,
                 destroy: true,
-                ajax: {
-                    url: pathname,
-                    type: 'POST',
-                    headers: {
-                        'X-CSRFToken': csrftoken
-                    },
-                    data: {
-                        'action': 'search_detproducts',
-                        'id': row.id
-                    },
-                    dataSrc: ""
-                },
+                        ajax: {
+                            url: pathname,
+                            type: 'POST',
+                            headers: {
+                                'X-CSRFToken': csrftoken
+                            },
+                            data: {
+                                'action': 'search_detproducts',
+                                'id': row.id
+                            },
+                            dataSrc: function(json) {
+                                console.log('DataTables AJAX response (details):', json);
+                                if (!json) return [];
+                                if (json.error) {
+                                    console.error('Server error:', json.error);
+                                    alert('Error al obtener detalles: ' + json.error);
+                                    return [];
+                                }
+                                if (Array.isArray(json)) return json;
+                                if (json.data && Array.isArray(json.data)) return json.data;
+                                return [];
+                            }
+                        },
                 scrollX: true,
                 scrollCollapse: true,
                 columns: [
