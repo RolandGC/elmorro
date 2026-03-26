@@ -110,13 +110,16 @@ class PaymentBankUpdateView(PermissionMixin, UpdateView):
 
 class PaymentBankDeleteView(PermissionMixin, DeleteView):
     model = PaymentBank
+    template_name = 'frm/paymentbank/delete.html'
     success_url = reverse_lazy('paymentbank_list')
     permission_required = 'delete_paymentbank'
 
-    def delete(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         data = {}
         try:
-            super().delete(request, *args, **kwargs)
+            obj = self.get_object()
+            obj.delete()
+            data['status'] = 'ok'
         except Exception as e:
             data['error'] = str(e)
         return HttpResponse(json.dumps(data), content_type='application/json')
