@@ -1,5 +1,6 @@
 from django.forms import ModelForm
 from django import forms
+from django.core.validators import RegexValidator
 from django.contrib.auth.models import Group
 from django.db.models import Sum
 from datetime import datetime, date
@@ -584,11 +585,12 @@ class ClientForm(ModelForm):
         'placeholder': 'Ingrese sus nombres completos'
     }), label='Nombre completo o Razón Social', max_length=50)
 
+    alnum_validator = RegexValidator(r'^[A-Za-z0-9 ]+$', 'Sólo se permiten letras y números')
     dni = forms.CharField(widget=forms.TextInput(attrs={
         'class': 'form-control',
         'autocomplete': 'off',
-        'placeholder': 'Ingrese su número Dni o Ruc'
-    }), label='Número de Identidad', max_length=10)
+        'placeholder': 'Ingrese su número DNI o RUC'
+    }), label='Número de Identidad', max_length=20, validators=[alnum_validator])
 
     email = forms.CharField(widget=forms.TextInput(attrs={
         'class': 'form-control',
