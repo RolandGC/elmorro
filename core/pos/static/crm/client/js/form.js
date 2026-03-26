@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
                                     action: 'validate_data'
                                 };
                             },
-                            message: 'El número de cédula ya se encuentra registrado',
+                            message: 'El número de DNI o RUC ya se encuentra registrado',
                             method: 'POST',
                             headers: {
                                 'X-CSRFToken': csrftoken

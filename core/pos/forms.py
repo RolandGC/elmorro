@@ -410,11 +410,15 @@ class BoxForm(ModelForm):
         }
     
     def get_fecha_inicio(self):
-        """Obtiene la fecha de inicio del rango: desde el último cierre"""
-        if self.instance.datetime_close:
-            return self.instance.datetime_close
+        """Obtiene la fecha de inicio del rango: desde el último cierre de caja"""
+        ultimo_cierre = Box.objects.filter(
+            user=self.user,
+            datetime_close__isnull=False
+        ).exclude(pk=self.instance.pk).order_by('-datetime_close').first()
+
+        if ultimo_cierre:
+            return ultimo_cierre.datetime_close
         else:
-            from datetime import datetime, time
             fecha_actual = datetime.now()
             return datetime.combine(fecha_actual.date(), time.min)
 
@@ -425,7 +429,7 @@ class BoxForm(ModelForm):
 
         total = SalePayment.objects.filter(
             sale__employee=self.user,
-            # sale__date_joined__range=[fecha_inicio, fecha_fin],
+            sale__date_joined__range=[fecha_inicio, fecha_fin],
             payment_method__code='efectivo',
             currency__code__in=['PEN', 'SOL']
         ).aggregate(total=Sum('amount'))['total'] or 0
@@ -439,7 +443,7 @@ class BoxForm(ModelForm):
 
         total = SalePayment.objects.filter(
             sale__employee=self.user,
-            # sale__date_joined__range=[fecha_inicio, fecha_fin],
+            sale__date_joined__range=[fecha_inicio, fecha_fin],
             payment_method__code='efectivo',
             currency__code__in=['USD', 'DÓLAR']
         ).aggregate(total=Sum('amount'))['total'] or 0
@@ -453,7 +457,7 @@ class BoxForm(ModelForm):
 
         total = SalePayment.objects.filter(
             sale__employee=self.user,
-            # sale__date_joined__range=[fecha_inicio, fecha_fin],
+            sale__date_joined__range=[fecha_inicio, fecha_fin],
             payment_method__code='transferencia',
             currency__code__in=['PEN', 'SOL']
         ).aggregate(total=Sum('amount'))['total'] or 0
@@ -467,7 +471,7 @@ class BoxForm(ModelForm):
 
         total = SalePayment.objects.filter(
             sale__employee=self.user,
-            # sale__date_joined__range=[fecha_inicio, fecha_fin],
+            sale__date_joined__range=[fecha_inicio, fecha_fin],
             payment_method__code='transferencia',
             currency__code__in=['USD', 'DÓLAR']
         ).aggregate(total=Sum('amount'))['total'] or 0
@@ -481,7 +485,7 @@ class BoxForm(ModelForm):
 
         total = SalePayment.objects.filter(
             sale__employee=self.user,
-            #sale__date_joined__range=[fecha_inicio, fecha_fin],
+            sale__date_joined__range=[fecha_inicio, fecha_fin],
             payment_method__code='deposito',
             currency__code__in=['PEN', 'SOL']
         ).aggregate(total=Sum('amount'))['total'] or 0
@@ -495,7 +499,7 @@ class BoxForm(ModelForm):
 
         total = SalePayment.objects.filter(
             sale__employee=self.user,
-            #sale__date_joined__range=[fecha_inicio, fecha_fin],
+            sale__date_joined__range=[fecha_inicio, fecha_fin],
             payment_method__code='deposito',
             currency__code__in=['USD', 'DÓLAR']
         ).aggregate(total=Sum('amount'))['total'] or 0
@@ -508,8 +512,8 @@ class BoxForm(ModelForm):
         fecha_fin = datetime.now()
 
         total = SalePayment.objects.filter(
-            # sale__employee=self.user,
-            # sale__date_joined__range=[fecha_inicio, fecha_fin],
+            sale__employee=self.user,
+            sale__date_joined__range=[fecha_inicio, fecha_fin],
             payment_method__code='yape',
             # currency__code__in=['PEN', 'SOL']
         ).aggregate(total=Sum('amount'))['total'] or 0

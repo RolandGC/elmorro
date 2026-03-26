@@ -47,7 +47,7 @@ type_administrativo, created = ModuleType.objects.get_or_create(
 print('{} {}'.format(type_administrativo.name, '(creado)' if created else '(actualizado)'))
 
 type_facturacion, created = ModuleType.objects.get_or_create(
-    name='Facturación',
+    name='Caja',
     defaults={'icon': 'fas fa-file-invoice-dollar'}
 )
 print('{} {}'.format(type_facturacion.name, '(creado)' if created else '(actualizado)'))
