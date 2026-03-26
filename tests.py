@@ -578,11 +578,18 @@ for m in Module.objects.filter().exclude(url__in=['/pos/crm/client/update/profil
     gm, _ = GroupModule.objects.get_or_create(module=m, group=admin_group)
     for perm in m.permits.all():
         admin_group.permissions.add(perm)
-        _, _ = GroupPermission.objects.get_or_create(
+        obj = GroupPermission.objects.filter(
             module_id=m.id,
             group_id=admin_group.id,
             permission_id=perm.id
-        )
+        ).first()
+
+        if not obj:
+            GroupPermission.objects.create(
+                module_id=m.id,
+                group_id=admin_group.id,
+                permission_id=perm.id
+            )
 
 client_group, created = Group.objects.get_or_create(name='Cliente')
 print('Grupo {}: {}'.format(client_group.name, '(creado)' if created else '(actualizado)'))
