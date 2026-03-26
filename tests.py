@@ -4,7 +4,7 @@ from django.contrib.auth.models import Permission
 from core.pos.models import *
 
 # Crear o actualizar Dashboard
-dashboard, created = Dashboard.objects.update_or_create(name='El Morro SAC')
+dashboard, created = Dashboard.objects.update_or_create(name='Grupo El Morro')
 dashboard.icon = 'fas fa-money-bill-wave'
 dashboard.layout = 1
 dashboard.card = ' '
