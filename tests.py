@@ -34,10 +34,9 @@ type_security, created = ModuleType.objects.get_or_create(
 )
 print('{} {}'.format(type_security.name, '(creado)' if created else '(actualizado)'))
 
-type_bodega, created = ModuleType.objects.get_or_create(
-    name='Almacén',
-    defaults={'icon': 'fas fa-warehouse'}
-)
+type_bodega, _ = ModuleType.objects.get_or_create(name='Almacén')
+type_bodega.icon = 'fas fa-warehouse'
+type_bodega.save()
 print('{} {}'.format(type_bodega.name, '(creado)' if created else '(actualizado)'))
 
 type_administrativo, created = ModuleType.objects.get_or_create(
