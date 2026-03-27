@@ -213,7 +213,10 @@ document.addEventListener('DOMContentLoaded', function (e) {
                         stringLength: {
                             min: 8
                         },
-                        digits: {},
+                        regexp: {
+                            regexp: /^[a-zA-Z0-9]+$/,
+                            message: 'Solo se permiten letras y números (sin caracteres especiales)'
+                        },
                         remote: {
                             url: pathname,
                             data: function () {
@@ -908,9 +911,9 @@ $(function () {
         fvClient.resetForm(true);
     });
 
-    $('input[name="dni"]').keypress(function (e) {
-        return validate_form_text('numbers', e, null);
-    });
+    // $('input[name="dni"]').keypress(function (e) {
+    //     return validate_form_text('numbers', e, null);
+    // });
 
     $('input[name="mobile"]').keypress(function (e) {
         return validate_form_text('numbers', e, null);
