@@ -47,7 +47,9 @@
             height: 175mm;
             {% endif %}
             padding: 7px;
+            {% if not is_android %}
             padding-left: 15px;
+            {% endif %}
             page-break-inside: avoid;
         }
 
