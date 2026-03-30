@@ -45,10 +45,11 @@
             width: 73mm;
             {% if is_android %}
             height: 175mm;
+            padding-horizontal: -7px;
             {% endif %}
             padding: 7px;
             {% if not is_android %}
-            padding-left: 15px;
+            padding-left: 18px;
             {% endif %}
             page-break-inside: avoid;
         }
