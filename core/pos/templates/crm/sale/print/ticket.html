@@ -7,27 +7,33 @@
     <title>Title</title>
     <style>
         @page {
-    width: 70mm;
-    height: auto;
-    margin: 0 !important;
-    padding: 0;
-    size: 64mm auto;   /* ← CLAVE: tamaño dinámico */
-}
+            width: 70mm;
+            {% if is_android %}
+            height: 175mm;
+            {% else %}
+            height: auto;
+            size: 70mm auto;  /* ← solo se agrega esto para web */
+            {% endif %}
+            margin: 0 !important;
+            padding: 0;
+        }
 
-html, body {
-    width: 70mm;
-    height: auto;
-    margin: 0 !important;
-    padding: 0 !important;
-    overflow: visible;
-    padding-left: 5px;
-}
+        html, body {
+            width: 70mm;
+            height: auto;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: visible;
+        }
 
-body {
-    font-family: "Roboto", "Lucida Grande", Verdana, Arial, sans-serif;
-    font-size: 7px;
-    color: black !important;
-}
+        body {
+            font-family: "Roboto", "Lucida Grande", Verdana, Arial, sans-serif;
+            padding: 0 !important;
+            margin: 0 !important;
+            font-size: 7px;
+            color: black !important;
+            page-break-after: avoid;
+        }
 
         p {
             font-size: 10px;
@@ -36,13 +42,13 @@ body {
         }
 
         .content {
-    width: 70mm;
-    padding: 7px;
-    height: auto;
-    display: block;
-    overflow: visible;
-    page-break-inside: avoid;
-}
+            width: 70mm;
+            {% if is_android %}
+            height: 175mm;
+            {% endif %}
+            padding: 7px;
+            page-break-inside: avoid;
+        }
 
         .client {
             font-size: 10px;
