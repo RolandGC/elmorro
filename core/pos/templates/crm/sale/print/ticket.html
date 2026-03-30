@@ -7,19 +7,19 @@
     <title>Title</title>
     <style>
         @page {
-            width: 70mm;
+            width: 73mm;
             {% if is_android %}
             height: 175mm;
             {% else %}
             height: auto;
-            size: 70mm auto;  /* ← solo se agrega esto para web */
+            size: 73mm auto;  /* ← solo se agrega esto para web */
             {% endif %}
             margin: 0 !important;
             padding: 0;
         }
 
         html, body {
-            width: 70mm;
+            width: 73mm;
             height: auto;
             margin: 0 !important;
             padding: 0 !important;
@@ -42,11 +42,12 @@
         }
 
         .content {
-            width: 70mm;
+            width: 73mm;
             {% if is_android %}
             height: 175mm;
             {% endif %}
             padding: 7px;
+            padding-left: 15px;
             page-break-inside: avoid;
         }
 
