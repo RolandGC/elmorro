@@ -7,13 +7,13 @@
     <title>Title</title>
     <style>
         @page {
-            width: 64mm;
+            width: 66mm;
             {% if is_android %}
             height: 175mm;
             {% else %}
             height: auto;
             {% endif %}
-            margin: 0;
+            margin: 0.3mm;
             padding: 0;
         }
 
@@ -33,11 +33,11 @@
         }
 
         .content {
-            width: 64mm;
+            width: 66mm;
             {% if is_android %}
             height: 175mm;
             {% endif %}
-            padding: 5px;
+            padding: 8px;
             page-break-inside: avoid;
         }
 
