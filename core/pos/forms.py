@@ -411,17 +411,28 @@ class BoxForm(ModelForm):
         }
     
     def get_fecha_inicio(self):
-        """Obtiene la fecha de inicio del rango: desde el último cierre de caja"""
-        ultimo_cierre = Box.objects.filter(
-            user=self.user,
-            datetime_close__isnull=False
-        ).exclude(pk=self.instance.pk).order_by('-datetime_close').first()
+        if not hasattr(self, '_fecha_inicio'):
+            ultimo_cierre = Box.objects.filter(
+                user=self.user,
+                datetime_close__isnull=False
+            ).exclude(pk=self.instance.pk).order_by('-datetime_close').first()
 
-        if ultimo_cierre:
-            return ultimo_cierre.datetime_close
-        else:
-            fecha_actual = datetime.now()
-            return datetime.combine(fecha_actual.date(), time.min)
+            if ultimo_cierre:
+                # Desde el último cierre hasta ahora
+                self._fecha_inicio = ultimo_cierre.datetime_close
+            else:
+                # Primera vez: desde el primer pago registrado del usuario
+                primer_pago = SalePayment.objects.filter(
+                    sale__employee=self.user
+                ).order_by('sale__date_joined').first()
+
+                self._fecha_inicio = (
+                    primer_pago.sale.date_joined
+                    if primer_pago
+                    else datetime.min  # fallback: desde el inicio de los tiempos
+                )
+
+        return self._fecha_inicio
 
     def get_efectivo_soles(self):
         """Calcula efectivo en soles desde el último cierre"""
