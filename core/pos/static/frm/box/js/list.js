@@ -107,6 +107,8 @@ function getData(all) {
                 orderable: false,
                 render: function(data, type, row) {
                     var buttons = '';
+                    // detail / expand button to open payments modal (small screens)
+                    buttons += '<a class="btn btn-info btn-xs btn-flat" rel="payments"><i class="fas fa-plus"></i></a> ';
                     buttons += '<a href="/pos/frm/box/print/ticket/' + row.id + '/" target="_blank" class="btn btn-primary btn-xs btn-flat"><i class="fas fa-print"></i></a> ';
                     buttons += '<a href="/pos/frm/box/update/' + row.id + '/" class="btn btn-warning btn-xs btn-flat"><i class="fas fa-edit"></i></a> ';
                     buttons += '<a href="/pos/frm/box/delete/' + row.id + '/" class="btn btn-danger btn-xs btn-flat"><i class="fas fa-trash"></i></a> ';
@@ -153,9 +155,7 @@ $(function() {
         getData(true);
     });
 
-    $('#data tbody')
-        .off()
-        .on('click', 'a[rel="payments"]', function() {
+    $(document).on('click', '#data a[rel="payments"]', function ()  {
             $('.tooltip').remove();
             var tr = tblCtasCollect.cell($(this).closest('td, li')).index(),
                 row = tblCtasCollect.row(tr.row).data();
