@@ -4,11 +4,17 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
+      <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
     <title>Ticket de Cierre de Caja</title>
     <style>
       @page {
-        width: 64mm;
-        height: 165mm;
+        width: 73mm;
+        {% if is_android %}
+        height: 185mm;
+        {% else %}
+        height: auto;
+        size: 73mm auto;  /* ← solo se agrega esto para web */
+        {% endif %}
         margin: 0;
         padding: 0;
       }
@@ -26,9 +32,15 @@
         padding: 0;
       }
       .content {
-        width: 64mm;
-        height: 165mm;
-        padding: 5px;
+        width: 73mm;
+        {% if is_android %}
+            height: 185mm;
+            padding: 7px; 
+            padding-horizontal: -12px;
+        {% else %}
+            padding: 7px;
+            padding-left: 15px;
+        {% endif %}
         page-break-inside: avoid;
       }
       .name-company {
@@ -48,13 +60,14 @@
         text-align: center;
       }
       .title-ticket {
-        font-size: 12px;
+        font-size: 14px;
         font-weight: bold;
         text-transform: uppercase;
         text-align: center;
         margin: 3px 0;
         border-bottom: 2px solid black;
         padding-bottom: 2px;
+        font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
       }
       .border-dotted {
         border-top: 1px dotted black;
@@ -62,25 +75,28 @@
         padding: 2px 0;
       }
       .info-section {
-        font-size: 9px;
+        font-size: 14px;
         margin-top: 3px;
         margin-bottom: 3px;
         line-height: 1.3;
+        font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
       }
       .info-section p {
         margin: 1px 0;
         padding: 0;
+        font-size: 14px;
       }
       .info-section b {
         font-weight: bold;
       }
       .section-label {
-        font-size: 9px;
+        font-size: 12px;
         font-weight: bold;
         margin-top: 3px;
         margin-bottom: 2px;
         text-transform: uppercase;
         border-bottom: 1px solid black;
+        font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
       }
       .detail-row {
         display: flex;
@@ -88,6 +104,8 @@
         margin: 2px 0;
         padding: 1px 0;
         border-bottom: 1px dotted #ccc;
+        font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
+        font-size: 12px;
       }
       .detail-label {
         font-weight: bold;
@@ -127,12 +145,15 @@
       }
       table {
         width: 100%;
-        font-size: 9px;
+        font-size: 12px;
         border-collapse: collapse;
+        font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
+        color: black;
       }
       table td {
         padding: 1px 2px;
         line-height: 1.1;
+        color: black;
       }
       .stamp {
         text-align: center;

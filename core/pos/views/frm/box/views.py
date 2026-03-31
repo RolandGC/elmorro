@@ -276,7 +276,11 @@ class BoxPrintTicketView(LoginRequiredMixin, View):
             company = Company.objects.first()
             context = {
                 'box': box,
-                'company': company
+                'company': company,
+                # ensure template always has these keys even if summary building fails
+                'payments_by_currency': {},
+                'payments_cash_by_currency': {},
+                'payments_non_cash_by_currency': {},
             }
             # Agregar resúmenes de pagos (por moneda, efectivo y no efectivo)
             try:
@@ -285,14 +289,20 @@ class BoxPrintTicketView(LoginRequiredMixin, View):
                 # Determinar fecha de inicio: cierre anterior del mismo usuario
                 prev_box = Box.objects.filter(user=box.user, datetime_close__lt=box.datetime_close).order_by('-datetime_close').first()
                 if prev_box and prev_box.datetime_close:
-                    fecha_inicio = prev_box.datetime_close
+                    # rango exclusivo en lower bound, inclusive en upper bound
+                    pagos = SalePayment.objects.filter(
+                        sale__employee=box.user,
+                        sale__date_joined__gt=prev_box.datetime_close,
+                        sale__date_joined__lte=box.datetime_close
+                    )
                 else:
+                    # desde inicio del día hasta el cierre (inclusive)
                     fecha_inicio = datetime.combine(box.datetime_close.date(), datetime.min.time())
-
-                pagos = SalePayment.objects.filter(
-                    sale__employee=box.user,
-                    sale__date_joined__range=[fecha_inicio, box.datetime_close]
-                )
+                    pagos = SalePayment.objects.filter(
+                        sale__employee=box.user,
+                        sale__date_joined__gte=fecha_inicio,
+                        sale__date_joined__lte=box.datetime_close
+                    )
 
                 payments_by_currency = {}
                 payments_cash_by_currency = {}
@@ -329,6 +339,40 @@ class BoxPrintTicketView(LoginRequiredMixin, View):
                 context['payments_by_currency'] = payments_by_currency
                 context['payments_cash_by_currency'] = payments_cash_by_currency
                 context['payments_non_cash_by_currency'] = payments_non_cash_by_currency
+                # If no payments found, fallback to box fields so template shows a summary
+                if not payments_by_currency:
+                    # Soles
+                    total_soles = float(box.efectivo_soles or 0) + float(box.transferencia_soles or 0) + float(box.deposito_soles or 0) + float(box.yape or 0) + float(box.plin or 0)
+                    # Dólares
+                    total_dolares = float(box.efectivo_dolares or 0) + float(box.transferencia_dolares or 0) + float(box.deposito_dolares or 0)
+
+                    # Only add currencies with amounts > 0
+                    if total_soles > 0:
+                        payments_by_currency['PEN'] = {'symbol': 'S/', 'name': 'Soles', 'total': round(total_soles, 2)}
+                    if total_dolares > 0:
+                        payments_by_currency['USD'] = {'symbol': '$', 'name': 'Dólares', 'total': round(total_dolares, 2)}
+
+                    # Cash (efectivo)
+                    cash_soles = float(box.efectivo_soles or 0)
+                    cash_dolares = float(box.efectivo_dolares or 0)
+                    payments_cash_by_currency = {}
+                    if cash_soles > 0:
+                        payments_cash_by_currency['PEN'] = {'symbol': 'S/', 'name': 'Soles', 'total': round(cash_soles, 2)}
+                    if cash_dolares > 0:
+                        payments_cash_by_currency['USD'] = {'symbol': '$', 'name': 'Dólares', 'total': round(cash_dolares, 2)}
+
+                    # Non-cash (transferencia, deposito, yape, plin)
+                    noncash_soles = float(box.transferencia_soles or 0) + float(box.deposito_soles or 0) + float(box.yape or 0) + float(box.plin or 0)
+                    noncash_dolares = float(box.transferencia_dolares or 0) + float(box.deposito_dolares or 0)
+                    payments_non_cash_by_currency = {}
+                    if noncash_soles > 0:
+                        payments_non_cash_by_currency['PEN'] = {'symbol': 'S/', 'name': 'Soles', 'total': round(noncash_soles, 2)}
+                    if noncash_dolares > 0:
+                        payments_non_cash_by_currency['USD'] = {'symbol': '$', 'name': 'Dólares', 'total': round(noncash_dolares, 2)}
+
+                    context['payments_by_currency'] = payments_by_currency
+                    context['payments_cash_by_currency'] = payments_cash_by_currency
+                    context['payments_non_cash_by_currency'] = payments_non_cash_by_currency
             except Exception:
                 # No interrumpir la generación del PDF si ocurre un error al agregar resúmenes
                 logger.exception('Error building payments summary for box print')
