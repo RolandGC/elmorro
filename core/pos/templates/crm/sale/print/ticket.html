@@ -47,10 +47,11 @@
             width: 73mm;
             {% if is_android %}
                 height: 185mm;
-                padding: 7px; /* Padding uniforme en Android para no desperdiciar espacio */
+                padding: 7px; 
+                padding-horizontal: -8px;
             {% else %}
                 padding: 7px;
-                padding-left: 15px; /* Solo se aplica en Windows/Web */
+                padding-left: 15px;
             {% endif %}
             page-break-inside: avoid;
         }
