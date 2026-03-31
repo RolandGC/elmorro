@@ -10,7 +10,7 @@
         @page {
             width: 73mm;
             {% if is_android %}
-            height: 175mm;
+            height: 185mm;
             {% else %}
             height: auto;
             size: 73mm auto;  /* ← solo se agrega esto para web */
@@ -46,10 +46,12 @@
         .content {
             width: 73mm;
             {% if is_android %}
-            height: 175mm;
+                height: 185mm;
+                padding: 7px; /* Padding uniforme en Android para no desperdiciar espacio */
+            {% else %}
+                padding: 7px;
+                padding-left: 15px; /* Solo se aplica en Windows/Web */
             {% endif %}
-            padding: 7px;
-            padding-left: 15px;
             page-break-inside: avoid;
         }
 
@@ -289,22 +291,26 @@
     <br>
     <br>
     <br>
+    <br>
+    <br>
     <div class="signatures" style="justify-content: center;">
         <div class="signature">
-            ---------------------------<br>
+            ----------------------------<br>
             Firma del cliente<br>
         </div>
     </div>
     <br>
     <br>
     <br>
+    <br>
+    <br>
     <div class="signatures">
         <div class="signature">
-            -----------------------<br>
+            --------------------------<br>
             Firma del Usuario<br>
         </div>
         <div class="signature">
-            -----------------------<br>
+            -------------------------<br>
             Revisado por<br>
         </div>
     </div>
