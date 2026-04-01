@@ -282,6 +282,15 @@ class BoxPrintTicketView(LoginRequiredMixin, View):
                 'payments_cash_by_currency': {},
                 'payments_non_cash_by_currency': {},
             }
+            # Detect device (Android/Windows) similarly to sale print view
+            user_agent = request.META.get('HTTP_USER_AGENT', '').lower()
+            is_android = 'android' in user_agent
+            is_windows = 'windows' in user_agent
+            context['is_android'] = is_android
+            context['is_windows'] = is_windows
+            # set fixed height for Android/Windows printers (12cm = 120mm)
+            context['height'] = 120 if (is_android or is_windows) else None
+
             # Agregar resúmenes de pagos (por moneda, efectivo y no efectivo)
             try:
                 from datetime import datetime
