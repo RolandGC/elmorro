@@ -542,12 +542,19 @@
                 const paymentBankSelect = paymentBlock.find('.payment-bank-select');
                 const paymentBankRequired = paymentBlock.find('.payment-bank-required');
                 const paymentDateContainer = paymentBlock.find('.payment-date-picker').closest('.payment-optional-field');
+                const paymentOperationInput = paymentBlock.find('.payment-operation');
                 const paymentMethodId = $(this).val();
-                
-                // Si la forma de pago es id=1, hacer los campos NO requeridos y ocultarlos
-                if (paymentMethodId === '1' || paymentMethodId === 1) {
+
+                // Si la forma de pago es id=1 (efectivo), limpiar y ocultar campos relacionados con banco
+                if (paymentMethodId === '1' || paymentMethodId === 1 || paymentMethodId === 'efectivo') {
                     paymentDateInput.prop('required', false);
                     paymentBankSelect.prop('required', false);
+                    // clear bank and operation when payment is cash
+                    try {
+                        paymentBankSelect.val('');
+                        paymentBankSelect.trigger('change');
+                    } catch (e) {}
+                    try { paymentOperationInput.val(''); } catch (e) {}
                     paymentBlock.find('.payment-date-picker').closest('.form-group').find('label').find('.text-danger').hide();
                     paymentBankRequired.hide();
                     paymentDateContainer.hide();
@@ -559,6 +566,8 @@
                     paymentBankRequired.show();
                     paymentDateContainer.show();
                 }
+                // actualizar resumen tras cambio
+                updatePaymentsSummary();
             });
             
             // Escuchar cuando se agregan nuevos bloques de pago
