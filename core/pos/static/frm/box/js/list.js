@@ -108,7 +108,7 @@ function getData(all) {
                 render: function(data, type, row) {
                     var buttons = '';
                     // detail / expand button to open payments modal (small screens)
-                    buttons += '<a class="btn btn-info btn-xs btn-flat" rel="payments"><i class="fas fa-plus"></i></a> ';
+                    buttons += '<a class="btn btn-info btn-xs btn-flat" rel="payments" onclick="showDetails(' + row.id + ')"><i class="fas fa-plus"></i></a> ';
                     buttons += '<a href="/pos/frm/box/print/ticket/' + row.id + '/" target="_blank" class="btn btn-primary btn-xs btn-flat"><i class="fas fa-print"></i></a> ';
                     buttons += '<a href="/pos/frm/box/update/' + row.id + '/" class="btn btn-warning btn-xs btn-flat"><i class="fas fa-edit"></i></a> ';
                     buttons += '<a href="/pos/frm/box/delete/' + row.id + '/" class="btn btn-danger btn-xs btn-flat"><i class="fas fa-trash"></i></a> ';
@@ -288,3 +288,16 @@ $(function() {
             );
         });
 });
+
+function showDetails( idBox ) {
+    console.log('holaaaaaa', idBox);
+    const miModalDetails = document.getElementById('myModalDetails');
+    if (miModalDetails) {
+        const modal = new bootstrap.Modal(miModalDetails);
+        const modalBody = miModalDetails.querySelector('.modal-content');
+        modalBody.innerHTML = '<div class="modal-header"><h5 class="modal-title">Detalles de la caja</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body"><p>Cargando detalles...</p></div>';
+        modal.show();
+    }
+
+    //$('#myModalDetails').modal('show');
+}

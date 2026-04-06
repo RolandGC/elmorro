@@ -179,7 +179,7 @@ $(function() {
             // invoice.push({'id': 'Total Igv', 'name': 'S/.' + row.total_igv});
             // invoice.push({'id': 'Descuento', 'name': row.dscto + ' %'});
             // invoice.push({'id': 'Total Descuento', 'name': 'S/.' + row.total_dscto});
-            invoice.push({ 'id': 'Total a pagar', 'name': 'S/.' + row.total });
+            //invoice.push({ 'id': 'Total a pagar', 'name': 'S/.' + row.total });
             // Mostrar detalle de pagos
             if (row.payments && row.payments.length > 0) {
                 $.each(row.payments, function (i, p) {

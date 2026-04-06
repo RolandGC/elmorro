@@ -527,7 +527,7 @@ class BoxForm(ModelForm):
             sale__employee=self.user,
             sale__date_joined__range=[fecha_inicio, fecha_fin],
             payment_method__code='yape',
-            # currency__code__in=['PEN', 'SOL']
+            currency__code__in=['PEN', 'SOL']
         ).aggregate(total=Sum('amount'))['total'] or 0
         
         return float(total)
