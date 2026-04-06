@@ -127,14 +127,14 @@
                     <!-- small card -->
                     <div class="small-box bg-warning">
                         <div class="inner">
-                            <h3>S/. {{ sales }}</h3>
-
+                            <h5>S/ {{ sales_soles|floatformat:2 }} <br>
+                            $ {{ sales_dolares|floatformat:2 }}</h5>
                             <p>Cobranzas mes</p>
                         </div>
                         <div class="icon">
                             <i class="fas fa-money-bill-wave"></i>
                         </div>
-                        <a href="#" class="small-box-footer">
+                        <a href="/reports/sale/" class="small-box-footer">
                             Más información <i class="fas fa-arrow-circle-right"></i>
                         </a>
                     </div>
@@ -143,14 +143,14 @@
                     <!-- small card -->
                     <div class="small-box bg-danger">
                         <div class="inner">
-                            <h3>{{ product }}</h3>
+                            <h3>{{ paymentmethods }}</h3>
 
                             <p>Formas de Pago</p>
                         </div>
                         <div class="icon">
                             <i class="fas fa-cube"></i>
                         </div>
-                        <a href="#" class="small-box-footer">
+                        <a href="/pos/frm/paymentmethod/" class="small-box-footer">
                             Más información <i class="fas fa-arrow-circle-right"></i>
                         </a>
                     </div>
@@ -169,25 +169,22 @@
                                 <table class="table m-0">
                                     <thead>
                                     <tr>
-                                        <th>Nro</th>
+                                        <th style="width: 18%;">Serie</th>
                                         <th>Cliente</th>
                                         <th>Fecha de registro</th>
-                                        <th>Subtotal</th>
-                                        <th>Dscto</th>
-                                        <th>Igv</th>
                                         <th>Total</th>
                                     </tr>
                                     </thead>
                                     <tbody>
-                                    {% for v in sale %}
+                                    {% for item in sale %}
                                         <tr>
-                                            <td>{{ v.id }}</td>
-                                            <td>{{ v.client.user.full_name }}</td>
-                                            <td>{{ v.date_joined|date:'c' }}</td>
-                                            <td>S/.{{ v.subtotal }}</td>
-                                            <td>S/.{{ v.total_dscto }}</td>
-                                            <td>S/.{{ v.total_igv }}</td>
-                                            <td>S/.{{ v.total }}</td>
+                                            <td>{{ item.sale.serie }}</td>
+                                            <td>{{ item.sale.client.user.full_name }}</td>
+                                            <td>{{ item.sale.date_joined|date:'d/m/Y' }}</td>
+                                            <td>
+                                                S/ {{ item.total_soles|floatformat:2 }} <br>
+                                                $ {{ item.total_dolares|floatformat:2 }}
+                                            </td>
                                         </tr>
                                     {% endfor %}
                                     </tbody>
@@ -199,7 +196,7 @@
                 <div class="col-md-6">
                     <div class="card">
                         <div class="card-header">
-                            <h3 class="card-title"><i class="fas fa-box"></i> Stock de Productos</h3>
+                            <h3 class="card-title"><i class="fas fa-box"></i> Cobranzas</h3>
                         </div>
                         <div class="card-body p-0">
                             <div id="graphstockproducts" style="height: 64vh;"></div>
@@ -211,7 +208,7 @@
                 <div class="col-lg-12">
                     <div class="card">
                         <div class="card-header">
-                            <h3 class="card-title"><i class="fas fa-calendar-check"></i> Compras y Ventas del
+                            <h3 class="card-title"><i class="fas fa-calendar-check"></i> Ingresos y Egresos del
                                 año {{ currentdate.year }}</h3>
                         </div>
                         <div class="card-body p-0">

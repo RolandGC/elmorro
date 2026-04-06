@@ -56,7 +56,7 @@ class TypeExpenseCreateView(PermissionMixin, CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data()
         context['list_url'] = self.success_url
-        context['title'] = 'Nuevo registro de un Tipo de Gasto'
+        context['title'] = 'Nuevo registro de un Tipo de Egreso'
         context['action'] = 'add'
         return context
 
@@ -102,7 +102,7 @@ class TypeExpenseUpdateView(PermissionMixin, UpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data()
         context['list_url'] = self.success_url
-        context['title'] = 'Edición de un Tipo de Gasto'
+        context['title'] = 'Edición de un Tipo de Egreso'
         context['action'] = 'edit'
         return context
 

@@ -31,7 +31,10 @@ document.addEventListener('DOMContentLoaded', function (e) {
                         stringLength: {
                             min: 8
                         },
-                        digits: {},
+                        regexp: {
+                            regexp: /^[a-zA-Z0-9]+$/,
+                            message: 'Solo se permiten letras y números (sin caracteres especiales)'
+                        },
                         remote: {
                             url: pathname,
                             data: function () {
@@ -41,7 +44,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
                                     action: 'validate_data'
                                 };
                             },
-                            message: 'El número de cédula ya se encuentra registrado',
+                            message: 'El número de DNI o RUC ya se encuentra registrado',
                             method: 'POST',
                             headers: {
                                 'X-CSRFToken': csrftoken
@@ -184,9 +187,9 @@ $(function () {
         return validate_form_text('letters', e, null);
     });
 
-    $('input[name="dni"]').keypress(function (e) {
-        return validate_form_text('numbers', e, null);
-    });
+    // $('input[name="dni"]').keypress(function (e) {
+    //     return validate_form_text('letters', e, null, );
+    // });
 
     $('input[name="mobile"]').keypress(function (e) {
         return validate_form_text('numbers', e, null);

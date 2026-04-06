@@ -2,13 +2,13 @@
 {% load security_extras %}
 <aside class="main-sidebar elevation-4 {{ dshboard.sidebar }}">
   <a href="{% url 'dashboard' %}" class="brand-link {{ dshboard.brand_logo }}">
-    <img src="{{ dshboard.get_image }}" alt="AdminLTE Logo" class="brand-image" style="opacity: .8" />
-    <span class="brand-text font-weight-light">{{ dshboard.name }}</span>
+    <img style="margin-left: -8px;" src="{{ dshboard.get_image }}" alt="AdminLTE Logo" class="brand-image" style="opacity: .8" />
+    <span class="brand-text font-bold">{{ dshboard.name }}</span>
   </a>
   <div class="sidebar mx-0 align-items-center">
     <div class="user-panel p-3 mx-0 d-flex">
       <div class="image">
-        <img src="{{ request.user.get_image }}" class="img-circle elevation-2" alt="User Image" />
+        <img style="width: 40px; height: 40px; margin-left: -20px;" src="{{ request.user.get_image }}" class="img-circle elevation-2" alt="User Image" />
       </div>
       <div class="info">
         <a href="#" class="d-block">{{ request.user.username }}</a>

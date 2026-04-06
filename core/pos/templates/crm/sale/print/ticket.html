@@ -4,49 +4,65 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Ticket de Cobranza</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
     <style>
         @page {
-            width: 64mm;
+            width: 73mm;
             {% if is_android %}
-            height: 135mm;
+            height: 185mm;
             {% else %}
             height: auto;
+            size: 73mm auto;  /* ← solo se agrega esto para web */
             {% endif %}
-            margin: 0;
+            margin: 0 !important;
             padding: 0;
+        }
+
+        html, body {
+            width: 73mm;
+            height: auto;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: visible;
         }
 
         body {
             font-family: "Roboto", "Lucida Grande", Verdana, Arial, sans-serif;
-            padding: 0;
-            margin: 0;
+            padding: 0 !important;
+            margin: 0 !important;
             font-size: 7px;
             color: black !important;
             page-break-after: avoid;
         }
 
         p {
-            font-size: 10px;
+            font-size: 13px;
             margin: 2px 0;
             padding: 0;
+            font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
         }
 
         .content {
-            width: 64mm;
+            width: 73mm;
             {% if is_android %}
-            height: 135mm;
+                height: 185mm;
+                padding: 7px; 
+                padding-horizontal: -12px;
+            {% else %}
+                padding: 7px;
+                padding-left: 15px;
             {% endif %}
-            padding: 5px;
             page-break-inside: avoid;
         }
 
         .client {
-            font-size: 10px;
+            font-size: 13px;
             margin-top: 0;
             padding-top: 0;
             margin-bottom: 2px;
             line-height: 1.2;
+            font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
         }
 
         .name-company {
@@ -72,18 +88,20 @@
         }
 
         .ruc {
-            font-size: 10px;
+            font-size: 14px;
             font-weight: bold;
             text-transform: uppercase;
             text-align: center;
             margin-bottom: 2px;
+            font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
         }
 
         .table {
-            font-size: 9px;
+            font-size: 12px;
             color: black;
             margin: 0;
             border-collapse: collapse;
+            font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
         }
 
         .table td, .table th {
@@ -103,8 +121,9 @@
             justify-content: space-between;
             align-items: flex-start;
             padding: 2px 0;
-            font-size: 10px;
+            font-size: 13px;
             margin-top: 2px;
+            font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
         }
 
         .signatures .signature {
@@ -134,7 +153,7 @@
         <b></b>
         <b>Usuario:</b> {{ sale.employee.full_name }}<br>
         <b>Cliente:</b> {{ sale.client.user.full_name }}<br>
-        <b>Número de DNI:</b> {{ sale.client.user.dni }}<br>
+        <b>DNI o RUC cliente:</b> {{ sale.client.user.dni }}<br>
         <b>Hora y fecha de registro:</b>
         
         {% if sale.date_joined %}
@@ -167,37 +186,67 @@
     <table class="table table-borderless table-sm" style="margin-bottom: 0">
         <thead>
         <tr style="border-bottom: 1px double black;">
-            <th style="width: 15%;">Moneda</th>
-            <th style="width: 25%;">Monto</th>
-            <th style="width: 25%;">Forma P.</th>
+            <th style="width: 26%;">Monto</th>
+            <th style="width: 20%;">Frm Pag</th>
+            <th style="width: 19%;"> Fech Pag</th>
             {#<th style="width: 15%;">Dscto</th>#}
-            <th style="width: 15%;" class="text-right">Banco</th>
+            <th style="width: 55%;" class="text-right">Banco</th>
         </tr>
         </thead>
         <tbody>
         {% for payment in sale.payments.all %}
             <tr style="line-height: 1.1;">
-                <td>{{payment.currency.name|default:"-" }}</td>
-                <td>{{ payment.amount|default:"-" }}</td>
+                <td>{{ payment.currency.symbol|default:"-" }} {{ payment.amount|default:"-" }}</td>
                 <td>{{ payment.payment_method.name|default:"-" }}</td>
-                {#<td>{{ det.total_dscto }}</td>#}
+
+                    <td>{{ payment.date_joined|date:"d/m/y" }}</td>
                 <td class="text-right">{{ payment.bank|default:"-" }}</td>
             </tr>
         {% endfor %}
         </tbody>
         <table class="table table-borderless table-sm" style="margin-top: 2px;">
     <tbody>
-    <br>
+    {# --- Resumen Efectivo --- #}
+    {% if payments_cash_by_currency %}
     <tr>
-        <td colspan="2"><b>RESUMEN:</b></td>
+        <td colspan="2" style="padding-top: 5px;"><b>Resumen Efectivo:</b></td>
+    </tr>
+    {% for code, payment_info in payments_cash_by_currency.items %}
+    <tr style="line-height: 1;">
+        <td class="float-left"><b>{{ payment_info.name }}</b></td>
+        <td class="text-right">{{ payment_info.symbol }} {{ payment_info.total|floatformat:2 }}</td>
+    </tr>
+    {% endfor %}
+    <tr><td colspan="2" style="height:5px;"></td></tr>
+    {% endif %}
+
+    {# --- Resumen Bancos --- #}
+    {% if payments_non_cash_by_currency %}
+    <tr>
+        <td colspan="2" style="padding-top: 5px;"><b>Resumen Bancos:</b></td>
+    </tr>
+    {% for code, payment_info in payments_non_cash_by_currency.items %}
+    <tr style="line-height: 1;">
+        <td class="float-left"><b>{{ payment_info.name }}</b></td>
+        <td class="text-right">{{ payment_info.symbol }} {{ payment_info.total|floatformat:2 }}</td>
+    </tr>
+    {% endfor %}
+    <tr><td colspan="2" style="height:5px;"></td></tr>
+    {% endif %}
+
+    {# --- Resumen Total --- #}
+    {% if payments_by_currency %}
+    <tr>
+        <td colspan="2" style="padding-top: 5px;"><b>RESUMEN TOTAL:</b></td>
     </tr>
     {% for code, payment_info in payments_by_currency.items %}
-        <tr style="line-height: 1;">
-            <td class="float-left"><b>{{ payment_info.name }}</b></td>
-            <td class="text-right">{{ payment_info.symbol }}{{ payment_info.total|floatformat:2 }}</td>
-        </tr>
+    <tr style="line-height: 1;">
+        <td class="float-left"><b>{{ payment_info.name }}</b></td>
+        <td class="text-right" style="font-weight: bold;">{{ payment_info.symbol }} {{ payment_info.total|floatformat:2 }}</td>
+    </tr>
     {% endfor %}
-    </tbody>
+    {% endif %}
+</tbody>
 </table>
     </table>
     <table class="table table-borderless table-sm" style="margin-top: 0">
@@ -243,21 +292,33 @@
     <br>
     <br>
     <br>
+    <br>
+    <br>
+    <div class="signatures" style="justify-content: center;">
+        <div class="signature">
+            ----------------------------<br>
+            Firma del cliente<br>
+        </div>
+    </div>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
     <div class="signatures">
         <div class="signature">
-            -----------------------<br>
+            --------------------------<br>
             Firma del Usuario<br>
         </div>
         <div class="signature">
-            -----------------------<br>
-            Firma del cliente<br>
+            -------------------------<br>
+            Revisado por<br>
         </div>
     </div>
     <br>
     <p class="text-center border-dotted p-1" style="font-size: 9px; margin: 2px 0; padding: 1px; line-height: 1.1;">
         !Gracias por su preferencia!<br>
-        "Brindando atención eficiente y<br>
-        de calidad."
+        
     </p>
 </div>
 </body>

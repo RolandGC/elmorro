@@ -75,7 +75,7 @@ class ExpensesCreateView(PermissionMixin, CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data()
         context['list_url'] = self.success_url
-        context['title'] = 'Nuevo registro de un Gasto'
+        context['title'] = 'Nuevo registro de un Egreso'
         context['action'] = 'add'
         return context
 

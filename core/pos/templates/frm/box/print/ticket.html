@@ -4,13 +4,26 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
+      <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
     <title>Ticket de Cierre de Caja</title>
     <style>
       @page {
-        width: 64mm;
-        height: 145mm;
+        width: 73mm;
+        {% if is_android %}
+        height: 185mm;
+        {% else %}
+        height: auto;
+        size: 73mm auto;  /* ← solo se agrega esto para web */
+        {% endif %}
         margin: 0;
         padding: 0;
+      }
+      html, body {
+        width: 73mm;
+        height: auto;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: visible;
       }
       body {
         font-family: 'Roboto', 'Lucida Grande', Verdana, Arial, sans-serif;
@@ -26,9 +39,15 @@
         padding: 0;
       }
       .content {
-        width: 64mm;
-        height: 145mm;
-        padding: 5px;
+        width: 73mm;
+        {% if is_android %}
+            height: 185mm;
+            padding: 7px; 
+            padding-horizontal: -12px;
+        {% else %}
+            padding: 7px;
+            padding-left: 15px;
+        {% endif %}
         page-break-inside: avoid;
       }
       .name-company {
@@ -48,13 +67,14 @@
         text-align: center;
       }
       .title-ticket {
-        font-size: 12px;
+        font-size: 14px;
         font-weight: bold;
         text-transform: uppercase;
         text-align: center;
         margin: 3px 0;
         border-bottom: 2px solid black;
         padding-bottom: 2px;
+        font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
       }
       .border-dotted {
         border-top: 1px dotted black;
@@ -62,25 +82,28 @@
         padding: 2px 0;
       }
       .info-section {
-        font-size: 9px;
+        font-size: 14px;
         margin-top: 3px;
         margin-bottom: 3px;
         line-height: 1.3;
+        font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
       }
       .info-section p {
         margin: 1px 0;
         padding: 0;
+        font-size: 14px;
       }
       .info-section b {
         font-weight: bold;
       }
       .section-label {
-        font-size: 9px;
+        font-size: 12px;
         font-weight: bold;
         margin-top: 3px;
         margin-bottom: 2px;
         text-transform: uppercase;
         border-bottom: 1px solid black;
+        font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
       }
       .detail-row {
         display: flex;
@@ -88,6 +111,8 @@
         margin: 2px 0;
         padding: 1px 0;
         border-bottom: 1px dotted #ccc;
+        font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
+        font-size: 12px;
       }
       .detail-label {
         font-weight: bold;
@@ -127,12 +152,15 @@
       }
       table {
         width: 100%;
-        font-size: 9px;
+        font-size: 12px;
         border-collapse: collapse;
+        font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
+        color: black;
       }
       table td {
         padding: 1px 2px;
         line-height: 1.1;
+        color: black;
       }
       .stamp {
         text-align: center;
@@ -175,77 +203,127 @@
             -
           {% endif %}
         </p>
-        <p>
-          <b>Fecha Registro:</b> {% if box.date_joined %}
-            {{ box.date_joined|date:'d/m/Y' }}
-          {% else %}
-            -
-          {% endif %}
-        </p>
       </div>
 
       <div class="section-label">DETALLE DE CAJA</div>
       <div class="expense-detail">
-        <!-- EFECTIVO -->
+        <!-- CAJA INICIAL -->
         <div class="detail-row">
-          <div class="detail-label">Efectivo S/:</div>
+          <div class="detail-label">Caja Inicial Soles:</div>
+          <div class="detail-value">S/ {{ box.initial_box_soles|floatformat:2 }}</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Efectivo Soles:</div>
           <div class="detail-value">S/ {{ box.efectivo_soles|floatformat:2 }}</div>
         </div>
         <div class="detail-row">
-          <div class="detail-label">Efectivo $:</div>
-          <div class="detail-value">$ {{ box.efectivo_dolares|floatformat:2 }}</div>
-        </div>
-        
-        <!-- YAPE (solo soles) -->
-        <div class="detail-row">
-          <div class="detail-label">Yape:</div>
-          <div class="detail-value">S/ {{ box.yape_soles|floatformat:2 }}</div>
-        </div>
-        
-        <!-- PLIN (solo soles) -->
-        <div class="detail-row">
-          <div class="detail-label">Plin:</div>
-          <div class="detail-value">S/ {{ box.plin_soles|floatformat:2 }}</div>
-        </div>
-        
-        <!-- TRANSFERENCIA -->
-        <div class="detail-row">
-          <div class="detail-label">Transferencia S/:</div>
+          <div class="detail-label">Transferencia Soles:</div>
           <div class="detail-value">S/ {{ box.transferencia_soles|floatformat:2 }}</div>
         </div>
         <div class="detail-row">
-          <div class="detail-label">Transferencia $:</div>
+          <div class="detail-label">Depósito Soles:</div>
+          <div class="detail-value">S/ {{ box.deposito_soles|floatformat:2 }}</div>
+        </div>
+         <!-- YAPE (solo soles) -->
+        <div class="detail-row">
+          <div class="detail-label">Yape:</div>
+          <div class="detail-value">S/ {{ box.yape|floatformat:2 }}</div>
+        </div>
+        <!-- PLIN (solo soles) -->
+        <div class="detail-row">
+          <div class="detail-label">Plin:</div>
+          <div class="detail-value">S/ {{ box.plin|floatformat:2 }}</div>
+        </div>
+        <!-- EGRESOS (solo soles) -->
+        <div class="detail-row">
+          <div class="detail-label">Egresos:</div>
+          <div class="detail-value">S/ {{ box.bills|floatformat:2 }}</div>
+        </div>
+        
+        <div class="detail-row">
+          <div class="detail-label">Caja Inicial Dólares:</div>
+          <div class="detail-value">$ {{ box.initial_box_dolares|floatformat:2 }}</div>
+        </div>
+        
+        <!-- EFECTIVO -->
+        
+        <div class="detail-row">
+          <div class="detail-label">Efectivo Dólares:</div>
+          <div class="detail-value">$ {{ box.efectivo_dolares|floatformat:2 }}</div>
+        </div>
+        
+       
+        <!-- TRANSFERENCIA -->
+        
+        <div class="detail-row">
+          <div class="detail-label">Transferencia Dólares:</div>
           <div class="detail-value">$ {{ box.transferencia_dolares|floatformat:2 }}</div>
         </div>
         
         <!-- DEPOSITO -->
+        
         <div class="detail-row">
-          <div class="detail-label">Depósito S/:</div>
-          <div class="detail-value">S/ {{ box.deposito_soles|floatformat:2 }}</div>
-        </div>
-        <div class="detail-row">
-          <div class="detail-label">Depósito $:</div>
+          <div class="detail-label">Depósito Dólares:</div>
           <div class="detail-value">$ {{ box.deposito_dolares|floatformat:2 }}</div>
         </div>
         
-        <!-- GASTOS (solo soles) -->
-        <div class="detail-row">
-          <div class="detail-label">Gastos:</div>
-          <div class="detail-value">S/ {{ box.gastos|floatformat:2 }}</div>
-        </div>
-        
-        <!-- CAJA INICIAL -->
-        <div class="detail-row">
-          <div class="detail-label">Caja Inicial:</div>
-          <div class="detail-value">S/ {{ box.initial_box|floatformat:2 }}</div>
-        </div>
-        
         <!-- CAJA FINAL -->
-        <div class="detail-row">
-          <div class="detail-label">Caja Final:</div>
-          <div class="detail-value">S/ {{ box.box_final|floatformat:2 }}</div>
+        {% comment %} <div class="detail-row">
+          <div class="detail-label" style="font-weight: bold; font-size: 9px;">CAJA FINAL SOLES:</div>
+          <div class="detail-value" style="font-weight: bold; font-size: 9px;">S/ {{ box.box_final_soles|floatformat:2 }}</div>
         </div>
+        <div class="detail-row">
+          <div class="detail-label" style="font-weight: bold; font-size: 9px;">CAJA FINAL DÓLARES:</div>
+          <div class="detail-value" style="font-weight: bold; font-size: 9px;">$ {{ box.box_final_dolares|floatformat:2 }}</div>
+        </div> {% endcomment %}
       </div>
+
+      <br>
+
+      <table class="table table-borderless table-sm" style="margin-top: 2px;">
+        <tbody>
+        {# --- Resumen Efectivo --- #}
+        {% if payments_cash_by_currency %}
+        <tr>
+          <td colspan="2" style="padding-top: 5px;"><b>Resumen Efectivo:</b></td>
+        </tr>
+        {% for code, payment_info in payments_cash_by_currency.items %}
+        <tr style="line-height: 1;">
+          <td class="float-left"><b>{{ payment_info.name }}</b></td>
+          <td class="text-right">{{ payment_info.symbol }} {{ payment_info.total|floatformat:2 }}</td>
+        </tr>
+        {% endfor %}
+        <tr><td colspan="2" style="height:5px;"></td></tr>
+        {% endif %}
+
+        {# --- Resumen Bancos --- #}
+        {% if payments_non_cash_by_currency %}
+        <tr>
+          <td colspan="2" style="padding-top: 5px;"><b>Resumen Bancos:</b></td>
+        </tr>
+        {% for code, payment_info in payments_non_cash_by_currency.items %}
+        <tr style="line-height: 1;">
+          <td class="float-left"><b>{{ payment_info.name }}</b></td>
+          <td class="text-right">{{ payment_info.symbol }} {{ payment_info.total|floatformat:2 }}</td>
+        </tr>
+        {% endfor %}
+        <tr><td colspan="2" style="height:5px;"></td></tr>
+        {% endif %}
+
+        {# --- Resumen Total --- #}
+        {% if payments_by_currency %}
+        <tr>
+          <td colspan="2" style="padding-top: 5px;"><b>RESUMEN TOTAL:</b></td>
+        </tr>
+        {% for code, payment_info in payments_by_currency.items %}
+        <tr style="line-height: 1;">
+          <td class="float-left"><b>{{ payment_info.name }}</b></td>
+          <td class="text-right" style="font-weight: bold;">{{ payment_info.symbol }} {{ payment_info.total|floatformat:2 }}</td>
+        </tr>
+        {% endfor %}
+        {% endif %}
+        </tbody>
+      </table>
 
       {% if box.desc %}
         <div class="section-label">DESCRIPCIÓN</div>

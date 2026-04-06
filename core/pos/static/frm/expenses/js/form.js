@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
                 typeexpense: {
                     validators: {
                         notEmpty: {
-                            message: 'Seleccione un tipo de gasto'
+                            message: 'Seleccione un tipo de Egreso'
                         }
                     }
                 },

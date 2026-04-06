@@ -195,7 +195,7 @@ class Company(models.Model):
     desc = models.CharField(max_length=500, null=True, blank=True, verbose_name='Descripción')
     image = models.ImageField(null=True, blank=True, upload_to='company/%Y/%m/%d', verbose_name='Logo')
     igv = models.DecimalField(default=0.00, decimal_places=2, max_digits=9, verbose_name='Igv')
-    exchange_rate = models.DecimalField(default=1.00, decimal_places=4, max_digits=9, verbose_name='Tasa de Cambio')
+    exchange_rate = models.DecimalField(default=3.00, decimal_places=4, max_digits=9, verbose_name='Tasa de Cambio')
 
     def __str__(self):
         return self.name
@@ -480,10 +480,24 @@ class Sale(models.Model):
         item['employee'] = {} if self.employee is None else self.employee.toJSON()
         item['client'] = {} if self.client is None else self.client.toJSON()
         item['payment_condition'] = {'id': self.payment_condition, 'name': self.get_payment_condition_display()}
-        # Serializar pagos desde SalePayment
-        item['payments'] = [p.toJSON() for p in self.payments.all()]
-        # Generar resumen de formas de pago para compatibilidad
-        payment_names = [p.payment_method.name for p in self.payments.all()]
+        # Serializar pagos desde SalePayment (defensivo)
+        item['payments'] = []
+        payment_names = []
+        for p in self.payments.all():
+            try:
+                item['payments'].append(p.toJSON())
+            except Exception:
+                try:
+                    # Fallback minimal serialization to avoid crashing
+                    item['payments'].append({'id': p.id, 'amount': format(p.amount, '.2f')})
+                except Exception:
+                    item['payments'].append({'id': None})
+            try:
+                name = p.payment_method.name
+            except Exception:
+                name = ''
+            if name:
+                payment_names.append(name)
         item['payment_method'] = {'id': '', 'name': ', '.join(payment_names) if payment_names else 'Sin pago'}
         item['type_voucher'] = {'id': self.type_voucher, 'name': self.get_type_voucher_display()}
         item['subtotal'] = format(self.subtotal, '.2f')
@@ -620,18 +634,27 @@ class SalePayment(models.Model):
     currency = models.ForeignKey(Currency, on_delete=models.PROTECT, verbose_name='Moneda')
     bank = models.ForeignKey(PaymentBank, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Banco')
     operation_number = models.CharField(max_length=50, null=True, blank=True, verbose_name='Nro de Operación')
-    date_joined = models.DateTimeField(default=datetime.now, verbose_name='Fecha del Pago')
+    date_joined = models.DateField(default=date.today, verbose_name='Fecha del Pago')
 
     def __str__(self):
         return '{} - {} {}'.format(self.sale.nro(), self.currency.symbol, format(self.amount, '.2f'))
 
     def toJSON(self):
         item = model_to_dict(self, exclude=['sale'])
-        item['payment_method'] = self.payment_method.toJSON()
-        item['currency'] = self.currency.toJSON()
+        try:
+            item['payment_method'] = self.payment_method.toJSON()
+        except Exception:
+            item['payment_method'] = {}
+        try:
+            item['currency'] = self.currency.toJSON()
+        except Exception:
+            item['currency'] = {}
         item['bank'] = self.bank.toJSON() if self.bank else {}
         item['amount'] = format(self.amount, '.2f')
-        item['date_joined'] = self.date_joined.strftime('%d/%m/%Y %H:%M')
+        try:
+            item['date_joined'] = self.date_joined.strftime('%d/%m/%Y')
+        except Exception:
+            item['date_joined'] = ''
         return item
 
     class Meta:
@@ -804,19 +827,19 @@ class TypeExpense(models.Model):
         return item
 
     class Meta:
-        verbose_name = 'Tipo de Gasto'
-        verbose_name_plural = 'Tipos de Gastos'
+        verbose_name = 'Tipo de Egreso'
+        verbose_name_plural = 'Tipos de Egresos'
         ordering = ['id']
 
 
 class Expenses(models.Model):
-    typeexpense = models.ForeignKey(TypeExpense, verbose_name='Tipo de Gasto', on_delete=models.PROTECT)
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Usuario que registró el gasto')
+    typeexpense = models.ForeignKey(TypeExpense, verbose_name='Tipo de Egreso', on_delete=models.PROTECT)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Usuario que registró el egreso')
     desc = models.CharField(max_length=500, null=True, blank=True, verbose_name='Descripción')
     date_joined = models.DateField(default=datetime.now, verbose_name='Fecha de Registro')
-    expense_date = models.DateField(null=True, blank=True, verbose_name='Fecha del Gasto')
+    expense_date = models.DateField(null=True, blank=True, verbose_name='Fecha del Egreso')
     valor = models.DecimalField(max_digits=9, decimal_places=2, default=0.00, verbose_name='Valor')
-    expense_serie = models.CharField(max_length=100, null=True, blank=True, verbose_name='Serie del Gasto')
+    expense_serie = models.CharField(max_length=100, null=True, blank=True, verbose_name='Serie del Egreso')
 
     def __str__(self):
         return self.desc
@@ -961,213 +984,62 @@ class Box(models.Model):
     date_close = models.DateField(verbose_name='Fecha de Cierre', null=True, blank=True)
     hours_close = models.TimeField(default=current_time, verbose_name='Hora de Cierre', null=True, blank=True)
     datetime_close = models.DateTimeField(verbose_name='Fecha y Hora de Cierre', null=True, blank=True)
-    efectivo = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name='Efectivo')
+    
+    initial_box_soles = models.DecimalField(max_digits=10, decimal_places=2, default=0.0, blank=True, null=True, verbose_name='Caja inicial (Soles)')
+    initial_box_dolares = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name='Caja inicial (Dólares)')
+    
+    efectivo_dolares = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name='Efectivo (Dólares)')
+    efectivo_soles = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name='Efectivo (Soles)')
+
     yape = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name='Yape')
     plin = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name='Plin')
-    transferencia = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name='Transferencia')
-    deposito = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name='Depósito')
-    initial_box = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Caja inicial')
-    bills = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Gastos del Día', null=True, blank=True)
-    box_final = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Caja final total')
+    transferencia_soles = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name='Transferencia (Soles)')
+    transferencia_dolares = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name='Transferencia (Dólares)')
+    deposito_soles = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name='Depósito (Soles)')
+    deposito_dolares = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name='Depósito (Dólares)')
+    
+    bills = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Egresos', null=True, blank=True)
+    box_final_soles = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name='Caja final (Soles)')
+    box_final_dolares = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name='Caja final (Dólares)')
+    
     desc = models.TextField(blank=True, null=True,verbose_name='Descripción')
-
+    
     def __str__(self):
         return self.date_close.strftime('%Y-%m-%d')
-
-    def get_fecha_inicio(self):
-        """Obtiene la fecha de inicio del rango: desde el último cierre"""
+    
+    def toJSON(self):
+        item = model_to_dict(self)
+        item['date_joined'] = self.date_joined.strftime('%Y-%m-%d')
+        
+        # Usar datetime_close si existe, si no combinar date_close y hours_close
         if self.datetime_close:
-            return self.datetime_close
+            item['datetime_close'] = self.datetime_close.strftime('%Y-%m-%d %H:%M')
+            item['date_close'] = self.datetime_close.strftime('%Y-%m-%d')
+            item['hours_close'] = self.datetime_close.strftime('%H:%M')
         else:
-            # Si no hay datetime_close, usar el inicio del día
-            from datetime import datetime, time
-            fecha_actual = datetime.now()
-            return datetime.combine(fecha_actual.date(), time.min)
-
-    def get_efectivo_soles(self):
-        """Calcula efectivo en soles desde el último cierre"""
-        fecha_inicio = self.get_fecha_inicio()
-        fecha_fin = datetime.now()
+            item['date_close'] = self.date_close.strftime('%Y-%m-%d') if self.date_close else ''
+            item['hours_close'] = self.hours_close.strftime('%H:%M') if self.hours_close else ''
+            item['datetime_close'] = ''
         
-        total = SalePayment.objects.filter(
-            sale__employee=self.user,
-            sale__date_joined__range=[fecha_inicio, fecha_fin],
-            payment_method__code='efectivo',
-            currency__code__in=['PEN', 'SOL']
-        ).aggregate(total=Sum('amount'))['total'] or 0
+        # Agregar valores calculados por moneda
+        item['efectivo_soles'] = format(self.efectivo_soles, '.2f')
+        item['efectivo_dolares'] = format(self.efectivo_dolares, '.2f')
+        item['yape'] = format(self.yape, '.2f')
+        item['plin'] = format(self.plin, '.2f')
+        item['transferencia_soles'] = format(self.transferencia_soles, '.2f')
+        item['transferencia_dolares'] = format(self.transferencia_dolares, '.2f')
+        item['deposito_soles'] = format(self.deposito_soles, '.2f')
+        item['deposito_dolares'] = format(self.deposito_dolares, '.2f')
+        item['bills'] = format(self.bills, '.2f')
+        item['initial_box_soles'] = format(self.initial_box_soles or 0, '.2f')
+        item['initial_box_dolares'] = format(self.initial_box_dolares or 0, '.2f')
+        item['box_final_soles'] = format(self.box_final_soles or 0, '.2f')
+        item['box_final_dolares'] = format(self.box_final_dolares or 0, '.2f')
         
-        return float(total)
-
-    def get_efectivo_dolares(self):
-        """Calcula efectivo en dólares desde el último cierre"""
-        fecha_inicio = self.get_fecha_inicio()
-        fecha_fin = datetime.now()
+        # Campo opciones para DataTables (se renderiza en JavaScript)
+        item['options'] = ''
         
-        total = SalePayment.objects.filter(
-            sale__employee=self.user,
-            sale__date_joined__range=[fecha_inicio, fecha_fin],
-            payment_method__code='efectivo',
-            currency__code__in=['USD', 'DOL']
-        ).aggregate(total=Sum('amount'))['total'] or 0
-        
-        return float(total)
-
-    def get_transferencia_soles(self):
-        """Calcula transferencia en soles desde el último cierre"""
-        fecha_inicio = self.get_fecha_inicio()
-        fecha_fin = datetime.now()
-        
-        total = SalePayment.objects.filter(
-            sale__employee=self.user,
-            sale__date_joined__range=[fecha_inicio, fecha_fin],
-            payment_method__code='transferencia',
-            currency__code__in=['PEN', 'SOL']
-        ).aggregate(total=Sum('amount'))['total'] or 0
-        
-        return float(total)
-
-    def get_transferencia_dolares(self):
-        """Calcula transferencia en dólares desde el último cierre"""
-        fecha_inicio = self.get_fecha_inicio()
-        fecha_fin = datetime.now()
-        
-        total = SalePayment.objects.filter(
-            sale__employee=self.user,
-            sale__date_joined__range=[fecha_inicio, fecha_fin],
-            payment_method__code='transferencia',
-            currency__code__in=['USD', 'DOL']
-        ).aggregate(total=Sum('amount'))['total'] or 0
-        
-        return float(total)
-
-    def get_deposito_soles(self):
-        """Calcula depósito en soles desde el último cierre"""
-        fecha_inicio = self.get_fecha_inicio()
-        fecha_fin = datetime.now()
-        
-        total = SalePayment.objects.filter(
-            sale__employee=self.user,
-            sale__date_joined__range=[fecha_inicio, fecha_fin],
-            payment_method__code='deposito',
-            currency__code__in=['PEN', 'SOL']
-        ).aggregate(total=Sum('amount'))['total'] or 0
-        
-        return float(total)
-
-    def get_deposito_dolares(self):
-        """Calcula depósito en dólares desde el último cierre"""
-        fecha_inicio = self.get_fecha_inicio()
-        fecha_fin = datetime.now()
-        
-        total = SalePayment.objects.filter(
-            sale__employee=self.user,
-            sale__date_joined__range=[fecha_inicio, fecha_fin],
-            payment_method__code='deposito',
-            currency__code__in=['USD', 'DOL']
-        ).aggregate(total=Sum('amount'))['total'] or 0
-        
-        return float(total)
-
-    def get_gastos(self):
-        """Calcula gastos en soles desde el último cierre"""
-        fecha_inicio = self.get_fecha_inicio()
-        fecha_fin = datetime.now()
-        
-        total = Expenses.objects.filter(
-            user=self.user,
-            date_joined__range=[fecha_inicio.date(), fecha_fin.date()]
-        ).aggregate(total=Sum('valor'))['total'] or 0
-        
-        return float(total)
-
-    def get_yape_soles(self):
-        """Calcula yape en soles desde el último cierre"""
-        fecha_inicio = self.get_fecha_inicio()
-        fecha_fin = datetime.now()
-        
-        total = SalePayment.objects.filter(
-            sale__employee=self.user,
-            sale__date_joined__range=[fecha_inicio, fecha_fin],
-            payment_method__code='yape',
-            currency__code__in=['PEN', 'SOL']
-        ).aggregate(total=Sum('amount'))['total'] or 0
-        
-        return float(total)
-
-    def get_plin_soles(self):
-        """Calcula plin en soles desde el último cierre"""
-        fecha_inicio = self.get_fecha_inicio()
-        fecha_fin = datetime.now()
-        
-        total = SalePayment.objects.filter(
-            sale__employee=self.user,
-            sale__date_joined__range=[fecha_inicio, fecha_fin],
-            payment_method__code='plin',
-            currency__code__in=['PEN', 'SOL']
-        ).aggregate(total=Sum('amount'))['total'] or 0
-        
-        return float(total)
-
-    # Métodos antiguos (compatibilidad)
-    def get_efectivo(self):
-        fecha_actual = date.today()
-        # Sumar montos de SalePayment con método 'efectivo'
-        total_efectivo = SalePayment.objects.filter(
-            sale__employee=self.user,
-            sale__payment_condition='contado',
-            payment_method__code='efectivo',
-            sale__date_joined__date=fecha_actual
-        ).aggregate(total=Sum('amount'))['total'] or 0
-        
-        payments = PaymentsCtaCollect.objects.filter(date_joined__date=fecha_actual)
-        total_payments = sum(p.valor for p in payments if p.ctascollect.sale.employee == self.user)
-        
-        return float(total_efectivo) + float(total_payments)
-
-    def get_yape(self):
-        fecha_actual = date.today()
-        total_yape = SalePayment.objects.filter(
-            sale__employee=self.user,
-            sale__payment_condition='contado',
-            payment_method__code='yape',
-            sale__date_joined__date=fecha_actual
-        ).aggregate(total=Sum('amount'))['total'] or 0
-        
-        return float(total_yape)
-
-    def get_plin(self):
-        fecha_actual = date.today()
-        total_plin = SalePayment.objects.filter(
-            sale__employee=self.user,
-            sale__payment_condition='contado',
-            payment_method__code='plin',
-            sale__date_joined__date=fecha_actual
-        ).aggregate(total=Sum('amount'))['total'] or 0
-        
-        return float(total_plin)
-
-    def get_transferencia(self):
-        fecha_actual = date.today()
-        total_transfer = SalePayment.objects.filter(
-            sale__employee=self.user,
-            sale__payment_condition='contado',
-            payment_method__code='transferencia',
-            sale__date_joined__date=fecha_actual
-        ).aggregate(total=Sum('amount'))['total'] or 0
-        
-        return float(total_transfer)
-
-    def get_deposito(self):
-        fecha_actual = date.today()
-        total_deposito = SalePayment.objects.filter(
-            sale__employee=self.user,
-            sale__payment_condition='contado',
-            payment_method__code='deposito',
-            sale__date_joined__date=fecha_actual
-        ).aggregate(total=Sum('amount'))['total'] or 0
-        
-        return float(total_deposito)
-
+        return item
     
     def calculate_totals(self):
         """
@@ -1176,7 +1048,7 @@ class Box(models.Model):
         Dollars total = sum of dollars (no subtraction).
         """
         self.box_final_soles = (
-            self.efectivo + self.yape + self.plin + self.transferencia + self.deposito - self.bills
+            self.efectivo_soles + self.yape + self.plin + self.transferencia_soles + self.deposito_soles - self.bills
         )
         self.box_final_dolares = (
             self.efectivo_dolares + self.transferencia_dolares + self.deposito_dolares
@@ -1207,33 +1079,6 @@ class Box(models.Model):
             'total_soles': total_soles,
             'total_dolares': total_dolares
         }
-
-    def toJSON(self):
-        item = model_to_dict(self)
-        item['date_joined'] = self.date_joined.strftime('%Y-%m-%d')
-        
-        # Usar datetime_close si existe, si no combinar date_close y hours_close
-        if self.datetime_close:
-            item['datetime_close'] = self.datetime_close.strftime('%Y-%m-%d %H:%M')
-            item['date_close'] = self.datetime_close.strftime('%Y-%m-%d')
-            item['hours_close'] = self.datetime_close.strftime('%H:%M')
-        else:
-            item['date_close'] = self.date_close.strftime('%Y-%m-%d') if self.date_close else ''
-            item['hours_close'] = self.hours_close.strftime('%H:%M') if self.hours_close else ''
-            item['datetime_close'] = ''
-        
-        # Agregar valores calculados por moneda
-        item['efectivo_soles'] = format(self.get_efectivo_soles(), '.2f')
-        item['efectivo_dolares'] = format(self.get_efectivo_dolares(), '.2f')
-        item['yape_soles'] = format(self.get_yape_soles(), '.2f')
-        item['plin_soles'] = format(self.get_plin_soles(), '.2f')
-        item['transferencia_soles'] = format(self.get_transferencia_soles(), '.2f')
-        item['transferencia_dolares'] = format(self.get_transferencia_dolares(), '.2f')
-        item['deposito_soles'] = format(self.get_deposito_soles(), '.2f')
-        item['deposito_dolares'] = format(self.get_deposito_dolares(), '.2f')
-        item['gastos'] = format(self.get_gastos(), '.2f')
-        
-        return item
 
     class Meta:
         verbose_name = 'Caja chica'

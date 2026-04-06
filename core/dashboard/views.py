@@ -9,9 +9,10 @@ from django.views.decorators.csrf import requires_csrf_token
 from django.views.generic import TemplateView
 
 from core.pos.models import Product, Sale, Client, Provider, Category, Purchase, Company, User
+from core.pos.models import PaymentMethodModel, SalePayment
 from core.reports.choices import months
 from core.security.models import Dashboard
-
+from django.db.models import Sum
 
 class DashboardView(LoginRequiredMixin, TemplateView):
     def get_template_names(self):
@@ -47,13 +48,13 @@ class DashboardView(LoginRequiredMixin, TemplateView):
                     result = Sale.objects.filter(date_joined__month=i[0], date_joined__year=year).aggregate(
                         resp=Coalesce(Sum('total'), 0.00, output_field=FloatField()))['resp']
                     rows.append(float(result))
-                data.append({'name': 'Ventas', 'data': rows})
+                data.append({'name': 'Ingresos', 'data': rows})
                 rows = []
                 for i in months[1:]:
                     result = Purchase.objects.filter(date_joined__month=i[0], date_joined__year=year).aggregate(
                         resp=Coalesce(Sum('subtotal'), 0.00, output_field=FloatField()))['resp']
                     rows.append(float(result))
-                data.append({'name': 'Compras', 'data': rows})
+                data.append({'name': 'Egresos', 'data': rows})
             else:
                 data['error'] = 'Ha ocurrido un error'
         except Exception as e:
@@ -68,10 +69,55 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         context['provider'] = Provider.objects.all().count()
         context['category'] = Category.objects.filter().count()
         context['product'] = Product.objects.all().count()
-        context['sale'] = Sale.objects.filter().order_by('-id')[0:10]
+        context['paymentmethods'] = PaymentMethodModel.objects.all().count()
+        # Obtener las últimas 10 cobranzas y calcular totales por moneda para cada una
+        last_sales_qs = Sale.objects.filter().order_by('-id')[0:10]
+        last_sales = []
+        for s in last_sales_qs:
+            # Sumar pagos relacionados por moneda
+            payments = s.payments.all()
+            total_soles = 0.0
+            total_dolares = 0.0
+            for p in payments:
+                code = (p.currency.code or '').upper()
+                if code in ['PEN', 'SOL']:
+                    total_soles += float(p.amount)
+                elif code in ['USD', 'DOL']:
+                    total_dolares += float(p.amount)
+            last_sales.append({
+                'sale': s,
+                'total_soles': round(total_soles, 2),
+                'total_dolares': round(total_dolares, 2),
+            })
+        context['sale'] = last_sales
         context['users'] = User.objects.all().count()
         context['sales'] = Sale.objects.filter(date_joined__month=datetime.now().month, date_joined__year=datetime.now().year).aggregate(
             resp=Coalesce(Sum('total'), 0.00, output_field=FloatField()))['resp']
+        # Totales por moneda (Soles y Dólares) basados en cobranzas (SalePayment)
+        # Usar rango por día (hoy) para coincidir con el listado que por defecto muestra el día actual.
+        now = datetime.now()
+
+        payments_qs = SalePayment.objects.filter(
+            sale__date_joined__month=now.month,
+            sale__date_joined__year=now.year
+        )
+
+        totals = payments_qs.values('currency__code').annotate(
+            total=Coalesce(Sum('amount'), 0.00, output_field=FloatField())
+        )
+
+        sales_soles = 0
+        sales_dolares = 0
+
+        for t in totals:
+            code = t['currency__code']
+            if code and code.upper() in ['PEN', 'SOL']:
+                sales_soles += float(t['total'])
+            elif code and code.upper() in ['USD', 'DOL']:
+                sales_dolares += float(t['total'])
+
+        context['sales_soles'] = round(sales_soles, 2)
+        context['sales_dolares'] = round(sales_dolares, 2)
         return context
 
 

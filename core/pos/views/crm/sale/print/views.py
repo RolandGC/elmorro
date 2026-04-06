@@ -1,3 +1,4 @@
+from multiprocessing import context
 import os
 import logging
 
@@ -30,10 +31,15 @@ class SalePrintVoucherView(LoginRequiredMixin, View):
         height += increment
         return round(height)
 
-    def is_mobile_or_windows(self, request):
-        """Check if request comes from Android or Windows device"""
+    def is_android(self, request):
+        """Return True if request comes from an Android device."""
         user_agent = request.META.get('HTTP_USER_AGENT', '').lower()
-        return 'android' in user_agent or 'windows' in user_agent
+        return 'android' in user_agent
+
+    def is_windows(self, request):
+        """Return True if request comes from a Windows device."""
+        user_agent = request.META.get('HTTP_USER_AGENT', '').lower()
+        return 'windows' in user_agent
 
     def get_grouped_payments_by_currency(self, sale):
         """Group payments by currency and sum amounts"""
@@ -48,7 +54,41 @@ class SalePrintVoucherView(LoginRequiredMixin, View):
                 }
             payments_by_currency[currency_code]['total'] += float(payment.amount)
         return payments_by_currency
+    
+    def get_grouped_cash_payments_by_currency(self, sale):
+        """Group ONLY cash payments by currency and sum amounts"""
+        payments_cash_by_currency = {}
 
+        for payment in sale.payments.all():
+            if payment.payment_method.code == 'efectivo':
+                currency_code = payment.currency.code
+
+                if currency_code not in payments_cash_by_currency:
+                    payments_cash_by_currency[currency_code] = {
+                        'symbol': payment.currency.symbol,
+                        'name': payment.currency.name,
+                        'total': 0
+                    }
+
+                payments_cash_by_currency[currency_code]['total'] += float(payment.amount)
+
+        return payments_cash_by_currency
+    
+    def get_grouped_non_cash_payments_by_currency(self, sale):
+        """Group all payments except cash by currency and sum amounts"""
+        payments_non_cash_by_currency = {}
+        for payment in sale.payments.all():
+            if payment.payment_method.code != 'efectivo':
+                currency_code = payment.currency.code
+                if currency_code not in payments_non_cash_by_currency:
+                    payments_non_cash_by_currency[currency_code] = {
+                        'symbol': payment.currency.symbol,
+                        'name': payment.currency.name,
+                        'total': 0
+                    }
+                payments_non_cash_by_currency[currency_code]['total'] += float(payment.amount)
+        return payments_non_cash_by_currency
+    
     def get(self, request, *args, **kwargs):
         try:
             # Check if ZPL format is requested (for Android/Zebra printer)
@@ -66,16 +106,19 @@ class SalePrintVoucherView(LoginRequiredMixin, View):
             else:
                 # Generate PDF (default)
                 context = {'sale': sale, 'company': company}
-                is_mobile_or_windows = self.is_mobile_or_windows(request)
-                context['is_android'] = is_mobile_or_windows
+                is_android = self.is_android(request)
+                is_windows = self.is_windows(request)
+                context['is_android'] = is_android
+                context['is_windows'] = is_windows
                 
                 # Add grouped payments by currency
                 context['payments_by_currency'] = self.get_grouped_payments_by_currency(sale)
-                
+                context['payments_cash_by_currency'] = self.get_grouped_cash_payments_by_currency(sale)
+                context['payments_non_cash_by_currency'] = self.get_grouped_non_cash_payments_by_currency(sale)                
                 if sale.type_voucher == 'ticket':
                     template = get_template('crm/sale/print/ticket.html')
-                    # Use fixed height for Android/Windows (12cm = 120mm), dynamic for desktop
-                    context['height'] = 120 if is_mobile_or_windows else self.get_height_ticket()
+                    # Use fixed height for Android or Windows (12cm = 120mm), dynamic for desktop
+                    context['height'] = 120 if (is_android or is_windows) else self.get_height_ticket()
                 else:
                     template = get_template('crm/sale/print/invoice.html')
                     

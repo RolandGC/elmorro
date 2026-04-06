@@ -225,23 +225,24 @@ class BoxCreateView(PermissionMixin, CreateView):
                 transferencia_dolares = float(request.POST.get('transferencia_dolares', 0)) or 0
                 deposito_soles = float(request.POST.get('deposito_soles', 0)) or 0
                 deposito_dolares = float(request.POST.get('deposito_dolares', 0)) or 0
-                bills_soles = float(request.POST.get('bills_soles', 0)) or 0
+                bills = float(request.POST.get('bills', 0)) or 0
+                box_final_soles = float(request.POST.get('box_final_soles', 0)) or 0
+                box_final_dolares = float(request.POST.get('box_final_dolares', 0)) or 0
                 
                 # Asignar valores al modelo
-                box.initial_box = initial_box_soles + initial_box_dolares
-                box.efectivo = efectivo_soles + efectivo_dolares
-                box.transferencia = transferencia_soles + transferencia_dolares
-                box.deposito = deposito_soles + deposito_dolares
+                box.initial_box_soles = initial_box_soles
+                box.initial_box_dolares = initial_box_dolares
+                box.efectivo_soles = efectivo_soles
+                box.efectivo_dolares = efectivo_dolares
+                box.transferencia_soles = transferencia_soles
+                box.transferencia_dolares = transferencia_dolares
+                box.deposito_soles = deposito_soles
+                box.deposito_dolares = deposito_dolares
                 box.yape = float(request.POST.get('yape', 0)) or 0
                 box.plin = float(request.POST.get('plin', 0)) or 0
-                box.bills = bills_soles
-                
-                # Calcular box_final: efectivo + transferencia + deposito + initial_box - bills
-                box.box_final = (efectivo_soles + efectivo_dolares + 
-                               transferencia_soles + transferencia_dolares + 
-                               deposito_soles + deposito_dolares + 
-                               initial_box_soles + initial_box_dolares - 
-                               bills_soles)
+                box.bills = bills
+                box.box_final_dolares = box_final_dolares
+                box.box_final_soles = box_final_soles
                 
                 box.desc = request.POST.get('desc', '')
                 box.save()
@@ -275,8 +276,115 @@ class BoxPrintTicketView(LoginRequiredMixin, View):
             company = Company.objects.first()
             context = {
                 'box': box,
-                'company': company
+                'company': company,
+                # ensure template always has these keys even if summary building fails
+                'payments_by_currency': {},
+                'payments_cash_by_currency': {},
+                'payments_non_cash_by_currency': {},
             }
+            # Detect device (Android/Windows) similarly to sale print view
+            user_agent = request.META.get('HTTP_USER_AGENT', '').lower()
+            is_android = 'android' in user_agent
+            is_windows = 'windows' in user_agent
+            context['is_android'] = is_android
+            context['is_windows'] = is_windows
+            # set fixed height for Android/Windows printers (12cm = 120mm)
+            context['height'] = 120 if (is_android or is_windows) else None
+
+            # Agregar resúmenes de pagos (por moneda, efectivo y no efectivo)
+            try:
+                from datetime import datetime
+                from core.pos.models import SalePayment
+                # Determinar fecha de inicio: cierre anterior del mismo usuario
+                prev_box = Box.objects.filter(user=box.user, datetime_close__lt=box.datetime_close).order_by('-datetime_close').first()
+                if prev_box and prev_box.datetime_close:
+                    # rango exclusivo en lower bound, inclusive en upper bound
+                    pagos = SalePayment.objects.filter(
+                        sale__employee=box.user,
+                        sale__date_joined__gt=prev_box.datetime_close,
+                        sale__date_joined__lte=box.datetime_close
+                    )
+                else:
+                    # desde inicio del día hasta el cierre (inclusive)
+                    fecha_inicio = datetime.combine(box.datetime_close.date(), datetime.min.time())
+                    pagos = SalePayment.objects.filter(
+                        sale__employee=box.user,
+                        sale__date_joined__gte=fecha_inicio,
+                        sale__date_joined__lte=box.datetime_close
+                    )
+
+                payments_by_currency = {}
+                payments_cash_by_currency = {}
+                payments_non_cash_by_currency = {}
+
+                for payment in pagos:
+                    currency_code = payment.currency.code
+                    if currency_code not in payments_by_currency:
+                        payments_by_currency[currency_code] = {
+                            'symbol': payment.currency.symbol,
+                            'name': payment.currency.name,
+                            'total': 0
+                        }
+                    payments_by_currency[currency_code]['total'] += float(payment.amount)
+
+                    method_code = payment.payment_method.code if payment.payment_method else ''
+                    if method_code == 'efectivo':
+                        if currency_code not in payments_cash_by_currency:
+                            payments_cash_by_currency[currency_code] = {
+                                'symbol': payment.currency.symbol,
+                                'name': payment.currency.name,
+                                'total': 0
+                            }
+                        payments_cash_by_currency[currency_code]['total'] += float(payment.amount)
+                    else:
+                        if currency_code not in payments_non_cash_by_currency:
+                            payments_non_cash_by_currency[currency_code] = {
+                                'symbol': payment.currency.symbol,
+                                'name': payment.currency.name,
+                                'total': 0
+                            }
+                        payments_non_cash_by_currency[currency_code]['total'] += float(payment.amount)
+
+                context['payments_by_currency'] = payments_by_currency
+                context['payments_cash_by_currency'] = payments_cash_by_currency
+                context['payments_non_cash_by_currency'] = payments_non_cash_by_currency
+                # If no payments found, fallback to box fields so template shows a summary
+                if not payments_by_currency:
+                    # Soles
+                    total_soles = float(box.efectivo_soles or 0) + float(box.transferencia_soles or 0) + float(box.deposito_soles or 0) + float(box.yape or 0) + float(box.plin or 0)
+                    # Dólares
+                    total_dolares = float(box.efectivo_dolares or 0) + float(box.transferencia_dolares or 0) + float(box.deposito_dolares or 0)
+
+                    # Only add currencies with amounts > 0
+                    if total_soles > 0:
+                        payments_by_currency['PEN'] = {'symbol': 'S/', 'name': 'Soles', 'total': round(total_soles, 2)}
+                    if total_dolares > 0:
+                        payments_by_currency['USD'] = {'symbol': '$', 'name': 'Dólares', 'total': round(total_dolares, 2)}
+
+                    # Cash (efectivo)
+                    cash_soles = float(box.efectivo_soles or 0)
+                    cash_dolares = float(box.efectivo_dolares or 0)
+                    payments_cash_by_currency = {}
+                    if cash_soles > 0:
+                        payments_cash_by_currency['PEN'] = {'symbol': 'S/', 'name': 'Soles', 'total': round(cash_soles, 2)}
+                    if cash_dolares > 0:
+                        payments_cash_by_currency['USD'] = {'symbol': '$', 'name': 'Dólares', 'total': round(cash_dolares, 2)}
+
+                    # Non-cash (transferencia, deposito, yape, plin)
+                    noncash_soles = float(box.transferencia_soles or 0) + float(box.deposito_soles or 0) + float(box.yape or 0) + float(box.plin or 0)
+                    noncash_dolares = float(box.transferencia_dolares or 0) + float(box.deposito_dolares or 0)
+                    payments_non_cash_by_currency = {}
+                    if noncash_soles > 0:
+                        payments_non_cash_by_currency['PEN'] = {'symbol': 'S/', 'name': 'Soles', 'total': round(noncash_soles, 2)}
+                    if noncash_dolares > 0:
+                        payments_non_cash_by_currency['USD'] = {'symbol': '$', 'name': 'Dólares', 'total': round(noncash_dolares, 2)}
+
+                    context['payments_by_currency'] = payments_by_currency
+                    context['payments_cash_by_currency'] = payments_cash_by_currency
+                    context['payments_non_cash_by_currency'] = payments_non_cash_by_currency
+            except Exception:
+                # No interrumpir la generación del PDF si ocurre un error al agregar resúmenes
+                logger.exception('Error building payments summary for box print')
             template = get_template('frm/box/print/ticket.html')
             html_template = template.render(context).encode(encoding="UTF-8")
             url_css = os.path.join(settings.BASE_DIR, 'static/lib/bootstrap-4.6.0/css/bootstrap.min.css')

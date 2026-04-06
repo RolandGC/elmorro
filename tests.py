@@ -4,7 +4,7 @@ from django.contrib.auth.models import Permission
 from core.pos.models import *
 
 # Crear o actualizar Dashboard
-dashboard, created = Dashboard.objects.update_or_create(name='El Morro SAC')
+dashboard, created = Dashboard.objects.update_or_create(name='Grupo El Morro')
 dashboard.icon = 'fas fa-money-bill-wave'
 dashboard.layout = 1
 dashboard.card = ' '
@@ -15,7 +15,7 @@ dashboard.save()
 print('Dashboard: {} {}'.format(dashboard.name, '(creado)' if created else '(actualizado)'))
 
 # Crear o actualizar Company
-company, created = Company.objects.update_or_create(name='El Morro S.A.C.')
+company, created = Company.objects.update_or_create(name='Grupo El Morro')
 company.ruc = '20532482683'
 company.email = 'area.ti@elmorro.com.pe'
 company.phone = '46200233'
@@ -34,10 +34,9 @@ type_security, created = ModuleType.objects.get_or_create(
 )
 print('{} {}'.format(type_security.name, '(creado)' if created else '(actualizado)'))
 
-type_bodega, created = ModuleType.objects.get_or_create(
-    name='Almacén',
-    defaults={'icon': 'fas fa-warehouse'}
-)
+type_bodega, _ = ModuleType.objects.get_or_create(name='Almacén')
+type_bodega.icon = 'fas fa-warehouse'
+type_bodega.save()
 print('{} {}'.format(type_bodega.name, '(creado)' if created else '(actualizado)'))
 
 type_administrativo, created = ModuleType.objects.get_or_create(
@@ -47,7 +46,7 @@ type_administrativo, created = ModuleType.objects.get_or_create(
 print('{} {}'.format(type_administrativo.name, '(creado)' if created else '(actualizado)'))
 
 type_facturacion, created = ModuleType.objects.get_or_create(
-    name='Facturación',
+    name='Caja',
     defaults={'icon': 'fas fa-file-invoice-dollar'}
 )
 print('{} {}'.format(type_facturacion.name, '(creado)' if created else '(actualizado)'))
@@ -578,11 +577,18 @@ for m in Module.objects.filter().exclude(url__in=['/pos/crm/client/update/profil
     gm, _ = GroupModule.objects.get_or_create(module=m, group=admin_group)
     for perm in m.permits.all():
         admin_group.permissions.add(perm)
-        _, _ = GroupPermission.objects.get_or_create(
+        obj = GroupPermission.objects.filter(
             module_id=m.id,
             group_id=admin_group.id,
             permission_id=perm.id
-        )
+        ).first()
+
+        if not obj:
+            GroupPermission.objects.create(
+                module_id=m.id,
+                group_id=admin_group.id,
+                permission_id=perm.id
+            )
 
 client_group, created = Group.objects.get_or_create(name='Cliente')
 print('Grupo {}: {}'.format(client_group.name, '(creado)' if created else '(actualizado)'))
