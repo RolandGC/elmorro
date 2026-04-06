@@ -185,11 +185,11 @@ function fillSalesTable(methodsData) {
             console.log('Venta:', sale);
             tbody.append(`
                 <tr>
-                    <td class="text-center">${sale.serie}</td>
+                    <td class="text-center">${sale.serie === '' ? '-' : sale.serie}</td>
                     <td class="text-center">${sale.date}</td>
                     <td class="text-center"><span class="badge badge-info">${sale.type_voucher}</span></td>
                     <td>${sale.client}</td>
-                    <td>${sale.comment}</td>
+                    <td>${sale.comment === '' ? '-' : sale.comment}</td>
                     
                     <td class="text-right"><strong>S/. ${parseFloat(sale.total).toFixed(2)}</strong></td>
                 </tr>

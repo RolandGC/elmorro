@@ -83,9 +83,11 @@ class UserSalesReportView(LoginRequiredMixin, ModuleMixin, TemplateView):
                     sale_data = {
                         'id': sale.id,
                         'nro': sale.nro(),
+                        'serie': sale.serie or '',
                         'date': sale.date_joined.strftime('%d/%m/%Y %H:%M'),
                         'type_voucher': sale.get_type_voucher_display(),
                         'client': sale.client.user.full_name if sale.client else 'Sin cliente',
+                        'comment': sale.comment or '',
                         'subtotal': float(sale.subtotal),
                         'total_dscto': float(sale.total_dscto),
                         'total': float(sale.total),
