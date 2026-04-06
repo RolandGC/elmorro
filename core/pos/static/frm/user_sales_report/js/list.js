@@ -182,7 +182,9 @@ function fillSalesTable(methodsData) {
 
     $.each(methodsData, function(method, methodData) {
         $.each(methodData.sales, function(index, sale) {
-            console.log('Venta:', sale);
+            console.log('Venta completa:', sale);
+            console.log('Sale ID:', sale.id);
+            var printUrl = '/pos/crm/sale/print/voucher/' + sale.id + '/';
             tbody.append(`
                 <tr>
                     <td class="text-center">${sale.serie === '' ? '-' : sale.serie}</td>
@@ -192,8 +194,11 @@ function fillSalesTable(methodsData) {
                     <td>${sale.comment === '' ? '-' : sale.comment}</td>
                     
                     <td class="text-right"><strong>S/. ${parseFloat(sale.total).toFixed(2)}</strong></td>
+                    <td class="text-center">
+                        <a href="${printUrl}" target="_blank" class="btn btn-primary btn-xs btn-flat" title="Imprimir"><i class="fas fa-print"></i></a>
+                    </td>
                 </tr>
-            `);
+            `)
         });
     });
 
