@@ -32,8 +32,8 @@ class SaleAdminListView(PermissionMixin, FormView):
                 end_date = request.POST.get('end_date')
                 search = Sale.objects.all()
                 
-                # Si el usuario NO es administrador, filtrar solo sus ventas
-                if not request.user.groups.filter(name='Administrador').exists():
+                # Si el usuario NO es administrador ni supervisor, filtrar solo sus ventas
+                if not request.user.groups.filter(name__in=['Administrador', 'Supervisor']).exists():
                     search = search.filter(employee=request.user)
                 
                 if start_date and end_date:
