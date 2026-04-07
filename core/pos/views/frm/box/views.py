@@ -30,7 +30,9 @@ class BoxListView(PermissionMixin, FormView):
         try:
             if action == 'search':
                 data = []
-                search = Box.objects.filter(user=request.user)
+                search = Box.objects.all()
+                if not request.user.groups.filter(name='Supervisor').exists():
+                    search = search.filter(user=request.user)
                 start_date = request.POST['start_date']
                 end_date = request.POST['end_date']
                 if len(start_date) and len(end_date):
