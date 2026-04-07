@@ -334,7 +334,8 @@ class BoxForm(ModelForm):
         widgets = {
             'datetime_close': forms.DateTimeInput(format='%Y-%m-%d %H:%M', attrs={
                 'type': 'datetime-local',
-                'class': 'form-control',
+                #'class': 'p-2',
+                'style': 'padding: 0px 30px;',
                 'value': datetime.now().strftime('%Y-%m-%dT%H:%M'),
                 'required': 'required'
             }),

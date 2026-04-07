@@ -1035,6 +1035,7 @@ class Box(models.Model):
         item['initial_box_dolares'] = format(self.initial_box_dolares or 0, '.2f')
         item['box_final_soles'] = format(self.box_final_soles or 0, '.2f')
         item['box_final_dolares'] = format(self.box_final_dolares or 0, '.2f')
+        item['user'] = self.user.toJSON() if self.user else None
         
         # Campo opciones para DataTables (se renderiza en JavaScript)
         item['options'] = ''
