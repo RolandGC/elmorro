@@ -337,15 +337,37 @@ function showDetails(idBox) {
                 </div>
             </div>`;
 
-            // ── Totales por moneda ───────────────────────────────────────
+            // ── Totales por moneda y resúmenes (efectivo / bancos) ───────
             const totals = {};
+            const payments_cash_by_currency = {};
+            const payments_non_cash_by_currency = {};
+            const cashMethods = ['efectivo']; // solo 'efectivo' se considera efectivo
+            const bankMethods = ['yape', 'plin', 'transferencia', 'deposito']; // estos los tratamos como bancos
+
             sales.forEach(sale => {
                 if (Array.isArray(sale.payments)) {
                     sale.payments.forEach(p => {
                         const code = p.currency?.code || 'UNK';
                         const symbol = p.currency?.symbol || '';
+                        const amount = parseNum(p.amount);
+
                         if (!totals[code]) totals[code] = { symbol, total: 0 };
-                        totals[code].total += parseNum(p.amount);
+                        totals[code].total += amount;
+
+                        const methodCode = (p.payment_method && p.payment_method.code) ? String(p.payment_method.code).toLowerCase() : (p.payment_method && p.payment_method.name ? String(p.payment_method.name).toLowerCase() : '');
+                        let classifiedAsCash = false;
+                        let classifiedAsBank = false;
+                        if (cashMethods.includes(methodCode) || methodCode === 'efectivo' || methodCode === 'cash') classifiedAsCash = true;
+                        if (bankMethods.includes(methodCode) || methodCode === 'yape' || methodCode === 'plin' || methodCode === 'transferencia' || methodCode === 'deposito') classifiedAsBank = true;
+
+                        if (classifiedAsCash) {
+                            if (!payments_cash_by_currency[code]) payments_cash_by_currency[code] = { symbol, total: 0 };
+                            payments_cash_by_currency[code].total += amount;
+                        } else {
+                            // cualquier otro medio (incluyendo tarjetas, transferencias, plin, yape, deposito) se considera dentro de 'bancos/non-cash'
+                            if (!payments_non_cash_by_currency[code]) payments_non_cash_by_currency[code] = { symbol, total: 0 };
+                            payments_non_cash_by_currency[code].total += amount;
+                        }
                     });
                 }
             });
@@ -354,6 +376,12 @@ function showDetails(idBox) {
                 `<span class="badge bg-secondary me-2">${code}: ${it.symbol}${it.total.toFixed(2)}</span>`
             ).join('');
             boxTotals.innerHTML = `<div class="mb-3"><strong>Totales por moneda:</strong> ${totalsHtml || '-'}</div>`;
+
+            // preparar textos para export
+            const resumenEfectivoLines = Object.entries(payments_cash_by_currency).map(([code, info]) => `${info.symbol} ${info.symbol} ${info.total.toFixed(2)}`);
+            const resumenBancosLines = Object.entries(payments_non_cash_by_currency).map(([code, info]) => `${info.symbol} ${info.total.toFixed(2)}`);
+            const resumenEfectivoText = resumenEfectivoLines.length ? resumenEfectivoLines.join(' — ') : 'S/. 0.00';
+            const resumenBancosText = resumenBancosLines.length ? resumenBancosLines.join(' — ') : 'S/. 0.00';
 
             // ── Filas para DataTable ─────────────────────────────────────
             const tableData = sales.map((s, i) => {
@@ -413,7 +441,31 @@ function showDetails(idBox) {
                             text: '<i class="fas fa-file-excel"></i> Excel',
                             className: 'btn btn-success btn-sm',
                             title: `Reporte de Caja - ${box?.datetime_close || ''}`,
-                            exportOptions: { columns: ':visible' }
+                            exportOptions: { columns: ':visible' },
+                            customize: function(xlsx) {
+                                try {
+                                    var sheet = xlsx.xl.worksheets['sheet1.xml'];
+                                    var downrows = 3; // filas de resumen a insertar
+                                    var clRow = $('row', sheet);
+                                    clRow.each(function() {
+                                        var attr = $(this).attr('r');
+                                        var ind = parseInt(attr);
+                                        $(this).attr('r', ind + downrows);
+                                    });
+                                    $('row c', sheet).each(function() {
+                                        var r = $(this).attr('r');
+                                        var cell = r.replace(/(\d+)/g, function(m) { return parseInt(m) + downrows; });
+                                        $(this).attr('r', cell);
+                                    });
+                                    var summary = '';
+                                    summary += '<row r="1"><c t="inlineStr" r="A1"><is><t>Resumen Efectivo: ' + resumenEfectivoText + '</t></is></c></row>';
+                                    summary += '<row r="2"><c t="inlineStr" r="A2"><is><t>Resumen Bancos: ' + resumenBancosText + '</t></is></c></row>';
+                                    summary += '<row r="3"><c t="inlineStr" r="A3"><is><t></t></is></c></row>';
+                                    $(sheet).find('sheetData').prepend(summary);
+                                } catch (e) {
+                                    console.warn('Excel customize failed', e);
+                                }
+                            }
                         },
                         {
                             extend: 'pdfHtml5',
@@ -426,18 +478,62 @@ function showDetails(idBox) {
                             customize: function (doc) {
                                 if (logoBase64) {
                                     doc.content.unshift({
-                                        image: logoBase64,  // ✅ ahora sí es base64
+                                        image: logoBase64,
                                         width: 80,
-                                        margin: [0, 0, 0, 8]
+                                        margin: [0, 0, 0, 6]
                                     });
                                 }
+                                // insertar resumen arriba de la tabla
+                                var tableIndex = -1;
+                                for (var i = 0; i < doc.content.length; i++) {
+                                    if (doc.content[i] && doc.content[i].table) { tableIndex = i; break; }
+                                }
+                                function buildResumenLines(obj) {
+                                    let lines = [];
+
+                                    Object.entries(obj).forEach(([code, info]) => {
+                                        let label = code === 'USD' ? 'Dólares:' : 'Soles:';
+                                        lines.push({
+                                            text: `${label}    ${info.symbol} ${info.total.toFixed(2)}`,
+                                            margin: [10, 0, 0, 2]
+                                        });
+                                    });
+
+                                    if (lines.length === 0) {
+                                        lines.push({
+                                            text: 'Soles:    S/ 0.00',
+                                            margin: [10, 0, 0, 2]
+                                        });
+                                    }
+
+                                    return lines;
+                                }
+
+                                var resumenBlock = [
+                                    { text: 'Resumen Efectivo:', style: 'subheader', margin: [0, 6, 0, 2] },
+                                    {
+                                        stack: buildResumenLines(payments_cash_by_currency)
+                                    },
+
+                                    { text: 'Resumen Bancos:', style: 'subheader', margin: [0, 8, 0, 2] },
+                                    {
+                                        stack: buildResumenLines(payments_non_cash_by_currency)
+                                    }
+                                ];
+                                if (tableIndex >= 0) {
+                                    doc.content.splice(tableIndex, 0, ...resumenBlock);
+                                } else {
+                                    doc.content.push(...resumenBlock);
+                                }
+                                doc.styles = doc.styles || {};
+                                doc.styles.tableHeader = doc.styles.tableHeader || {};
                                 doc.styles.tableHeader.fillColor = '#343a40';
                                 doc.styles.tableHeader.color = '#ffffff';
                             }
                         }
                     ],
                     columns: [
-                        { title: '#' },
+                        { title: 'N°' },
                         { title: 'Serie' },
                         { title: 'Cliente' },
                         { title: 'Fecha' },
