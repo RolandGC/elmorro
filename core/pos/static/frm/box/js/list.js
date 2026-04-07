@@ -289,15 +289,169 @@ $(function() {
         });
 });
 
-function showDetails( idBox ) {
-    console.log('holaaaaaa', idBox);
+function showDetails(idBox) {
+    console.log('showDetails', idBox);
     const miModalDetails = document.getElementById('myModalDetails');
-    if (miModalDetails) {
-        const modal = new bootstrap.Modal(miModalDetails);
-        const modalBody = miModalDetails.querySelector('.modal-content');
-        modalBody.innerHTML = '<div class="modal-header"><h5 class="modal-title">Detalles de la caja</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body"><p>Cargando detalles...</p></div>';
-        modal.show();
+    if (!miModalDetails) return;
+
+    const modal = new bootstrap.Modal(miModalDetails);
+    const boxInfo = document.getElementById('boxInfo');
+    const boxTotals = document.getElementById('boxTotals');
+    boxInfo.innerHTML = '<p>Cargando...</p>';
+    boxTotals.innerHTML = '';
+    modal.show();
+
+    // Destruir DataTable previa si existe
+    if ($.fn.DataTable.isDataTable('#tblBoxSales')) {
+        $('#tblBoxSales').DataTable().destroy();
+        $('#tblBoxSales tbody').empty();
     }
 
-    //$('#myModalDetails').modal('show');
+    fetch(`/pos/frm/box/${idBox}/sales-range/`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+    })
+        .then(r => { if (!r.ok) throw new Error('Network error'); return r.json(); })
+        .then(data => {
+            if (data.error) {
+                boxInfo.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
+                return;
+            }
+
+            const box = data.box || null;
+            const prev = data.previous_box || null;
+            const sales = Array.isArray(data.sales) ? data.sales : [];
+
+            const parseNum = v => {
+                if (v === null || v === undefined) return 0;
+                const n = parseFloat(String(v).replace(/,/g, '').replace(/[^0-9.\-]/g, ''));
+                return isNaN(n) ? 0 : n;
+            };
+
+            // ── Resumen de caja ──────────────────────────────────────────
+            boxInfo.innerHTML = `
+            <div class="row mb-2">
+                <div class="col-md-6">
+                    <p class="mb-1"><strong>Cierre actual:</strong> ${box ? (box.datetime_close || '-') : '-'}</p>
+                    <p class="mb-1"><strong>Cierre previo:</strong> ${prev ? (prev.datetime_close || '-') : 'Sin cierre previo'}</p>
+                </div>
+            </div>`;
+
+            // ── Totales por moneda ───────────────────────────────────────
+            const totals = {};
+            sales.forEach(sale => {
+                if (Array.isArray(sale.payments)) {
+                    sale.payments.forEach(p => {
+                        const code = p.currency?.code || 'UNK';
+                        const symbol = p.currency?.symbol || '';
+                        if (!totals[code]) totals[code] = { symbol, total: 0 };
+                        totals[code].total += parseNum(p.amount);
+                    });
+                }
+            });
+
+            const totalsHtml = Object.entries(totals).map(([code, it]) =>
+                `<span class="badge bg-secondary me-2">${code}: ${it.symbol}${it.total.toFixed(2)}</span>`
+            ).join('');
+            boxTotals.innerHTML = `<div class="mb-3"><strong>Totales por moneda:</strong> ${totalsHtml || '-'}</div>`;
+
+            // ── Filas para DataTable ─────────────────────────────────────
+            const tableData = sales.map((s, i) => {
+                const clientName = s.client?.user?.full_name || s.client?.user?.fullName || '-';
+                const paymentsByCurrency = {};
+                if (Array.isArray(s.payments)) {
+                    s.payments.forEach(p => {
+                        const sym = p.currency?.symbol || p.currency?.code || '';
+                        paymentsByCurrency[sym] = (paymentsByCurrency[sym] || 0) + parseNum(p.amount);
+                    });
+                }
+                const paymentsDisplay = Object.entries(paymentsByCurrency)
+                    .map(([sym, amt]) => `${sym}${amt.toFixed(2)}`).join(', ') || '-';
+                const paymentMethod = s.payment_method?.name || '-';
+
+                return [
+                    i + 1,
+                    s.serie || '-',
+                    clientName,
+                    s.date_joined || '-',
+                    paymentMethod,
+                    paymentsDisplay,
+                ];
+            });
+
+            // ── Inicializar DataTable con botones Export ─────────────────
+            // ── Inicializar DataTable con botones Export ─────────────────
+            const logoUrl = document.getElementById('exportLogo')?.src || '';
+
+            // Convertir logo a base64 primero
+            function getBase64FromUrl(url) {
+                return new Promise((resolve) => {
+                    if (!url) return resolve(null);
+                    const img = new Image();
+                    img.crossOrigin = 'Anonymous';
+                    img.onload = function () {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        canvas.getContext('2d').drawImage(img, 0, 0);
+                        resolve(canvas.toDataURL('image/png'));
+                    };
+                    img.onerror = () => resolve(null); // si falla, continuar sin logo
+                    img.src = url;
+                });
+            }
+
+            getBase64FromUrl(logoUrl).then(logoBase64 => {
+                $('#tblBoxSales').DataTable({
+                    destroy: true,
+                    data: tableData,
+                    scrollX: true,
+                    dom: 'Bfrtip',
+                    buttons: [
+                        {
+                            extend: 'excelHtml5',
+                            text: '<i class="fas fa-file-excel"></i> Excel',
+                            className: 'btn btn-success btn-sm',
+                            title: `Reporte de Caja - ${box?.datetime_close || ''}`,
+                            exportOptions: { columns: ':visible' }
+                        },
+                        {
+                            extend: 'pdfHtml5',
+                            text: '<i class="fas fa-file-pdf"></i> PDF',
+                            className: 'btn btn-danger btn-sm',
+                            title: `Reporte de Caja - ${box?.datetime_close || ''}`,
+                            orientation: 'landscape',
+                            pageSize: 'A4',
+                            exportOptions: { columns: ':visible' },
+                            customize: function (doc) {
+                                if (logoBase64) {
+                                    doc.content.unshift({
+                                        image: logoBase64,  // ✅ ahora sí es base64
+                                        width: 80,
+                                        margin: [0, 0, 0, 8]
+                                    });
+                                }
+                                doc.styles.tableHeader.fillColor = '#343a40';
+                                doc.styles.tableHeader.color = '#ffffff';
+                            }
+                        }
+                    ],
+                    columns: [
+                        { title: '#' },
+                        { title: 'Serie' },
+                        { title: 'Cliente' },
+                        { title: 'Fecha' },
+                        { title: 'Forma de Pago' },
+                        { title: 'Total' },
+                    ],
+                    language: {
+                        url: '//cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json'
+                    }
+                });
+            });
+        })
+        .catch(err => {
+            console.error('Error:', err);
+            boxInfo.innerHTML = '<div class="alert alert-danger">Error al cargar los detalles.</div>';
+        });
 }

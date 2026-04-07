@@ -77,6 +77,7 @@ urlpatterns = [
     path('frm/box/update/<int:pk>/', BoxUpdateView.as_view(), name='box_update'),
     path('frm/box/delete/<int:pk>/',BoxDeleteView.as_view(), name='box_delete'),
     path('frm/box/print/ticket/<int:pk>/', BoxPrintTicketView.as_view(), name='box_print_ticket'),
+    path('frm/box/<int:pk>/sales-range/', BoxSalesRangeView.as_view(), name='box_sales_range'),
     # series
     path('frm/series/', SeriesListView.as_view(), name='series_list'),
     path('frm/series/add/', SeriesCreateView.as_view(), name='series_create'),

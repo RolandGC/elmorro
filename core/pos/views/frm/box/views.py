@@ -15,7 +15,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from core.pos.forms import BoxForm, Box, BoxFormListView
-from core.pos.models import Company
+from core.pos.models import Company, Sale, SalePayment
 
 
 
@@ -397,6 +397,46 @@ class BoxPrintTicketView(LoginRequiredMixin, View):
         return HttpResponseRedirect(self.success_url)
 
 
+class BoxSalesRangeView(LoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        data = {}
+        try:
+            pk = kwargs.get('pk')
+            box = Box.objects.get(pk=pk)
+        except Box.DoesNotExist:
+            return JsonResponse({'error': 'Box no encontrado'}, status=404)
+
+        try:
+            prev_box = Box.objects.filter(
+                user=box.user,
+                datetime_close__lt=box.datetime_close
+            ).order_by('-datetime_close').first()
+
+            if prev_box and prev_box.datetime_close:
+                # Hay cierre previo: tomar ventas entre ambos cierres
+                sales_qs = Sale.objects.filter(
+                    employee=box.user,
+                    date_joined__gt=prev_box.datetime_close,
+                    date_joined__lte=box.datetime_close
+                )
+            else:
+                # ✅ Sin cierre previo: tomar TODAS las ventas hasta este cierre
+                sales_qs = Sale.objects.filter(
+                    employee=box.user,
+                    date_joined__lte=box.datetime_close
+                )
+
+            sales = [s.toJSON() for s in sales_qs.order_by('date_joined')]
+
+            data = {
+                'box': box.toJSON(),
+                'previous_box': prev_box.toJSON() if prev_box else None,
+                'sales': sales,
+            }
+        except Exception as e:
+            data = {'error': str(e)}
+
+        return HttpResponse(json.dumps(data, cls=DjangoJSONEncoder), content_type='application/json')
 class BoxUpdateView(PermissionMixin, UpdateView):
     model = Box
     template_name = 'frm/box/create.html'
@@ -427,77 +467,103 @@ class BoxUpdateView(PermissionMixin, UpdateView):
         return kwargs
 
     def get_initial_values(self):
-        """Retorna los valores iniciales para el formulario"""
         data = {}
         try:
             from datetime import datetime
             from django.db.models import Sum
-            
-            user = self.request.user
-            fecha_actual = datetime.now()
-            
             from core.pos.models import Expenses, SalePayment
-            
-            # Obtener el último cierre de caja del usuario
-            ultimo_cierre = Box.objects.filter(user=user).order_by('-datetime_close').first()
-            
-            if ultimo_cierre and ultimo_cierre.datetime_close:
-                fecha_inicio = ultimo_cierre.datetime_close
+
+            user = self.request.user
+            box = self.get_object()  # la caja que se está editando
+            datetime_str = self.request.POST.get('datetime_close', '')
+
+            if datetime_str:
+                try:
+                    fecha_cierre = datetime.fromisoformat(datetime_str)
+                except:
+                    fecha_cierre = box.datetime_close or datetime.now()
             else:
-                # Si no hay cierre anterior, usar el inicio del día
-                fecha_inicio = datetime.combine(fecha_actual.date(), datetime.min.time())
-            
-            # Obtener todos los pagos en el rango de fecha, agrupados por moneda
+                fecha_cierre = box.datetime_close or datetime.now()
+
+            # Cierre ANTERIOR a este (mismo criterio que BoxPrintTicketView)
+            cierre_anterior = Box.objects.filter(
+                user=user,
+                datetime_close__lt=fecha_cierre
+            ).exclude(pk=box.pk).order_by('-datetime_close').first()
+
+            if cierre_anterior and cierre_anterior.datetime_close:
+                fecha_inicio = cierre_anterior.datetime_close
+            else:
+                fecha_inicio = datetime.combine(fecha_cierre.date(), datetime.min.time())
+
+            # Pagos entre cierre anterior y el datetime_close de esta caja
             pagos = SalePayment.objects.filter(
                 sale__employee=user,
-                sale__date_joined__range=[fecha_inicio, fecha_actual]
-            ).values('currency__code', 'currency__name', 'currency__symbol').annotate(total=Sum('amount'))
-            
-            # Crear diccionario con montos por moneda
-            montos_por_moneda = {}
-            total_pagos = 0
+                sale__date_joined__gt=fecha_inicio,
+                sale__date_joined__lte=fecha_cierre
+            ).values(
+                'currency__code', 'currency__name', 'currency__symbol', 'payment_method__code'
+            ).annotate(total=Sum('amount'))
+
+            monto_soles = monto_dolares = 0.0
+            efectivo_soles = efectivo_dolares = 0.0
+            yape_soles = plin_soles = 0.0
+            transferencia_soles = transferencia_dolares = 0.0
+            deposito_soles = deposito_dolares = 0.0
+
             for pago in pagos:
                 codigo = pago['currency__code']
-                nombre = pago['currency__name']
-                simbolo = pago['currency__symbol']
+                metodo = pago['payment_method__code']
                 monto = float(pago['total']) or 0
-                
-                montos_por_moneda[codigo] = {
-                    'nombre': nombre,
-                    'simbolo': simbolo,
-                    'monto': round(monto, 2)
-                }
-                total_pagos += monto
-            
-            # Guardar resumen de monedas en formato legible
-            data['montos_por_moneda'] = montos_por_moneda
-            data['resumen_monedas'] = ', '.join([
-                f"{v['simbolo']} {v['monto']:.2f}" for v in montos_por_moneda.values()
-            ]) if montos_por_moneda else 'Sin pagos'
-            
-            # Calcular gastos del período
+
+                es_soles = codigo.upper() in ['PEN', 'SOL']
+                es_dolares = codigo.upper() in ['USD', 'DOL']
+
+                if es_soles:
+                    monto_soles += monto
+                elif es_dolares:
+                    monto_dolares += monto
+
+                if metodo and metodo.lower() == 'efectivo':
+                    if es_soles: efectivo_soles += monto
+                    elif es_dolares: efectivo_dolares += monto
+                elif metodo and metodo.lower() == 'yape':
+                    if es_soles: yape_soles += monto
+                elif metodo and metodo.lower() == 'plin':
+                    if es_soles: plin_soles += monto
+                elif metodo and metodo.lower() == 'transferencia':
+                    if es_soles: transferencia_soles += monto
+                    elif es_dolares: transferencia_dolares += monto
+                elif metodo and metodo.lower() == 'deposito':
+                    if es_soles: deposito_soles += monto
+                    elif es_dolares: deposito_dolares += monto
+
+            data['monto_soles'] = round(monto_soles, 2)
+            data['monto_dolares'] = round(monto_dolares, 2)
+            data['initial_box_soles'] = float(box.initial_box_soles or 0)
+            data['initial_box_dolares'] = float(box.initial_box_dolares or 0)
+            data['efectivo_soles'] = round(efectivo_soles, 2)
+            data['efectivo_dolares'] = round(efectivo_dolares, 2)
+            data['yape_soles'] = round(yape_soles, 2)
+            data['plin_soles'] = round(plin_soles, 2)
+            data['transferencia_soles'] = round(transferencia_soles, 2)
+            data['transferencia_dolares'] = round(transferencia_dolares, 2)
+            data['deposito_soles'] = round(deposito_soles, 2)
+            data['deposito_dolares'] = round(deposito_dolares, 2)
+
             total_gastos = Expenses.objects.filter(
                 user=user,
-                date_joined__range=[fecha_inicio.date(), fecha_actual.date()]
+                date_joined__range=[fecha_inicio.date(), fecha_cierre.date()]
             ).aggregate(total=Sum('valor'))['total'] or 0
             data['bills'] = round(float(total_gastos), 2)
-            
-            # Calcular el total del box (pagos - gastos)
-            data['box_final'] = round(total_pagos - float(total_gastos), 2)
-            
-            # Mantener campos antiguos para compatibilidad (todos en 0)
-            data['efectivo'] = 0
-            data['yape'] = 0
-            data['plin'] = 0
-            data['transferencia'] = 0
-            data['deposito'] = 0
+
         except Exception as e:
             import traceback
             traceback.print_exc()
             data['error'] = str(e)
-        
-        return JsonResponse(data)
 
+        return JsonResponse(data)
+    
     def post(self, request, *args, **kwargs):
         data = {}
         action = request.POST.get('action', '')
@@ -507,27 +573,28 @@ class BoxUpdateView(PermissionMixin, UpdateView):
             elif action == 'edit':
                 from datetime import datetime
                 box = self.get_object()
-                
-                # Obtener datetime_close del POST
+
                 datetime_str = request.POST.get('datetime_close', '')
                 if datetime_str:
                     try:
-                        # El navegador envía en formato: 2025-12-19T14:30
                         box.datetime_close = datetime.fromisoformat(datetime_str)
                     except:
                         pass
-                
-                box.efectivo = float(request.POST.get('efectivo', 0))
-                box.yape = float(request.POST.get('yape', 0))
-                box.plin = float(request.POST.get('plin', 0))
-                box.transferencia = float(request.POST.get('transferencia', 0))
-                box.deposito = float(request.POST.get('deposito', 0))
-                box.bills = float(request.POST.get('bills', 0))
-                box.initial_box = float(request.POST.get('initial_box', 0))
-                
-                # Calcular box_final automáticamente: efectivo + yape + plin + transferencia + deposito + initial_box - bills
-                box.box_final = float(box.efectivo) + float(box.yape) + float(box.plin) + float(box.transferencia) + float(box.deposito) + float(box.initial_box) - float(box.bills)
-                
+
+                # Guardar campos duales (igual que BoxCreateView)
+                box.initial_box_soles = float(request.POST.get('initial_box_soles', 0)) or 0
+                box.initial_box_dolares = float(request.POST.get('initial_box_dolares', 0)) or 0
+                box.efectivo_soles = float(request.POST.get('efectivo_soles', 0)) or 0
+                box.efectivo_dolares = float(request.POST.get('efectivo_dolares', 0)) or 0
+                box.transferencia_soles = float(request.POST.get('transferencia_soles', 0)) or 0
+                box.transferencia_dolares = float(request.POST.get('transferencia_dolares', 0)) or 0
+                box.deposito_soles = float(request.POST.get('deposito_soles', 0)) or 0
+                box.deposito_dolares = float(request.POST.get('deposito_dolares', 0)) or 0
+                box.yape = float(request.POST.get('yape', 0)) or 0
+                box.plin = float(request.POST.get('plin', 0)) or 0
+                box.bills = float(request.POST.get('bills', 0)) or 0
+                box.box_final_soles = float(request.POST.get('box_final_soles', 0)) or 0
+                box.box_final_dolares = float(request.POST.get('box_final_dolares', 0)) or 0
                 box.desc = request.POST.get('desc', '')
                 box.save()
             elif action == 'validate_data':
