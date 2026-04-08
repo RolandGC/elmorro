@@ -37,9 +37,7 @@ function getData(all) {
             // { data: "transferencia_soles" },
             // { data: "transferencia_dolares" },
             // { data: "deposito_soles" },
-            // { data: "deposito_dolares" },
-            { data: "initial_box_soles" },
-            { data: "initial_box_dolares" },
+            { data: "user.full_name" },
             { data: "box_final_soles" },
             { data: "box_final_dolares" },
             { data: "bills" },
@@ -64,45 +62,39 @@ function getData(all) {
                 targets: [2],
                 class: 'text-center',
                 render: function(data, type, row) {
-                    return 'S/.' + data
+                    return  data
                 }
             },
+           
             {
                 targets: [3],
                 class: 'text-center',
                 render: function(data, type, row) {
-                    return '$' + data
+                    return 'S/.' + data
                 }
             },
             {
                 targets: [4],
                 class: 'text-center',
                 render: function(data, type, row) {
-                    return 'S/.' + data
+                    return '$' + data
                 }
             },
             {
                 targets: [5],
                 class: 'text-center',
                 render: function(data, type, row) {
-                    return '$' + data
-                }
-            },
-            {
-                targets: [6],
-                class: 'text-center',
-                render: function(data, type, row) {
                     return 'S/.' + data
                 }
             },
             {
-                targets: [7],
+                targets: [6],
                 render: function(data, type, row) {
                     return data || '-'
                 }
             },
             {
-                targets: [8],
+                targets: [7],
                 class: 'text-center',
                 orderable: false,
                 render: function(data, type, row) {
