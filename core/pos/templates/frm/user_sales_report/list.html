@@ -65,8 +65,8 @@
               <div class="form-group">
                 <label>&nbsp;</label>
                 <div class="btn-group btn-block" role="group">
-                  <button type="button" id="btnSearch" class="btn btn-success btn-block" style="margin-top: 8px;"><i class="fas fa-search"></i> Buscar</button>
-                  <button type="button" id="btnSummary" class="btn btn-info btn-block"><i class="fas fa-chart-bar"></i> Resumen</button>
+                  <button type="button" id="btnSearch" class="btn btn-success btn-block" style="margin-top: 0px;"><i class="fas fa-search"></i> Buscar</button>
+                  {% comment %} <button type="button" id="btnSummary" class="btn btn-info btn-block"><i class="fas fa-chart-bar"></i> Resumen</button> {% endcomment %}
                 </div>
               </div>
             </div>
@@ -121,10 +121,9 @@
               <thead>
                 <tr class="bg-info">
                   <th class="text-center">Nro Serie</th>
-                  {% comment %} <th class="text-center">Serie</th> {% endcomment %}
-                  <th class="text-center">Fecha</th>
-                  <th class="text-center">Tipo Voucher</th>
                   <th class="text-center">Cliente</th>
+                  <th class="text-center">Fecha</th>
+                  <th class="text-center">Forma de pago</th>
                   <th class="text-center">Comentario</th>
                   {% comment %} <th class="text-center">Subtotal</th> {% endcomment %}
                   {% comment %} <th class="text-center">Descuento</th> {% endcomment %}

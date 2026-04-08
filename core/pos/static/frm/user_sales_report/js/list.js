@@ -111,13 +111,25 @@ function showPaymentMethodsSummary(methodsData, totalGeneral, totalCantidad) {
         'deposito': '#e09289' // rojo suave
     };
 
+    // Calcular totales por moneda para cada método usando los `sale_payments` de sus ventas
+    var overallTotals = {};
     $.each(methodsData, function(method, data) {
         if (data.count > 0) {
             var color = colors[method] || 'secondary';
+            var sales = data.sales || [];
+            var totalsByCode = sumCurrencyTotalsFromSales(sales); // { USD: 12.00, PEN: 34.00 }
+
+            // acumular en totales generales
+            Object.keys(totalsByCode).forEach(function(code) {
+                overallTotals[code] = (overallTotals[code] || 0) + totalsByCode[code];
+            });
+
+            var totalsHtml = formatCurrencyCodeTotals(totalsByCode);
+
             container.append(`
                 <div class="col-lg-4 col-md-6">
-                    <div class="card card-payment-method" style="background:  #ffffff);">
-                        <div class="card-header " style= "background-color: ${color}; background: linear-gradient(155deg, ${color}, #ffffff);">
+                    <div class="card card-payment-method">
+                        <div class="card-header" style="background: linear-gradient(155deg, ${color}, #ffffff);">
                             <h6 class="payment-method-title text-white m-0">
                                 <i class="fas fa-money-bill"></i> ${data.name.toUpperCase()}
                             </h6>
@@ -130,8 +142,8 @@ function showPaymentMethodsSummary(methodsData, totalGeneral, totalCantidad) {
                             
                             <hr style="margin: 8px 0;">
                             <div class="payment-method-info">
-                                <span style="font-weight: 600;">Total Vendido:</span>
-                                <span class="payment-method-total" style="font-size: 16px;">S/. ${parseFloat(data.total).toFixed(2)}</span>
+                                <span style="font-weight: 600;">Total Cobrado:</span>
+                                <span class="payment-method-total" style="font-size: 14px;">${totalsHtml}</span>
                             </div>
                         </div>
                     </div>
@@ -158,12 +170,36 @@ function showPaymentMethodsSummary(methodsData, totalGeneral, totalCantidad) {
                     <hr style="margin: 8px 0;">
                     <div class="payment-method-info">
                         <span style="font-weight: 600; font-size: 15px;">TOTAL GENERAL:</span>
-                        <span class="payment-method-total" style="font-size: 18px; color: #2ecc71;">S/. ${parseFloat(totalGeneral).toFixed(2)}</span>
+                        <span class="payment-method-total" style="font-size: 15px; color: #2ecc71;">${formatCurrencyCodeTotals(overallTotals)}</span>
                     </div>
                 </div>
             </div>
         </div>
     `);
+}
+
+// Sumar montos por currency.code a partir de un array de ventas (cada venta tiene sale_payments o payments)
+function sumCurrencyTotalsFromSales(sales) {
+    var totals = {};
+    sales.forEach(function(sale) {
+        var payments = sale.sale_payments || sale.payments || [];
+        payments.forEach(function(p) {
+            var code = (p.currency && p.currency.symbol);
+            var amount = parseFloat(p.amount) || 0;
+            totals[code] = (totals[code] || 0) + amount;
+        });
+    });
+    return totals;
+}
+
+// Formatear objeto {USD: 12, PEN: 34} a string 'USD 12.00, PEN 34.00'
+function formatCurrencyCodeTotals(totals) {
+    var parts = [];
+    Object.keys(totals).forEach(function(code) {
+        var amt = parseFloat(totals[code]) || 0;
+        parts.push(code + ' ' + amt.toFixed(2));
+    });
+    return parts.length ? parts.join(', ') : '0.00';
 }
 
 // Contar total de transacciones
@@ -179,21 +215,49 @@ function getTotalCount(methodsData) {
 function fillSalesTable(methodsData) {
     var tbody = $('#tblSales tbody');
     tbody.empty();
+    console.log('Llenando tabla de ventas con data:', methodsData);
 
     $.each(methodsData, function(method, methodData) {
         $.each(methodData.sales, function(index, sale) {
             console.log('Venta completa:', sale);
             console.log('Sale ID:', sale.id);
             var printUrl = '/pos/crm/sale/print/voucher/' + sale.id + '/';
+
+            // Obtener arreglo de pagos (soporta `sale_payments` o `payments` según el backend)
+            var paymentsArray = sale.sale_payments || sale.payments || [];
+            var paymentNames = '-';
+            if (paymentsArray && paymentsArray.length) {
+                paymentNames = paymentsArray.map(function(p) {
+                    return (p.payment_method && p.payment_method.name) || p.payment_method_name || '-';
+                }).join(', ');
+            }
+
+            // Agrupar y sumar montos por currency.code (ej. USD, PEN)
+            var paymentSumsByCode = {};
+            if (paymentsArray && paymentsArray.length) {
+                paymentsArray.forEach(function(p) {
+                    var code = (p.currency && p.currency.symbol);
+                    var amount = parseFloat(p.amount) || 0;
+                    paymentSumsByCode[code] = (paymentSumsByCode[code] || 0) + amount;
+                });
+            }
+            var paymentAmounts = '-';
+            var codes = Object.keys(paymentSumsByCode);
+            if (codes.length) {
+                paymentAmounts = codes.map(function(code) {
+                    return code + ' ' + paymentSumsByCode[code].toFixed(2);
+                }).join(', ');
+            }
+
             tbody.append(`
                 <tr>
                     <td class="text-center">${sale.serie === '' ? '-' : sale.serie}</td>
-                    <td class="text-center">${sale.date}</td>
-                    <td class="text-center"><span class="badge badge-info">${sale.type_voucher}</span></td>
                     <td>${sale.client}</td>
+                    <td class="text-center">${sale.date}</td>
+                    <td class="text-center">${paymentNames}</td>
                     <td>${sale.comment === '' ? '-' : sale.comment}</td>
                     
-                    <td class="text-right"><strong>S/. ${parseFloat(sale.total).toFixed(2)}</strong></td>
+                    <td class="text-right"><strong>${paymentAmounts}</strong></td>
                     <td class="text-center">
                         <a href="${printUrl}" target="_blank" class="btn btn-primary btn-xs btn-flat" title="Imprimir"><i class="fas fa-print"></i></a>
                     </td>
