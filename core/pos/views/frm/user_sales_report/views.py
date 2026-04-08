@@ -73,7 +73,7 @@ class UserSalesReportView(LoginRequiredMixin, ModuleMixin, TemplateView):
                 # Agrupar ventas por método de pago a través de SalePayment
                 for sale in sales_query.select_related('client', 'employee'):
                     # Obtener los pagos de esta venta
-                    sale_payments = sale.payments.select_related('payment_method').all()
+                    sale_payments = list(sale.payments.select_related('payment_method', 'currency', 'bank').all())
                     
                     # Contar cantidad de productos
                     cant = sale.saledetail_set.aggregate(total_cant=Sum('cant'))['total_cant'] or 0
@@ -91,10 +91,11 @@ class UserSalesReportView(LoginRequiredMixin, ModuleMixin, TemplateView):
                         'subtotal': float(sale.subtotal),
                         'total_dscto': float(sale.total_dscto),
                         'total': float(sale.total),
-                        'cantidad': cant
+                        'cantidad': cant,
+                        'sale_payments': [sp.toJSON() for sp in sale_payments]
                     }
                     
-                    if sale_payments.exists():
+                    if sale_payments:
                         for sp in sale_payments:
                             method_code = sp.payment_method.code
                             if method_code not in sales_by_method:
