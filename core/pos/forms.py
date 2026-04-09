@@ -313,6 +313,15 @@ class BoxForm(ModelForm):
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
 
+        # Configurar la fecha actual al crear (o la guardada al editar)
+        if self.instance and self.instance.pk:
+            self.fields['datetime_close'].widget.attrs['readonly'] = 'readonly'
+            if self.instance.datetime_close:
+                # Nos aseguramos que el HTML tenga instanciado el value formato iso
+                self.fields['datetime_close'].widget.attrs['value'] = self.instance.datetime_close.strftime('%Y-%m-%dT%H:%M')
+        else:
+            self.fields['datetime_close'].widget.attrs['value'] = datetime.now().strftime('%Y-%m-%dT%H:%M')
+
         # Calcular valores iniciales dinámicamente
         if self.instance and self.user:
             efectivo_soles = self.get_efectivo_soles()
@@ -357,7 +366,6 @@ class BoxForm(ModelForm):
                 'type': 'datetime-local',
                 #'class': 'p-2',
                 'style': 'padding: 0px 30px;',
-                'value': datetime.now().strftime('%Y-%m-%dT%H:%M'),
                 'required': 'required'
             }),
             'desc': forms.Textarea(attrs={

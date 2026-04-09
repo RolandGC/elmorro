@@ -31,9 +31,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const boxFinalSoles = document.querySelector('#id_box_final_soles');
     const boxFinalDolares = document.querySelector('#id_box_final_dolares');
 
-    // Configurar datetime_close con la fecha/hora actual
+    // Configurar datetime_close con la fecha/hora actual SOLO si es nuevo registro
     const datetimeCloseInput = document.querySelector('#id_datetime_close');
-    if (datetimeCloseInput) {
+    const actionInput = document.querySelector('input[name="action"]');
+    if (datetimeCloseInput && (!actionInput || actionInput.value !== 'edit')) {
         const now = new Date();
         const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, '0');
