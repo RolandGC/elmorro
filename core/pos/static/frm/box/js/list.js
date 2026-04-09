@@ -378,15 +378,15 @@ function showDetails(idBox) {
             // ── Filas para DataTable ─────────────────────────────────────
             const tableData = sales.map((s, i) => {
                 const clientName = s.client?.user?.full_name || s.client?.user?.fullName || '-';
-                const paymentsByCurrency = {};
-                if (Array.isArray(s.payments)) {
-                    s.payments.forEach(p => {
+                let paymentsDisplay = '-';
+
+                if (Array.isArray(s.payments) && s.payments.length > 0) {
+                    paymentsDisplay = s.payments.map(p => {
                         const sym = p.currency?.symbol || p.currency?.code || '';
-                        paymentsByCurrency[sym] = (paymentsByCurrency[sym] || 0) + parseNum(p.amount);
-                    });
+                        const amount = parseNum(p.amount);
+                        return `${sym}${amount.toFixed(2)}`;
+                    }).join(', ');
                 }
-                const paymentsDisplay = Object.entries(paymentsByCurrency)
-                    .map(([sym, amt]) => `${sym}${amt.toFixed(2)}`).join(', ') || '-';
                 const paymentMethod = s.payment_method?.name || '-';
 
                 return [
