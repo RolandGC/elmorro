@@ -315,15 +315,36 @@ class BoxForm(ModelForm):
 
         # Calcular valores iniciales dinámicamente
         if self.instance and self.user:
-            self.fields['efectivo_soles'].initial = self.get_efectivo_soles()
-            self.fields['efectivo_dolares'].initial = self.get_efectivo_dolares()
-            self.fields['transferencia_soles'].initial = self.get_transferencia_soles()
-            self.fields['transferencia_dolares'].initial = self.get_transferencia_dolares()
-            self.fields['deposito_soles'].initial = self.get_deposito_soles()
-            self.fields['deposito_dolares'].initial = self.get_deposito_dolares()
-            self.fields['yape'].initial = self.get_yape_soles()
-            self.fields['plin'].initial = self.get_plin_soles()
-            self.fields['bills'].initial = self.get_gastos()
+            efectivo_soles = self.get_efectivo_soles()
+            efectivo_dolares = self.get_efectivo_dolares()
+            transferencia_soles = self.get_transferencia_soles()
+            transferencia_dolares = self.get_transferencia_dolares()
+            deposito_soles = self.get_deposito_soles()
+            deposito_dolares = self.get_deposito_dolares()
+            yape_soles = self.get_yape_soles()
+            plin_soles = self.get_plin_soles()
+            gastos = self.get_gastos()
+
+            self.fields['efectivo_soles'].initial = efectivo_soles
+            self.fields['efectivo_dolares'].initial = efectivo_dolares
+            self.fields['transferencia_soles'].initial = transferencia_soles
+            self.fields['transferencia_dolares'].initial = transferencia_dolares
+            self.fields['deposito_soles'].initial = deposito_soles
+            self.fields['deposito_dolares'].initial = deposito_dolares
+            self.fields['yape'].initial = yape_soles
+            self.fields['plin'].initial = plin_soles
+            self.fields['bills'].initial = gastos
+
+            # Forzar valores en initial del formulario (sobreescribe los de BD en edicion)
+            self.initial['efectivo_soles'] = efectivo_soles
+            self.initial['efectivo_dolares'] = efectivo_dolares
+            self.initial['transferencia_soles'] = transferencia_soles
+            self.initial['transferencia_dolares'] = transferencia_dolares
+            self.initial['deposito_soles'] = deposito_soles
+            self.initial['deposito_dolares'] = deposito_dolares
+            self.initial['yape'] = yape_soles
+            self.initial['plin'] = plin_soles
+            self.initial['bills'] = gastos
 
     class Meta:
         model = Box
@@ -416,10 +437,17 @@ class BoxForm(ModelForm):
             ultimo_cierre = Box.objects.filter(
                 user=self.user,
                 datetime_close__isnull=False
-            ).exclude(pk=self.instance.pk).order_by('-datetime_close').first()
+            )
+            
+            if self.instance and self.instance.pk and self.instance.datetime_close:
+                ultimo_cierre = ultimo_cierre.filter(datetime_close__lt=self.instance.datetime_close)
+            else:
+                ultimo_cierre = ultimo_cierre.exclude(pk=self.instance.pk)
+                
+            ultimo_cierre = ultimo_cierre.order_by('-datetime_close').first()
 
             if ultimo_cierre:
-                # Desde el último cierre hasta ahora
+                # Desde el último cierre hasta ahora o el actual
                 self._fecha_inicio = ultimo_cierre.datetime_close
             else:
                 # Primera vez: desde el primer pago registrado del usuario
@@ -435,10 +463,16 @@ class BoxForm(ModelForm):
 
         return self._fecha_inicio
 
+    def get_fecha_fin(self):
+        """Obtiene la fecha final para los cálculos"""
+        if self.instance and self.instance.pk and self.instance.datetime_close:
+            return self.instance.datetime_close
+        return datetime.now()
+
     def get_efectivo_soles(self):
         """Calcula efectivo en soles desde el último cierre"""
         fecha_inicio = self.get_fecha_inicio()
-        fecha_fin = datetime.now()
+        fecha_fin = self.get_fecha_fin()
 
         total = SalePayment.objects.filter(
             sale__employee=self.user,
@@ -452,7 +486,7 @@ class BoxForm(ModelForm):
     def get_efectivo_dolares(self):
         """Calcula efectivo en dólares desde el último cierre"""
         fecha_inicio = self.get_fecha_inicio()
-        fecha_fin = datetime.now()
+        fecha_fin = self.get_fecha_fin()
 
         total = SalePayment.objects.filter(
             sale__employee=self.user,
@@ -466,7 +500,7 @@ class BoxForm(ModelForm):
     def get_transferencia_soles(self):
         """Calcula transferencia en soles desde el último cierre"""
         fecha_inicio = self.get_fecha_inicio()
-        fecha_fin = datetime.now()
+        fecha_fin = self.get_fecha_fin()
 
         total = SalePayment.objects.filter(
             sale__employee=self.user,
@@ -480,7 +514,7 @@ class BoxForm(ModelForm):
     def get_transferencia_dolares(self):
         """Calcula transferencia en dólares desde el último cierre"""
         fecha_inicio = self.get_fecha_inicio()
-        fecha_fin = datetime.now()
+        fecha_fin = self.get_fecha_fin()
 
         total = SalePayment.objects.filter(
             sale__employee=self.user,
@@ -494,7 +528,7 @@ class BoxForm(ModelForm):
     def get_deposito_soles(self):
         """Calcula depósito en soles desde el último cierre"""
         fecha_inicio = self.get_fecha_inicio()
-        fecha_fin = datetime.now()
+        fecha_fin = self.get_fecha_fin()
 
         total = SalePayment.objects.filter(
             sale__employee=self.user,
@@ -508,7 +542,7 @@ class BoxForm(ModelForm):
     def get_deposito_dolares(self):
         """Calcula depósito en dólares desde el último cierre"""
         fecha_inicio = self.get_fecha_inicio()
-        fecha_fin = datetime.now()
+        fecha_fin = self.get_fecha_fin()
 
         total = SalePayment.objects.filter(
             sale__employee=self.user,
@@ -522,7 +556,7 @@ class BoxForm(ModelForm):
     def get_yape_soles(self):
         """Calcula yape en soles desde el último cierre"""
         fecha_inicio = self.get_fecha_inicio()
-        fecha_fin = datetime.now()
+        fecha_fin = self.get_fecha_fin()
 
         total = SalePayment.objects.filter(
             sale__employee=self.user,
@@ -536,7 +570,7 @@ class BoxForm(ModelForm):
     def get_plin_soles(self):
         """Calcula plin en soles desde el último cierre"""
         fecha_inicio = self.get_fecha_inicio()
-        fecha_fin = datetime.now()
+        fecha_fin = self.get_fecha_fin()
 
         total = SalePayment.objects.filter(
             sale__employee=self.user,
@@ -550,7 +584,7 @@ class BoxForm(ModelForm):
     def get_gastos(self):
         """Calcula gastos en soles desde el último cierre"""
         fecha_inicio = self.get_fecha_inicio()
-        fecha_fin = datetime.now()
+        fecha_fin = self.get_fecha_fin()
 
         total = Expenses.objects.filter(
             user=self.user,
