@@ -1076,9 +1076,10 @@ $(function () {
             // Encontrar códigos
             var primary = (typeof currenciesData !== 'undefined') ? currenciesData.find(x => String(x.id) === String(primaryCurrencyId)) : null;
             var equiv = (typeof currenciesData !== 'undefined') ? currenciesData.find(x => String(x.id) === String(eqCurrencyId)) : null;
-            var rate = typeof companyExchangeRate !== 'undefined' ? parseFloat(companyExchangeRate) : 1;
+            // Leer el exchange_rate directamente del input
+            var inputExRate = parseFloat($('input[name="exchange_rate"]').val());
+            var rate = !isNaN(inputExRate) && inputExRate > 0 ? inputExRate : 1;
             var computed = equivVal;
-            console.log('ratessee', rate)
             try {
                 // Si no hay moneda primaria seleccionada, asumimos que la entrada equiv es igual a la original
                 if (!primary || !equiv) {
@@ -1116,7 +1117,9 @@ $(function () {
             var eqCurrencyId = block.find('.payment-eq-currency-select').val();
             var primary = (typeof currenciesData !== 'undefined') ? currenciesData.find(x => String(x.id) === String(primaryCurrencyId)) : null;
             var equiv = (typeof currenciesData !== 'undefined') ? currenciesData.find(x => String(x.id) === String(eqCurrencyId)) : null;
-            var rate = typeof companyExchangeRate !== 'undefined' ? parseFloat(companyExchangeRate) : 1;
+            // Leer el exchange_rate directamente del input
+            var inputExRate = parseFloat($('input[name="exchange_rate"]').val());
+            var rate = !isNaN(inputExRate) && inputExRate > 0 ? inputExRate : 1;
             var computedEq = orig;
             if (!primary || !equiv) {
                 computedEq = orig;

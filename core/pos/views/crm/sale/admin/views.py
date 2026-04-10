@@ -91,10 +91,16 @@ class SaleAdminCreateView(PermissionMixin, CreateView):
     def get_form(self, form_class=None):
         form = SaleForm()
         client = Client.objects.filter(user__dni='9999999999')
+        # Precargar valores por defecto
+        company = Company.objects.first()
+        initial_data = {}
+        if company:
+            initial_data['exchange_rate'] = company.exchange_rate
         if client.exists():
             client = client[0]
             form.fields['client'].queryset = Client.objects.filter(id=client.id)
-            form.initial = {'client': client}
+            initial_data['client'] = client
+        form.initial = initial_data
         return form
 
     def post(self, request, *args, **kwargs):
@@ -128,6 +134,8 @@ class SaleAdminCreateView(PermissionMixin, CreateView):
                     sale.comment = request.POST.get('comment', '')
                     # Usar el total ingresado por el usuario
                     sale.total = float(request.POST.get('total', 0.00))
+                    # Usar tipo de cambio ingresado
+                    sale.exchange_rate = float(request.POST.get('exchange_rate', Company.objects.first().exchange_rate if Company.objects.exists() else 3.50))
                     # if date_joined was not provided or could not be parsed, use current datetime
                     if not getattr(sale, 'date_joined', None):
                         sale.date_joined = timezone.now()
@@ -336,6 +344,7 @@ class SaleAdminUpdateView(SaleAdminCreateView):
                     sale.dscto = float(request.POST['dscto'])
                     sale.comment = request.POST.get('comment', '')
                     sale.total = float(request.POST.get('total', 0.00))
+                    sale.exchange_rate = float(request.POST.get('exchange_rate', sale.exchange_rate or 3.50))
                     sale.save()
 
                     # Restaurar stock de los detalles anteriores

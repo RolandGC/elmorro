@@ -141,6 +141,14 @@
                                 </div>
                             </div>
                             <div class="row">
+                                <div class="col-lg-12">
+                                    <div class="form-group">
+                                        <label class="control-label">Tipo de Cambio:</label>
+                                        {{ form.exchange_rate }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
                                 <div class="col-lg-6">
                                     <div class="form-group">
                                         <label class="control-label">Comprobante:</label>
@@ -584,6 +592,11 @@
                     subtree: true
                 });
             }
+            
+            // Recalcular equivalencias si el usuario decide editar manualmente la Tasa de Cambio
+            $(document).on('input change', 'input[name="exchange_rate"]', function() {
+                $('.payment-amount-equiv').trigger('input');
+            });
         });
     </script>
 {% endblock %}

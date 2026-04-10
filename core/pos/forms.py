@@ -755,6 +755,11 @@ class SaleForm(ModelForm):
                 'rows': 4,
                 'placeholder': 'Escribe un comentario...'
             }),
+            'exchange_rate': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.0001',
+                'min': '0.0001'
+            }),
         }
 
     amount = forms.CharField(widget=forms.TextInput(attrs={
