@@ -217,8 +217,16 @@ function fillSalesTable(methodsData) {
     tbody.empty();
     console.log('Llenando tabla de ventas con data:', methodsData);
 
+    var seenSales = {};
     $.each(methodsData, function(method, methodData) {
+        console.log('salesss:', methodData.sales);
+
         $.each(methodData.sales, function(index, sale) {
+            var saleKey = String(sale.id || index);
+            if (seenSales[saleKey]) {
+                return; // skip duplicate sale already rendered
+            }
+            seenSales[saleKey] = true;
             console.log('Venta completa:', sale);
             console.log('Sale ID:', sale.id);
             var printUrl = '/pos/crm/sale/print/voucher/' + sale.id + '/';
