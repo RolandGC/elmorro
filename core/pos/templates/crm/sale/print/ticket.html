@@ -184,28 +184,29 @@
         <br>
     </p>
     <table class="table table-borderless table-sm" style="margin-bottom: 0">
-        <thead>
-        <tr style="border-bottom: 1px double black;">
-            <th style="width: 26%;">Monto</th>
-            <th style="width: 20%;">Frm Pag</th>
-            <th style="width: 19%;"> Fech Pag</th>
-            {#<th style="width: 15%;">Dscto</th>#}
-            <th style="width: 55%;" class="text-right">Banco</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for payment in sale.payments.all %}
-            <tr style="line-height: 1.1;">
-                <td>{{ payment.currency.symbol|default:"-" }} {{ payment.amount|default:"-" }}</td>
-                <td>{{ payment.payment_method.name|default:"-" }}</td>
-
-                    <td>{{ payment.date_joined|date:"d/m/y" }}</td>
-                <td class="text-right">{{ payment.bank|default:"-" }}</td>
-            </tr>
-        {% endfor %}
-        </tbody>
-        <table class="table table-borderless table-sm" style="margin-top: 2px;">
+    <thead>
+    <tr style="border-bottom: 1px double black;">
+        <th style="width: 26%;">Monto</th>
+        <th style="width: 20%;">Frm Pag</th>
+        <th style="width: 19%;">Fech Pag</th>
+        <th style="width: 55%;" class="text-right">Banco</th>
+    </tr>
+    </thead>
     <tbody>
+    {% for payment in sale.payments.all %}
+        <tr style="line-height: 1.1;">
+            <td>{{ payment.currency.symbol|default:"-" }} {{ payment.amount|default:"-" }}</td>
+            <td>{{ payment.payment_method.name|default:"-" }}</td>
+            <td>{{ payment.date_joined|date:"d/m/y" }}</td>
+            <td class="text-right">{{ payment.bank|default:"-" }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<table class="table table-borderless table-sm" style="margin-top: 2px;">
+    <tbody>
+
     {# --- Resumen Efectivo --- #}
     {% if payments_cash_by_currency %}
     <tr>
@@ -246,35 +247,30 @@
     </tr>
     {% endfor %}
     {% endif %}
-</tbody>
+
+    {# --- Total Equivalente --- #}
+    {% if equivalent_total %}
+    <tr><td colspan="2" style="height:5px;"></td></tr>
+    <tr style="border-top: 1px dotted black;">
+        <td colspan="2" style="padding-top: 4px;"><b>TOTAL EQUIVALENTE:</b></td>
+    </tr>
+    <tr style="line-height: 1;">
+        <td class="float-left"><b>{{ equivalent_total.currency_name }}</b></td>
+        <td class="text-right" style="font-weight: bold;">
+            {{ equivalent_total.symbol }} {{ equivalent_total.total|floatformat:2 }}
+        </td>
+    </tr>
+    {% if equivalent_total.detail %}
+    <tr>
+        <td colspan="2" style="font-size: 9px; line-height: 1.2; color: black;">
+            {{ equivalent_total.detail }}
+        </td>
+    </tr>
+    {% endif %}
+    {% endif %}
+
+    </tbody>
 </table>
-    </table>
-    <table class="table table-borderless table-sm" style="margin-top: 0">
-        <thead>
-        <tr>
-            <th style="width: 50%;"></th>
-            <th style="width: 50%;"></th>
-        </tr>
-        </thead>
-        <tbody>
-        {#<tr style="line-height: 1;">#}
-            {#<td class="float-left"><b>Subtotal</b></td>#}
-            {#<td class="text-right">{{ sale.subtotal }}</td>#}
-        {#</tr>#}
-        {#<tr style="line-height: 1;">#}
-            {#<td class="float-left"><b>Igv {{ sale.igv }}%</b></td>#}
-            {#<td class="text-right">{{ sale.total_igv }}</td>#}
-        {#</tr>#}
-        {#<tr>#}
-            {#<td class="float-left"><b>Descuento {{ sale.dscto }}%</b></td>#}
-            {#<td class="text-right">{{ sale.total_dscto }}</td>#}
-        {#</tr>#}
-        <tr style="line-height: 1;">
-            {% comment %} <td class="float-left"><b>Total a pagar</b></td>
-            <td class="text-right">{{ sale.total }}</td> {% endcomment %}
-        </tr>
-        </tbody>
-    </table>
     <br>
     <p><b>Comentario:</b> {{ sale.comment }}</p>
     {% comment %} {% if sale.payment_condition == 'contado' %}

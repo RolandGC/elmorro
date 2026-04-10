@@ -354,6 +354,12 @@
                                     </table>
                                 </div>
                             </div>
+                                <div id="rowEquivalentTotal" style="display: none; text-align: left !important;">
+                                        <b>TOTAL EQUIVALENTE:</b>
+                                        <span id="lblEquivalentSymbol"></span>
+                                        <span id="lblEquivalentTotal" style="font-size: 1.1em;"></span>
+                                        <br>
+                                </div>
                              <div class="row">
                                 <div class="col-lg-12">
                                     <div class="form-group">
@@ -604,5 +610,97 @@
                 $('.payment-amount-equiv').trigger('input');
             });
         });
+
+        function updateEquivalentTotal() {
+            const baseCurrencySelect = document.querySelector('select[name="base_currency"]');
+            const exchangeRateInput = document.querySelector('input[name="exchange_rate"]');
+            const rowEquiv = document.getElementById('rowEquivalentTotal');
+            const lblSymbol = document.getElementById('lblEquivalentSymbol');
+            const lblTotal = document.getElementById('lblEquivalentTotal');
+            if (!baseCurrencySelect || !rowEquiv) return;
+
+            const baseCurrencyId = baseCurrencySelect.value;
+            if (!baseCurrencyId) {
+                rowEquiv.style.display = 'none';
+                return;
+            }
+
+            const baseCurrencyObj = currenciesData.find(c => String(c.id) === String(baseCurrencyId));
+            if (!baseCurrencyObj) {
+                rowEquiv.style.display = 'none';
+                return;
+            }
+
+            const exchangeRate = parseFloat(exchangeRateInput ? exchangeRateInput.value : 1) || companyExchangeRate || 1;
+            // base_currency define cuál es la moneda "principal"
+            // Asumimos que si base_currency = USD, la tasa es: 1 USD = X PEN
+            // Si base_currency = PEN, la tasa es: 1 USD = X PEN (igual)
+
+            let totalEquivalent = 0;
+            const detailParts = [];
+
+            document.querySelectorAll('.payment-block').forEach(block => {
+                const currencySelect = block.querySelector('.payment-currency-select');
+                const amountInput = block.querySelector('.payment-amount');
+                if (!currencySelect || !amountInput) return;
+
+                const payCurrencyId = currencySelect.value;
+                const amount = parseFloat(amountInput.value) || 0;
+                if (!payCurrencyId || amount === 0) return;
+
+                const payCurrencyObj = currenciesData.find(c => String(c.id) === String(payCurrencyId));
+                if (!payCurrencyObj) return;
+
+                const sym = payCurrencyObj.symbol || payCurrencyObj.name;
+
+                if (String(payCurrencyId) === String(baseCurrencyId)) {
+                    // Misma moneda: suma directa
+                    totalEquivalent += amount;
+                    detailParts.push(`${sym}${amount.toFixed(2)}`);
+                } else {
+                    // Diferente moneda: convertir según tasa
+                    let converted;
+                   
+                    //     base=PEN, exchange_rate=3.7 => 1 USD = 3.70 PEN => USD*3.7 = PEN
+                    if (baseCurrencyObj.symbol === 'S/' || baseCurrencyObj.symbol === 'S/.' || baseCurrencyObj.code === 'PEN') {
+                        // Base = PEN: los pagos en moneda extranjera se multiplican por exchange_rate
+                        converted = amount * exchangeRate;
+                        detailParts.push(`(${sym}${amount.toFixed(2)} × ${exchangeRate.toFixed(2)})`);
+                    } else {
+                        // Base = USD (u otra moneda fuerte): los pagos en PEN se dividen entre exchange_rate
+                        converted = amount / exchangeRate;
+                        detailParts.push(`(${sym}${amount.toFixed(2)} ÷ ${exchangeRate.toFixed(2)})`);
+                    }
+                    totalEquivalent += converted;
+                }
+            });
+
+            if (detailParts.length === 0) {
+                rowEquiv.style.display = 'none';
+                return;
+            }
+
+            rowEquiv.style.display = '';
+            lblSymbol.textContent = baseCurrencyObj.symbol || '';
+            lblTotal.textContent = totalEquivalent.toFixed(2);
+        }
+
+                // Añadir junto al listener de resumen existente:
+        $(document).on('change', '.payment-currency-select, .payment-amount', function() {
+            updatePaymentsSummary();
+            updateEquivalentTotal();   // <-- añadir
+        });
+
+        $(document).on('change input', 'select[name="base_currency"]', function() {
+            updateEquivalentTotal();
+        });
+
+        $(document).on('input change', 'input[name="exchange_rate"]', function() {
+            $('.payment-amount-equiv').trigger('input');
+            updateEquivalentTotal();   // <-- añadir también aquí
+        });
+
+        // Y al final del $(function(){...}), después de updatePaymentsSummary():
+        updateEquivalentTotal();
     </script>
 {% endblock %}

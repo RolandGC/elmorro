@@ -114,7 +114,8 @@ class SalePrintVoucherView(LoginRequiredMixin, View):
                 # Add grouped payments by currency
                 context['payments_by_currency'] = self.get_grouped_payments_by_currency(sale)
                 context['payments_cash_by_currency'] = self.get_grouped_cash_payments_by_currency(sale)
-                context['payments_non_cash_by_currency'] = self.get_grouped_non_cash_payments_by_currency(sale)                
+                context['payments_non_cash_by_currency'] = self.get_grouped_non_cash_payments_by_currency(sale)  
+                context['equivalent_total'] = self.get_equivalent_total(sale)              
                 if sale.type_voucher == 'ticket':
                     template = get_template('crm/sale/print/ticket.html')
                     # Use fixed height for Android or Windows (12cm = 120mm), dynamic for desktop
@@ -131,3 +132,49 @@ class SalePrintVoucherView(LoginRequiredMixin, View):
         except Exception as e:
             logger.error(f"Error generating print: {str(e)}", exc_info=True)
         return HttpResponseRedirect(self.get_success_url())
+    
+    def get_equivalent_total(self, sale):
+    
+        base_currency = sale.base_currency  # ajusta al nombre real del campo
+        if not base_currency:
+            return None
+
+        exchange_rate = float(sale.exchange_rate or 1)
+        is_base_pen = base_currency.symbol in ('S/', 'S/.')  # ajusta según tu modelo
+
+        total_equivalent = 0.0
+        detail_parts = []
+
+        for payment in sale.payments.all():
+            amount = float(payment.amount or 0)
+            if amount == 0:
+                continue
+
+            sym = payment.currency.symbol or payment.currency.name
+            is_same_currency = payment.currency_id == base_currency.id
+
+            if is_same_currency:
+                total_equivalent += amount
+                detail_parts.append(f"{sym}{amount:.2f}")
+            else:
+                if is_base_pen:
+                    # Base PEN: moneda extranjera × tasa
+                    converted = amount * exchange_rate
+                    detail_parts.append(f"({sym}{amount:.2f} × {exchange_rate:.2f})")
+                else:
+                    # Base USD u otra: moneda débil ÷ tasa
+                    converted = amount / exchange_rate if exchange_rate else 0
+                    detail_parts.append(f"({sym}{amount:.2f} ÷ {exchange_rate:.2f})")
+                total_equivalent += converted
+
+        if not detail_parts:
+            return None
+
+        base_sym = base_currency.symbol or ''
+        detail_str = ' + '.join(detail_parts) + f' = {base_sym}{total_equivalent:.2f}'
+
+        return {
+            'currency_name': base_currency.name,
+            'symbol': base_sym,
+            'total': round(total_equivalent, 2),
+        }
