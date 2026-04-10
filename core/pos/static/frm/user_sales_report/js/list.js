@@ -1,5 +1,7 @@
 let currentUser = null;
 let allUsers = [];
+let tblSalesDT = null;
+let tblSummaryDT = null;
 
 // Cargar lista de usuarios al iniciar
 function loadUsers() {
@@ -213,22 +215,17 @@ function getTotalCount(methodsData) {
 
 // Llenar tabla de ventas
 function fillSalesTable(methodsData) {
-    var tbody = $('#tblSales tbody');
-    tbody.empty();
     console.log('Llenando tabla de ventas con data:', methodsData);
 
+    var salesArray = [];
     var seenSales = {};
-    $.each(methodsData, function(method, methodData) {
-        console.log('salesss:', methodData.sales);
 
+    $.each(methodsData, function(method, methodData) {
         $.each(methodData.sales, function(index, sale) {
             var saleKey = String(sale.id || index);
-            if (seenSales[saleKey]) {
-                return; // skip duplicate sale already rendered
-            }
+            if (seenSales[saleKey]) return;
             seenSales[saleKey] = true;
-            console.log('Venta completa:', sale);
-            console.log('Sale ID:', sale.id);
+
             var printUrl = '/pos/crm/sale/print/voucher/' + sale.id + '/';
 
             // Obtener arreglo de pagos (soporta `sale_payments` o `payments` según el backend)
@@ -240,7 +237,7 @@ function fillSalesTable(methodsData) {
                 }).join(', ');
             }
 
-            // Agrupar y sumar montos por currency.code (ej. USD, PEN)
+            // Agrupar y sumar montos por currency.code
             var paymentSumsByCode = {};
             if (paymentsArray && paymentsArray.length) {
                 paymentsArray.forEach(function(p) {
@@ -257,26 +254,61 @@ function fillSalesTable(methodsData) {
                 }).join(', ');
             }
 
-            tbody.append(`
-                <tr>
-                    <td class="text-center">${sale.serie === '' ? '-' : sale.serie}</td>
-                    <td>${sale.client}</td>
-                    <td class="text-center">${sale.date}</td>
-                    <td class="text-center">${paymentNames}</td>
-                    <td>${sale.comment === '' ? '-' : sale.comment}</td>
-                    
-                    <td class="text-right"><strong>${paymentAmounts}</strong></td>
-                    <td class="text-center">
-                        <a href="${printUrl}" target="_blank" class="btn btn-primary btn-xs btn-flat" title="Imprimir"><i class="fas fa-print"></i></a>
-                    </td>
-                </tr>
-            `)
+            salesArray.push({
+                'id': sale.id,
+                'serie': sale.serie === '' ? '-' : sale.serie,
+                'client': sale.client,
+                'date': sale.date,
+                'paymentNames': paymentNames,
+                'comment': sale.comment === '' ? '-' : sale.comment,
+                'paymentAmounts': paymentAmounts,
+                'printUrl': printUrl
+            });
         });
     });
 
-    if ($('#tblSales tbody tr').length === 0) {
-        tbody.append('<tr><td colspan="8" class="text-center text-muted">No hay ventas registradas</td></tr>');
+    if (tblSalesDT) {
+        tblSalesDT.destroy();
     }
+
+    tblSalesDT = $('#tblSales').DataTable({
+        responsive: true,
+        autoWidth: false,
+        data: salesArray,
+        ordering: true,
+        info: true,
+        paging: true,
+        columns: [
+            { data: "serie" },
+            { data: "client" },
+            { data: "date" },
+            { data: "paymentNames" },
+            { data: "comment" },
+            { data: "paymentAmounts" },
+            { data: "id" }
+        ],
+        columnDefs: [
+            {
+                targets: [0, 2, 3],
+                class: 'text-center'
+            },
+            {
+                targets: [-2],
+                class: 'text-right',
+                render: function(data, type, row) {
+                    return '<strong>' + data + '</strong>';
+                }
+            },
+            {
+                targets: [-1],
+                class: 'text-center',
+                orderable: false,
+                render: function(data, type, row) {
+                    return '<a href="' + row.printUrl + '" target="_blank" class="btn btn-primary btn-xs btn-flat" title="Imprimir"><i class="fas fa-print"></i></a>';
+                }
+            }
+        ]
+    });
 }
 
 // Mostrar resumen general
@@ -318,8 +350,7 @@ function loadSummary() {
 
 // Llenar tabla de resumen
 function fillSummaryTable(summary) {
-    var tbody = $('#tblSummary tbody');
-    tbody.empty();
+    var summaryArray = [];
 
     $.each(summary, function(index, user) {
         var efectivo = user.metodos.efectivo ? user.metodos.efectivo.total : 0;
@@ -328,23 +359,60 @@ function fillSummaryTable(summary) {
         var transferencia = user.metodos.transferencia ? user.metodos.transferencia.total : 0;
         var deposito = user.metodos.deposito ? user.metodos.deposito.total : 0;
 
-        tbody.append(`
-            <tr>
-                <td><strong>${user.user_name}</strong></td>
-                <td class="text-center">${user.total_transacciones}</td>
-                <td class="text-right">S/. ${parseFloat(efectivo).toFixed(2)}</td>
-                <td class="text-right">S/. ${parseFloat(yape).toFixed(2)}</td>
-                <td class="text-right">S/. ${parseFloat(plin).toFixed(2)}</td>
-                <td class="text-right">S/. ${parseFloat(transferencia).toFixed(2)}</td>
-                <td class="text-right">S/. ${parseFloat(deposito).toFixed(2)}</td>
-                <td class="text-right"><strong>S/. ${parseFloat(user.total_vendido).toFixed(2)}</strong></td>
-            </tr>
-        `);
+        summaryArray.push({
+            'user_name': user.user_name,
+            'total_transacciones': user.total_transacciones,
+            'efectivo': parseFloat(efectivo).toFixed(2),
+            'yape': parseFloat(yape).toFixed(2),
+            'plin': parseFloat(plin).toFixed(2),
+            'transferencia': parseFloat(transferencia).toFixed(2),
+            'deposito': parseFloat(deposito).toFixed(2),
+            'total_vendido': parseFloat(user.total_vendido).toFixed(2)
+        });
     });
 
-    if (summary.length === 0) {
-        tbody.append('<tr><td colspan="8" class="text-center text-muted">No hay datos disponibles</td></tr>');
+    if (tblSummaryDT) {
+        tblSummaryDT.destroy();
     }
+
+    tblSummaryDT = $('#tblSummary').DataTable({
+        responsive: true,
+        autoWidth: false,
+        data: summaryArray,
+        ordering: true,
+        info: true,
+        paging: true,
+        columns: [
+            { data: "user_name" },
+            { data: "total_transacciones" },
+            { data: "efectivo" },
+            { data: "yape" },
+            { data: "plin" },
+            { data: "transferencia" },
+            { data: "deposito" },
+            { data: "total_vendido" }
+        ],
+        columnDefs: [
+            {
+                targets: [1],
+                class: 'text-center'
+            },
+            {
+                targets: [2, 3, 4, 5, 6],
+                class: 'text-right',
+                render: function(data, type, row) {
+                    return 'S/. ' + data;
+                }
+            },
+            {
+                targets: [-1],
+                class: 'text-right',
+                render: function(data, type, row) {
+                    return '<strong>S/. ' + data + '</strong>';
+                }
+            }
+        ]
+    });
 }
 
 // Event listeners
