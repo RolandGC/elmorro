@@ -760,6 +760,9 @@ class SaleForm(ModelForm):
                 'step': '0.0001',
                 'min': '0.0001'
             }),
+            'base_currency': forms.Select(attrs={
+                'class': 'form-control select2'
+            }),
         }
 
     amount = forms.CharField(widget=forms.TextInput(attrs={

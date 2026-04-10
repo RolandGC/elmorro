@@ -136,6 +136,10 @@ class SaleAdminCreateView(PermissionMixin, CreateView):
                     sale.total = float(request.POST.get('total', 0.00))
                     # Usar tipo de cambio ingresado
                     sale.exchange_rate = float(request.POST.get('exchange_rate', Company.objects.first().exchange_rate if Company.objects.exists() else 3.50))
+                    
+                    base_currency_id = request.POST.get('base_currency')
+                    sale.base_currency_id = int(base_currency_id) if base_currency_id else None
+                    
                     # if date_joined was not provided or could not be parsed, use current datetime
                     if not getattr(sale, 'date_joined', None):
                         sale.date_joined = timezone.now()
@@ -345,6 +349,10 @@ class SaleAdminUpdateView(SaleAdminCreateView):
                     sale.comment = request.POST.get('comment', '')
                     sale.total = float(request.POST.get('total', 0.00))
                     sale.exchange_rate = float(request.POST.get('exchange_rate', sale.exchange_rate or 3.50))
+                    
+                    base_currency_id = request.POST.get('base_currency')
+                    sale.base_currency_id = int(base_currency_id) if base_currency_id else None
+                    
                     sale.save()
 
                     # Restaurar stock de los detalles anteriores
