@@ -1350,9 +1350,9 @@ $(function () {
                 var block = addPaymentBlock();
                 block.find('.payment-currency-select').val(payment.currency.id).trigger('change');
                 block.find('.payment-method-select').val(payment.payment_method.id).trigger('change');
-                block.find('.payment-amount').val(payment.amount);
+                block.find('.payment-amount').val(payment.amount).trigger('input');
                 if (payment.bank && payment.bank.id) {
-                    block.find('.payment-bank-select').val(payment.bank.id);
+                    block.find('.payment-bank-select').val(payment.bank.id).trigger('change');
                 }
                 if (payment.operation_number) {
                     block.find('.payment-operation').val(payment.operation_number);
@@ -1362,7 +1362,7 @@ $(function () {
                     var date = moment(payment.date_joined, ['DD/MM/YYYY', 'YYYY-MM-DD', moment.ISO_8601]);
 
                     if (date.isValid()) {
-                        block.find('.payment-date').val(date.format('YYYY-MM-DD'));
+                        block.find('.payment-date').val(date.format('YYYY-MM-DD')).trigger('change');
                         block.find('.payment-date-picker').datetimepicker('date', date);
                     } else {
                         console.warn('Fecha inválida:', payment.date_joined);
@@ -1370,6 +1370,9 @@ $(function () {
                 }
             });
             recalcPaymentsTotal();
+            // Forzar actualización de resúmenes visuales en create.html
+            if (typeof updatePaymentsSummary === 'function') updatePaymentsSummary();
+            if (typeof updateEquivalentTotal === 'function') updateEquivalentTotal();
         }
 
         // Cargar total y amount
