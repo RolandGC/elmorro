@@ -550,8 +550,8 @@
             // Actualizar resumen inicial
             updatePaymentsSummary();
             
-            // Escuchar cambios en los pagos
-            $(document).on('change', '.payment-currency-select, .payment-amount', function() {
+            // Escuchar cambios en los pagos (incluyendo el campo equivalente visual)
+            $(document).on('change input', '.payment-currency-select, .payment-amount, .payment-amount-equiv', function() {
                 updatePaymentsSummary();
             });
             
@@ -686,7 +686,7 @@
         }
 
                 // Añadir junto al listener de resumen existente:
-        $(document).on('change', '.payment-currency-select, .payment-amount', function() {
+        $(document).on('change input', '.payment-currency-select, .payment-amount, .payment-amount-equiv', function() {
             updatePaymentsSummary();
             updateEquivalentTotal();   // <-- añadir
         });
