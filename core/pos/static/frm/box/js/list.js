@@ -293,11 +293,35 @@ function showDetails(idBox) {
     boxTotals.innerHTML = '';
     modal.show();
 
-    // Destruir DataTable previa si existe
+    // ── Destruir DataTable previa ────────────────────────────────────────
     if ($.fn.DataTable.isDataTable('#tblBoxSales')) {
         $('#tblBoxSales').DataTable().destroy();
         $('#tblBoxSales tbody').empty();
     }
+
+    // ── Reconstruir thead y tfoot con las 10 columnas correctas ─────────
+    // Esto resuelve el error "Cannot read properties of undefined (reading 'style')"
+    // que ocurre cuando el thead/tfoot no coincide con las columnas del JS
+    (function rebuildTableStructure() {
+        const $tbl = $('#tblBoxSales');
+        if (!$tbl.length) return;
+
+        $tbl.find('thead').remove();
+        $tbl.find('tfoot').remove();
+        $tbl.find('tbody').empty();
+
+        const cols = ['N°', 'Serie', 'Cliente', 'Fecha', 'Efectivo', 'Yape', 'Plin', 'Transferencia', 'Depósito', 'Total'];
+
+        let thead = '<thead><tr>';
+        cols.forEach(c => { thead += `<th>${c}</th>`; });
+        thead += '</tr></thead>';
+
+        let tfoot = '<tfoot><tr>';
+        cols.forEach(() => { tfoot += '<th></th>'; });
+        tfoot += '</tr></tfoot>';
+
+        $tbl.append(thead).append('<tbody></tbody>').append(tfoot);
+    })();
 
     fetch(`/pos/frm/box/${idBox}/sales-range/`, {
         method: 'GET',
@@ -314,98 +338,141 @@ function showDetails(idBox) {
             const prev = data.previous_box || null;
             const sales = Array.isArray(data.sales) ? data.sales : [];
 
+            // ── Helper: parsear número ────────────────────────────────────────
             const parseNum = v => {
                 if (v === null || v === undefined) return 0;
                 const n = parseFloat(String(v).replace(/,/g, '').replace(/[^0-9.\-]/g, ''));
                 return isNaN(n) ? 0 : n;
             };
 
-            // ── Resumen de caja ──────────────────────────────────────────
+            // ── Resumen de caja ───────────────────────────────────────────────
             boxInfo.innerHTML = `
-            <div class="row mb-2">
-                <div class="col-md-6">
-                    <p class="mb-1"><strong>Cierre actual:</strong> ${box ? (box.datetime_close || '-') : '-'}</p>
-                    <p class="mb-1"><strong>Cierre previo:</strong> ${prev ? (prev.datetime_close || '-') : 'Sin cierre previo'}</p>
-                </div>
-            </div>`;
+        <div class="row mb-2">
+            <div class="col-md-6">
+                <p class="mb-1"><strong>Cierre actual:</strong> ${box ? (box.datetime_close || '-') : '-'}</p>
+                <p class="mb-1"><strong>Cierre previo:</strong> ${prev ? (prev.datetime_close || '-') : 'Sin cierre previo'}</p>
+            </div>
+        </div>`;
 
-            // ── Totales por moneda y resúmenes (efectivo / bancos) ───────
+            // ── Claves y etiquetas de métodos ─────────────────────────────────
+            const methodKeys = ['efectivo', 'yape', 'plin', 'transferencia', 'deposito'];
+            const methodLabels = {
+                efectivo: 'Efectivo',
+                yape: 'Yape',
+                plin: 'Plin',
+                transferencia: 'Transferencia',
+                deposito: 'Depósito'
+            };
+
+            // ── Acumuladores globales ─────────────────────────────────────────
+            const methodTotals = {};
             const totals = {};
             const payments_cash_by_currency = {};
             const payments_non_cash_by_currency = {};
-            const cashMethods = ['efectivo']; // solo 'efectivo' se considera efectivo
-            const bankMethods = ['yape', 'plin', 'transferencia', 'deposito']; // estos los tratamos como bancos
 
-            sales.forEach(sale => {
-                if (Array.isArray(sale.payments)) {
-                    sale.payments.forEach(p => {
+            methodKeys.forEach(k => methodTotals[k] = {});
+
+            // ── Resolver a cuál método pertenece un pago ──────────────────────
+            function resolveMethodKey(p) {
+                const raw = (
+                    p.payment_method?.code ||
+                    p.payment_method?.name ||
+                    ''
+                ).toLowerCase().trim()
+                    .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+                if (raw === 'efectivo' || raw === 'cash') return 'efectivo';
+                if (raw === 'yape') return 'yape';
+                if (raw === 'plin') return 'plin';
+                if (raw === 'transferencia' || raw === 'transfer') return 'transferencia';
+                if (raw === 'deposito' || raw === 'deposit') return 'deposito';
+                for (const key of methodKeys) {
+                    if (raw.includes(key)) return key;
+                }
+                console.warn('resolveMethodKey: método desconocido →', p.payment_method);
+                return 'deposito';
+            }
+
+            // ── Helper formato objeto moneda → texto ──────────────────────────
+            const formatCurrencyObj = (obj, emptyText = '-') =>
+                Object.keys(obj).length
+                    ? Object.values(obj).map(i => `${i.symbol}${i.total.toFixed(2)}`).join(' / ')
+                    : emptyText;
+
+            // ── Construir filas ───────────────────────────────────────────────
+            const tableData = sales.map((s, idx) => {
+                const clientName = s.client?.user?.full_name || s.client?.user?.fullName || '-';
+
+                const perMethod = {};
+                methodKeys.forEach(k => perMethod[k] = {});
+                const saleCurrencyTotals = {};
+
+                if (Array.isArray(s.payments)) {
+                    s.payments.forEach(p => {
+                        const amount = parseNum(p.amount);
                         const code = p.currency?.code || 'UNK';
                         const symbol = p.currency?.symbol || '';
-                        const amount = parseNum(p.amount);
+                        const methodKey = resolveMethodKey(p);
+
+                        if (!perMethod[methodKey][code])
+                            perMethod[methodKey][code] = { symbol, total: 0 };
+                        perMethod[methodKey][code].total += amount;
+
+                        if (!saleCurrencyTotals[code])
+                            saleCurrencyTotals[code] = { symbol, total: 0 };
+                        saleCurrencyTotals[code].total += amount;
+
+                        if (!methodTotals[methodKey][code])
+                            methodTotals[methodKey][code] = { symbol, total: 0 };
+                        methodTotals[methodKey][code].total += amount;
 
                         if (!totals[code]) totals[code] = { symbol, total: 0 };
                         totals[code].total += amount;
 
-                        const methodCode = (p.payment_method && p.payment_method.code) ? String(p.payment_method.code).toLowerCase() : (p.payment_method && p.payment_method.name ? String(p.payment_method.name).toLowerCase() : '');
-                        let classifiedAsCash = false;
-                        let classifiedAsBank = false;
-                        if (cashMethods.includes(methodCode) || methodCode === 'efectivo' || methodCode === 'cash') classifiedAsCash = true;
-                        if (bankMethods.includes(methodCode) || methodCode === 'yape' || methodCode === 'plin' || methodCode === 'transferencia' || methodCode === 'deposito') classifiedAsBank = true;
-
-                        if (classifiedAsCash) {
-                            if (!payments_cash_by_currency[code]) payments_cash_by_currency[code] = { symbol, total: 0 };
+                        if (methodKey === 'efectivo') {
+                            if (!payments_cash_by_currency[code])
+                                payments_cash_by_currency[code] = { symbol, total: 0 };
                             payments_cash_by_currency[code].total += amount;
                         } else {
-                            // cualquier otro medio (incluyendo tarjetas, transferencias, plin, yape, deposito) se considera dentro de 'bancos/non-cash'
-                            if (!payments_non_cash_by_currency[code]) payments_non_cash_by_currency[code] = { symbol, total: 0 };
+                            if (!payments_non_cash_by_currency[code])
+                                payments_non_cash_by_currency[code] = { symbol, total: 0 };
                             payments_non_cash_by_currency[code].total += amount;
                         }
                     });
                 }
-            });
-
-            const totalsHtml = Object.entries(totals).map(([code, it]) =>
-                `<span class="badge bg-secondary me-2">${code}: ${it.symbol}${it.total.toFixed(2)}</span>`
-            ).join('');
-            boxTotals.innerHTML = `<div class="mb-3"><strong>Totales por moneda:</strong> ${totalsHtml || '-'}</div>`;
-
-            // preparar textos para export
-            const resumenEfectivoLines = Object.entries(payments_cash_by_currency).map(([code, info]) => `${info.symbol} ${info.symbol} ${info.total.toFixed(2)}`);
-            const resumenBancosLines = Object.entries(payments_non_cash_by_currency).map(([code, info]) => `${info.symbol} ${info.total.toFixed(2)}`);
-            const resumenEfectivoText = resumenEfectivoLines.length ? resumenEfectivoLines.join(' — ') : 'S/. 0.00';
-            const resumenBancosText = resumenBancosLines.length ? resumenBancosLines.join(' — ') : 'S/. 0.00';
-
-            // ── Filas para DataTable ─────────────────────────────────────
-            const tableData = sales.map((s, i) => {
-                const clientName = s.client?.user?.full_name || s.client?.user?.fullName || '-';
-                let paymentsDisplay = '-';
-
-                if (Array.isArray(s.payments) && s.payments.length > 0) {
-                    paymentsDisplay = s.payments.map(p => {
-                        const sym = p.currency?.symbol || p.currency?.code || '';
-                        const amount = parseNum(p.amount);
-                        return `${sym}${amount.toFixed(2)}`;
-                    }).join(', ');
-                }
-                const paymentMethod = s.payment_method?.name || '-';
 
                 return [
-                    i + 1,
+                    idx + 1,
                     s.serie || '-',
                     clientName,
                     s.date_joined || '-',
-                    paymentMethod,
-                    paymentsDisplay,
+                    formatCurrencyObj(perMethod['efectivo']),
+                    formatCurrencyObj(perMethod['yape']),
+                    formatCurrencyObj(perMethod['plin']),
+                    formatCurrencyObj(perMethod['transferencia']),
+                    formatCurrencyObj(perMethod['deposito']),
+                    formatCurrencyObj(saleCurrencyTotals),
                 ];
             });
 
-            // ── Inicializar DataTable con botones Export ─────────────────
-            // ── Inicializar DataTable con botones Export ─────────────────
-            const logoUrl = document.getElementById('exportLogo')?.src || '';
+            // ── Badges totales globales ───────────────────────────────────────
+            const totalsHtml = Object.entries(totals)
+                .map(([code, it]) =>
+                    `<span class="badge bg-secondary me-2">${code}: ${it.symbol}${it.total.toFixed(2)}</span>`)
+                .join('');
+            boxTotals.innerHTML = `<div class="mb-3"><strong>Totales por moneda:</strong> ${totalsHtml || '-'}</div>`;
 
-            // Convertir logo a base64 primero
+            // ── Textos resumen para exports ───────────────────────────────────
+            const resumenMethodsText = methodKeys
+                .map(k => `${methodLabels[k]}: ${formatCurrencyObj(methodTotals[k], 'S/0.00')}`)
+                .join('  |  ');
+            const resumenEfectivoText = formatCurrencyObj(payments_cash_by_currency, 'S/0.00');
+            const resumenBancosText = formatCurrencyObj(payments_non_cash_by_currency, 'S/0.00');
+
+            // ── Logo → base64 ─────────────────────────────────────────────────
+            const logoUrl = document.getElementById('exportLogo')?.src || '';
             function getBase64FromUrl(url) {
-                return new Promise((resolve) => {
+                return new Promise(resolve => {
                     if (!url) return resolve(null);
                     const img = new Image();
                     img.crossOrigin = 'Anonymous';
@@ -416,49 +483,85 @@ function showDetails(idBox) {
                         canvas.getContext('2d').drawImage(img, 0, 0);
                         resolve(canvas.toDataURL('image/png'));
                     };
-                    img.onerror = () => resolve(null); // si falla, continuar sin logo
+                    img.onerror = () => resolve(null);
                     img.src = url;
                 });
             }
 
+            // ── Fila de totales para el PDF ───────────────────────────────────
+            function buildPdfFooterRow(numCols) {
+                const grandTotal = Object.values(methodTotals).reduce((acc, obj) => {
+                    Object.entries(obj).forEach(([code, info]) => {
+                        if (!acc[code]) acc[code] = { symbol: info.symbol, total: 0 };
+                        acc[code].total += info.total;
+                    });
+                    return acc;
+                }, {});
+
+                const valueMap = {
+                    3: 'TOTALES',
+                    4: formatCurrencyObj(methodTotals['efectivo'], ''),
+                    5: formatCurrencyObj(methodTotals['yape'], ''),
+                    6: formatCurrencyObj(methodTotals['plin'], ''),
+                    7: formatCurrencyObj(methodTotals['transferencia'], ''),
+                    8: formatCurrencyObj(methodTotals['deposito'], ''),
+                    9: formatCurrencyObj(grandTotal, ''),
+                };
+
+                const cells = [];
+                for (let i = 0; i < numCols; i++) {
+                    cells.push({
+                        text: valueMap[i] || '',
+                        bold: true,
+                        alignment: i >= 3 ? 'right' : 'left',
+                        fillColor: '#d4edda',
+                        color: '#155724',
+                        fontSize: 8
+                    });
+                }
+                return cells;
+            }
+
+            // ── Inicializar DataTable ─────────────────────────────────────────
             getBase64FromUrl(logoUrl).then(logoBase64 => {
+
                 $('#tblBoxSales').DataTable({
                     destroy: true,
                     data: tableData,
                     scrollX: true,
                     dom: 'Bfrtip',
                     buttons: [
+                        // ── Excel ──────────────────────────────────────────────
                         {
                             extend: 'excelHtml5',
                             text: '<i class="fas fa-file-excel"></i> Excel',
                             className: 'btn btn-success btn-sm',
                             title: `Reporte de Caja - ${box?.datetime_close || ''}`,
                             exportOptions: { columns: ':visible' },
-                            customize: function(xlsx) {
+                            customize: function (xlsx) {
                                 try {
-                                    var sheet = xlsx.xl.worksheets['sheet1.xml'];
-                                    var downrows = 3; // filas de resumen a insertar
-                                    var clRow = $('row', sheet);
-                                    clRow.each(function() {
-                                        var attr = $(this).attr('r');
-                                        var ind = parseInt(attr);
-                                        $(this).attr('r', ind + downrows);
+                                    const sheet = xlsx.xl.worksheets['sheet1.xml'];
+                                    const downrows = 5;
+                                    $('row', sheet).each(function () {
+                                        $(this).attr('r', parseInt($(this).attr('r')) + downrows);
                                     });
-                                    $('row c', sheet).each(function() {
-                                        var r = $(this).attr('r');
-                                        var cell = r.replace(/(\d+)/g, function(m) { return parseInt(m) + downrows; });
-                                        $(this).attr('r', cell);
+                                    $('row c', sheet).each(function () {
+                                        $(this).attr('r', $(this).attr('r').replace(/(\d+)/g, m => parseInt(m) + downrows));
                                     });
-                                    var summary = '';
-                                    summary += '<row r="1"><c t="inlineStr" r="A1"><is><t>Resumen Efectivo: ' + resumenEfectivoText + '</t></is></c></row>';
-                                    summary += '<row r="2"><c t="inlineStr" r="A2"><is><t>Resumen Bancos: ' + resumenBancosText + '</t></is></c></row>';
-                                    summary += '<row r="3"><c t="inlineStr" r="A3"><is><t></t></is></c></row>';
+                                    const summary =
+                                        `<row r="1"><c t="inlineStr" r="A1"><is><t>Resumen por Métodos: ${resumenMethodsText}</t></is></c></row>` +
+                                        `<row r="2"><c t="inlineStr" r="A2"><is><t>Efectivo: ${resumenEfectivoText}</t></is></c></row>` +
+                                        `<row r="3"><c t="inlineStr" r="A3"><is><t>Bancos / Digital: ${resumenBancosText}</t></is></c></row>` +
+                                        `<row r="4"><c t="inlineStr" r="A4"><is><t></t></is></c></row>` +
+                                        `<row r="5"><c t="inlineStr" r="A5"><is><t></t></is></c></row>`;
                                     $(sheet).find('sheetData').prepend(summary);
                                 } catch (e) {
                                     console.warn('Excel customize failed', e);
                                 }
                             }
                         },
+
+                        // ── PDF ────────────────────────────────────────────────
                         {
                             extend: 'pdfHtml5',
                             text: '<i class="fas fa-file-pdf"></i> PDF',
@@ -468,6 +571,7 @@ function showDetails(idBox) {
                             pageSize: 'A4',
                             exportOptions: { columns: ':visible' },
                             customize: function (doc) {
+
                                 if (logoBase64) {
                                     doc.content.unshift({
                                         image: logoBase64,
@@ -475,65 +579,111 @@ function showDetails(idBox) {
                                         margin: [0, 0, 0, 6]
                                     });
                                 }
-                                // insertar resumen arriba de la tabla
-                                var tableIndex = -1;
-                                for (var i = 0; i < doc.content.length; i++) {
-                                    if (doc.content[i] && doc.content[i].table) { tableIndex = i; break; }
-                                }
+
                                 function buildResumenLines(obj) {
-                                    let lines = [];
-
-                                    Object.entries(obj).forEach(([code, info]) => {
-                                        let label = code === 'USD' ? 'Dólares:' : 'Soles:';
-                                        lines.push({
-                                            text: `${label}    ${info.symbol} ${info.total.toFixed(2)}`,
-                                            margin: [10, 0, 0, 2]
-                                        });
-                                    });
-
-                                    if (lines.length === 0) {
-                                        lines.push({
-                                            text: 'Soles:    S/ 0.00',
-                                            margin: [10, 0, 0, 2]
-                                        });
-                                    }
-
-                                    return lines;
+                                    if (!Object.keys(obj).length)
+                                        return [{ text: 'S/ 0.00', margin: [10, 0, 0, 2] }];
+                                    return Object.values(obj).map(info => ({
+                                        text: `${info.symbol} ${info.total.toFixed(2)}`,
+                                        margin: [10, 0, 0, 2]
+                                    }));
                                 }
 
-                                var resumenBlock = [
-                                    { text: 'Resumen Efectivo:', style: 'subheader', margin: [0, 6, 0, 2] },
-                                    {
-                                        stack: buildResumenLines(payments_cash_by_currency)
-                                    },
-
-                                    { text: 'Resumen Bancos:', style: 'subheader', margin: [0, 8, 0, 2] },
-                                    {
-                                        stack: buildResumenLines(payments_non_cash_by_currency)
-                                    }
+                                const resumenBlock = [
+                                    //{ text: 'Resumen por Métodos:', style: 'subheader', margin: [0, 6, 0, 2] },
+                                    //{ text: resumenMethodsText, margin: [10, 0, 0, 6] },
+                                    { text: 'Efectivo:', style: 'subheader', margin: [0, 4, 0, 2] },
+                                    { stack: buildResumenLines(payments_cash_by_currency) },
+                                    { text: 'Bancos / Digital:', style: 'subheader', margin: [0, 4, 0, 2] },
+                                    { stack: buildResumenLines(payments_non_cash_by_currency) },
+                                    { text: ' ', margin: [0, 6, 0, 0] }
                                 ];
-                                if (tableIndex >= 0) {
+
+                                const tableIndex = doc.content.findIndex(c => c && c.table);
+                                if (tableIndex >= 0)
                                     doc.content.splice(tableIndex, 0, ...resumenBlock);
-                                } else {
+                                else
                                     doc.content.push(...resumenBlock);
+
+                                // Fila de totales al pie de la tabla PDF
+                                const tIdx = doc.content.findIndex(c => c && c.table);
+                                if (tIdx >= 0) {
+                                    const tableNode = doc.content[tIdx];
+                                    const colCount = tableNode.table.body?.[0]?.length || 10;
+                                    tableNode.table.body.push(buildPdfFooterRow(colCount));
+                                    tableNode.table.widths = ['auto', 'auto', '*', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto'];
                                 }
+
                                 doc.styles = doc.styles || {};
-                                doc.styles.tableHeader = doc.styles.tableHeader || {};
-                                doc.styles.tableHeader.fillColor = '#343a40';
-                                doc.styles.tableHeader.color = '#ffffff';
+                                doc.styles.tableHeader = {
+                                    ...(doc.styles.tableHeader || {}),
+                                    fillColor: '#343a40',
+                                    color: '#ffffff',
+                                    fontSize: 8,
+                                    bold: true
+                                };
+                                doc.defaultStyle = doc.defaultStyle || {};
+                                doc.defaultStyle.fontSize = 7;
                             }
                         }
                     ],
+
                     columns: [
                         { title: 'N°' },
                         { title: 'Serie' },
                         { title: 'Cliente' },
                         { title: 'Fecha' },
-                        { title: 'Forma de Pago' },
+                        { title: 'Efectivo' },
+                        { title: 'Yape' },
+                        { title: 'Plin' },
+                        { title: 'Transferencia' },
+                        { title: 'Depósito' },
                         { title: 'Total' },
                     ],
+
+                    // ── Footer HTML (sumatoria visible en pantalla) ───────────
+                    footerCallback: function (row, data, start, end, display) {
+                        try {
+                            const api = this.api();
+                            methodKeys.forEach((k, i) => {
+                                $(api.column(4 + i).footer())
+                                    .html(`<strong>${formatCurrencyObj(methodTotals[k], '-')}</strong>`);
+                            });
+                            const grand = Object.values(methodTotals).reduce((acc, obj) => {
+                                Object.entries(obj).forEach(([code, info]) => {
+                                    if (!acc[code]) acc[code] = { symbol: info.symbol, total: 0 };
+                                    acc[code].total += info.total;
+                                });
+                                return acc;
+                            }, {});
+                            $(api.column(9).footer()).html(`<strong>${formatCurrencyObj(grand, '-')}</strong>`);
+                            $(api.column(3).footer()).html('<strong>TOTALES</strong>');
+                        } catch (e) {
+                            console.warn('footerCallback error', e);
+                        }
+                    },
+
+                    // ── Idioma inline (evita error CORS del JSON externo) ─────
                     language: {
-                        url: '//cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json'
+                        sProcessing: "Procesando...",
+                        sLengthMenu: "Mostrar _MENU_ registros",
+                        sZeroRecords: "No se encontraron resultados",
+                        sEmptyTable: "Ningún dato disponible en esta tabla",
+                        sInfo: "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
+                        sInfoEmpty: "Mostrando registros del 0 al 0 de un total de 0 registros",
+                        sInfoFiltered: "(filtrado de un total de _MAX_ registros)",
+                        sSearch: "Buscar:",
+                        sUrl: "",
+                        oPaginate: {
+                            sFirst: "Primero",
+                            sLast: "Último",
+                            sNext: "Siguiente",
+                            sPrevious: "Anterior"
+                        },
+                        oAria: {
+                            sSortAscending: ": Activar para ordenar de manera ascendente",
+                            sSortDescending: ": Activar para ordenar de manera descendente"
+                        }
                     }
                 });
             });
