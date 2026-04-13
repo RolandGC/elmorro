@@ -593,6 +593,7 @@
             // Escuchar cuando se agregan nuevos bloques de pago
             const observer = new MutationObserver(function(mutations) {
                 updatePaymentsSummary();
+                updateEquivalentTotal(); // <-- Añadido para que se refresque al eliminar
                 // Reinicializar datepickers cuando se agregan nuevos bloques
                 initializePaymentDatePickers();
             });
