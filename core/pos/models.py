@@ -448,8 +448,6 @@ class Sale(models.Model):
     card_number = models.CharField(max_length=30, null=True, blank=True)
     titular = models.CharField(max_length=30, null=True, blank=True)
     amount_debited = models.DecimalField(max_digits=9, decimal_places=2, default=0.00)
-    exchange_rate = models.DecimalField(default=3.50, decimal_places=4, max_digits=9, verbose_name='Tasa de Cambio')
-    base_currency = models.ForeignKey(Currency, on_delete=models.RESTRICT, null=True, blank=True, verbose_name="Moneda Base")
     comment = models.TextField(max_length=600, null=True, blank=True, verbose_name='Comentario')
 
     def __str__(self):
