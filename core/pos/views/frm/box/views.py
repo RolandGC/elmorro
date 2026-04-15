@@ -346,10 +346,17 @@ class BoxPrintTicketView(LoginRequiredMixin, View):
                                 'total': 0
                             }
                         payments_non_cash_by_currency[currency_code]['total'] += float(payment.amount)
+                if payments_cash_by_currency['PEN']:
+                    payments_cash_by_currency['PEN']['total'] = float(payments_cash_by_currency['PEN']['total']) - float(box.bills or 0)
+                
+                if payments_by_currency['PEN']:
+                    payments_by_currency['PEN']['total'] = float(payments_by_currency['PEN']['total']) - float(box.bills or 0)
 
                 context['payments_by_currency'] = payments_by_currency
                 context['payments_cash_by_currency'] = payments_cash_by_currency
                 context['payments_non_cash_by_currency'] = payments_non_cash_by_currency
+                print('printttt',payments_cash_by_currency)
+                
                 # If no payments found, fallback to box fields so template shows a summary
                 if not payments_by_currency:
                     # Soles
@@ -384,6 +391,7 @@ class BoxPrintTicketView(LoginRequiredMixin, View):
                     context['payments_by_currency'] = payments_by_currency
                     context['payments_cash_by_currency'] = payments_cash_by_currency
                     context['payments_non_cash_by_currency'] = payments_non_cash_by_currency
+                    print(payments_cash_by_currency)
             except Exception:
                 # No interrumpir la generación del PDF si ocurre un error al agregar resúmenes
                 logger.exception('Error building payments summary for box print')

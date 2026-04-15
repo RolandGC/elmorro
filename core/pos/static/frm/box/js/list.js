@@ -396,7 +396,7 @@ function showDetails(idBox) {
             // ── Helper formato objeto moneda → texto ──────────────────────────
             const formatCurrencyObj = (obj, emptyText = '-') =>
                 Object.keys(obj).length
-                    ? Object.values(obj).map(i => `${i.symbol}${i.total.toFixed(2)}`).join(' / ')
+                    ? Object.values(obj).map(i => `${i.symbol}${i.total.toFixed(2)}`).join('  |  ')
                     : emptyText;
 
             const formatSingleCurrencyTotal = (obj, codes) => {
@@ -474,7 +474,7 @@ function showDetails(idBox) {
             // ── Textos resumen para exports ───────────────────────────────────
             const resumenMethodsText = methodKeys
                 .map(k => `${methodLabels[k]}: ${formatCurrencyObj(methodTotals[k], 'S/0.00')}`)
-                .join('  |  ');
+                .join('   |   ');
             const resumenEfectivoText = formatCurrencyObj(payments_cash_by_currency, 'S/0.00');
             const resumenBancosText = formatCurrencyObj(payments_non_cash_by_currency, 'S/0.00');
 
@@ -605,10 +605,10 @@ function showDetails(idBox) {
                                 const resumenBlock = [
                                     //{ text: 'Resumen por Métodos:', style: 'subheader', margin: [0, 6, 0, 2] },
                                     //{ text: resumenMethodsText, margin: [10, 0, 0, 6] },
-                                    { text: 'Efectivo:', style: 'subheader', margin: [0, 4, 0, 2] },
-                                    { stack: buildResumenLines(payments_cash_by_currency) },
-                                    { text: 'Bancos / Digital:', style: 'subheader', margin: [0, 4, 0, 2] },
-                                    { stack: buildResumenLines(payments_non_cash_by_currency) },
+                                    //{ text: 'Efectivo:', style: 'subheader', margin: [0, 4, 0, 2] },
+                                    //{ stack: buildResumenLines(payments_cash_by_currency) },
+                                    //{ text: 'Bancos / Digital:', style: 'subheader', margin: [0, 4, 0, 2] },
+                                    //{ stack: buildResumenLines(payments_non_cash_by_currency) },
                                     { text: ' ', margin: [0, 6, 0, 0] }
                                 ];
 
@@ -625,6 +625,76 @@ function showDetails(idBox) {
                                     const colCount = tableNode.table.body?.[0]?.length || 11;
                                     tableNode.table.body.push(buildPdfFooterRow(colCount));
                                     tableNode.table.widths = ['auto', 'auto', '*', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto'];
+                                    tableNode.layout = {
+                                        hLineWidth: function (i, node) {
+                                            return 0.5; // grosor horizontal
+                                        },
+                                        vLineWidth: function (i, node) {
+                                            return 0.5; // grosor vertical
+                                        },
+                                        hLineColor: function (i, node) {
+                                            return '#cccccc'; // color gris claro
+                                        },
+                                        vLineColor: function (i, node) {
+                                            return '#cccccc'; // color gris claro
+                                        },
+                                        paddingLeft: function () { return 4; },
+                                        paddingRight: function () { return 4; },
+                                        paddingTop: function () { return 2; },
+                                        paddingBottom: function () { return 2; }
+                                    };
+                                    // --- Resumen final: efectivo (Soles) - gastos (bills) y línea de firma ---
+                                    try {
+                                        // calcular efectivo en soles (todas las monedas que no sean USD)
+                                        var cashObj = payments_cash_by_currency || {};
+                                        var solesCash = 0;
+                                        var usdCash = 0;
+                                        Object.entries(cashObj).forEach(function(ent) {
+                                            var code = ent[0];
+                                            var info = ent[1];
+                                            if (String(code).toUpperCase() === 'USD') usdCash += info.total;
+                                            else solesCash += info.total;
+                                        });
+                                        var billsVal = 0;
+                                        try { billsVal = parseFloat(box?.bills) || 0; } catch (e) { billsVal = 0; }
+                                        var entregableSoles = solesCash - billsVal;
+
+                                        var finalBlock = [
+                                            { text: 'Resumen Final', style: 'subheader', margin: [0, 8, 0, 4] },
+                                            { text: `Efectivo (Soles): S/ ${solesCash.toFixed(2)}`, margin: [0, 0, 0, 4] },
+                                            
+                                        ];
+                                        if (usdCash > 0) {
+                                            finalBlock.push({ text: `Egresos: S/ ${billsVal.toFixed(2)}`, margin: [0, 0, 0, 4] },)
+                                        }
+                                       
+                                        finalBlock.push({ text: `TOTAL A ENTREGAR: S/ ${entregableSoles.toFixed(2)}`, bold: true, margin: [0, 0, 0, 8] },
+                                            {
+                                                columns: [
+                                                    {
+                                                        stack: [
+                                                            { canvas: [{ type: 'line', x1: 250, y1: 0, x2: 100, y2: 0, lineWidth: 0.5 }], margin: [0, 10, 0, 6] },
+                                                            { text: 'Firma Supervisor', alignment: 'center', margin: [0, 0, 0, 0] }
+                                                        ],
+                                                        width: '50%'
+                                                    },
+                                                    {
+                                                        stack: [
+                                                            { canvas: [{ type: 'line', x1: 250, y1: 0, x2: 100, y2: 0, lineWidth: 0.5 }], margin: [0, 10, 0, 6] },
+                                                            { text: 'Firma Usuario', alignment: 'center', margin: [0, 0, 0, 0] }
+                                                        ],
+                                                        width: '50%'
+                                                    }
+                                                ],
+                                                columnGap: 40,
+                                                margin: [0, 40, 0, 10]
+                                            })
+
+                                        // insertar después de la tabla
+                                        doc.content.splice(tIdx + 1, 0, ...finalBlock);
+                                    } catch (e) {
+                                        console.warn('No se pudo generar resumen final en PDF', e);
+                                    }
                                 }
 
                                 doc.styles = doc.styles || {};
