@@ -299,7 +299,7 @@ function showDetails(idBox) {
         $('#tblBoxSales tbody').empty();
     }
 
-    // ── Reconstruir thead y tfoot con las 10 columnas correctas ─────────
+    // ── Reconstruir thead y tfoot con las 11 columnas correctas ─────────
     // Esto resuelve el error "Cannot read properties of undefined (reading 'style')"
     // que ocurre cuando el thead/tfoot no coincide con las columnas del JS
     (function rebuildTableStructure() {
@@ -310,7 +310,7 @@ function showDetails(idBox) {
         $tbl.find('tfoot').remove();
         $tbl.find('tbody').empty();
 
-        const cols = ['N°', 'Serie', 'Cliente', 'Fecha', 'Efectivo', 'Yape', 'Plin', 'Transferencia', 'Depósito', 'Total'];
+        const cols = ['N°', 'Serie', 'Cliente', 'Fecha', 'Efectivo', 'Yape', 'Plin', 'Transferencia', 'Depósito', 'Total S/', 'Total $'];
 
         let thead = '<thead><tr>';
         cols.forEach(c => { thead += `<th>${c}</th>`; });
@@ -399,6 +399,14 @@ function showDetails(idBox) {
                     ? Object.values(obj).map(i => `${i.symbol}${i.total.toFixed(2)}`).join(' / ')
                     : emptyText;
 
+            const formatSingleCurrencyTotal = (obj, codes) => {
+                const key = Object.keys(obj).find(k => codes.includes(String(k || '').toUpperCase()));
+                if (!key || !obj[key]) {
+                    return '-';
+                }
+                return `${obj[key].symbol}${obj[key].total.toFixed(2)}`;
+            };
+
             // ── Construir filas ───────────────────────────────────────────────
             const tableData = sales.map((s, idx) => {
                 const clientName = s.client?.user?.full_name || s.client?.user?.fullName || '-';
@@ -451,7 +459,8 @@ function showDetails(idBox) {
                     formatCurrencyObj(perMethod['plin']),
                     formatCurrencyObj(perMethod['transferencia']),
                     formatCurrencyObj(perMethod['deposito']),
-                    formatCurrencyObj(saleCurrencyTotals),
+                    formatSingleCurrencyTotal(saleCurrencyTotals, ['PEN', 'SOL']),
+                    formatSingleCurrencyTotal(saleCurrencyTotals, ['USD', 'DOL']),
                 ];
             });
 
@@ -498,6 +507,9 @@ function showDetails(idBox) {
                     return acc;
                 }, {});
 
+                const totalSoles = formatSingleCurrencyTotal(grandTotal, ['PEN', 'SOL']);
+                const totalDolares = formatSingleCurrencyTotal(grandTotal, ['USD', 'DOL']);
+
                 const valueMap = {
                     3: 'TOTALES',
                     4: formatCurrencyObj(methodTotals['efectivo'], ''),
@@ -505,7 +517,8 @@ function showDetails(idBox) {
                     6: formatCurrencyObj(methodTotals['plin'], ''),
                     7: formatCurrencyObj(methodTotals['transferencia'], ''),
                     8: formatCurrencyObj(methodTotals['deposito'], ''),
-                    9: formatCurrencyObj(grandTotal, ''),
+                    9: totalSoles,
+                    10: totalDolares,
                 };
 
                 const cells = [];
@@ -609,9 +622,9 @@ function showDetails(idBox) {
                                 const tIdx = doc.content.findIndex(c => c && c.table);
                                 if (tIdx >= 0) {
                                     const tableNode = doc.content[tIdx];
-                                    const colCount = tableNode.table.body?.[0]?.length || 10;
+                                    const colCount = tableNode.table.body?.[0]?.length || 11;
                                     tableNode.table.body.push(buildPdfFooterRow(colCount));
-                                    tableNode.table.widths = ['auto', 'auto', '*', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto'];
+                                    tableNode.table.widths = ['auto', 'auto', '*', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto'];
                                 }
 
                                 doc.styles = doc.styles || {};
@@ -638,7 +651,8 @@ function showDetails(idBox) {
                         { title: 'Plin' },
                         { title: 'Transferencia' },
                         { title: 'Depósito' },
-                        { title: 'Total' },
+                        { title: 'Total S/' },
+                        { title: 'Total $' },
                     ],
 
                     // ── Footer HTML (sumatoria visible en pantalla) ───────────
@@ -656,7 +670,8 @@ function showDetails(idBox) {
                                 });
                                 return acc;
                             }, {});
-                            $(api.column(9).footer()).html(`<strong>${formatCurrencyObj(grand, '-')}</strong>`);
+                            $(api.column(9).footer()).html(`<strong>${formatSingleCurrencyTotal(grand, ['PEN', 'SOL'])}</strong>`);
+                            $(api.column(10).footer()).html(`<strong>${formatSingleCurrencyTotal(grand, ['USD', 'DOL'])}</strong>`);
                             $(api.column(3).footer()).html('<strong>TOTALES</strong>');
                         } catch (e) {
                             console.warn('footerCallback error', e);
