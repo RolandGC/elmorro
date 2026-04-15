@@ -721,8 +721,8 @@ function showDetails(idBox) {
                         { title: 'Plin' },
                         { title: 'Transferencia' },
                         { title: 'Depósito' },
-                        { title: 'Total S/' },
-                        { title: 'Total $' },
+                        { title: 'Total Soles' },
+                        { title: 'Total Dólares' },
                     ],
 
                     // ── Footer HTML (sumatoria visible en pantalla) ───────────
