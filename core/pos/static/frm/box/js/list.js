@@ -657,11 +657,16 @@ function showDetails(idBox) {
                                         });
                                         var billsVal = 0;
                                         try { billsVal = parseFloat(box?.bills) || 0; } catch (e) { billsVal = 0; }
-                                        var entregableSoles = solesCash - billsVal;
+                                        var initialBox = 0;
+                                        try { initialBox = parseFloat(box?.initial_box_soles) || 0; } catch (e) { initialBox = 0; }
+
+                                        // Total entregable = caja inicial + efectivo recaudado - gastos
+                                        var entregableSoles = initialBox + solesCash - billsVal;
 
                                         var finalBlock = [
                                             { text: 'Resumen Final', style: 'subheader', margin: [0, 8, 0, 4] },
                                             { text: `Efectivo (Soles): S/ ${solesCash.toFixed(2)}`, margin: [0, 0, 0, 4] },
+                                            { text: `Caja Inicial (Soles): S/ ${initialBox.toFixed(2)}`, margin: [0, 0, 0, 4] },
                                             
                                         ];
                                         if (usdCash > 0) {
