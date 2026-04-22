@@ -664,36 +664,47 @@ function showDetails(idBox) {
                                         var entregableSoles = initialBox + solesCash - billsVal;
 
                                         var finalBlock = [
-                                            { text: 'Resumen Final', style: 'subheader', margin: [0, 8, 0, 4] },
-                                            { text: `Efectivo (Soles): S/ ${solesCash.toFixed(2)}`, margin: [0, 0, 0, 4] },
-                                            { text: `Caja Inicial (Soles): S/ ${initialBox.toFixed(2)}`, margin: [0, 0, 0, 4] },
-                                            
+                                            { text: 'Resumen Final', style: 'subheader', margin: [0, 8, 0, 4] }
                                         ];
-                                        if (usdCash > 0) {
-                                            finalBlock.push({ text: `Egresos: S/ ${billsVal.toFixed(2)}`, margin: [0, 0, 0, 4] },)
+
+                                        // Mostrar efectivo solo si existe (evita mostrar 0.00 innecesario)
+                                        if (solesCash && Number(solesCash) !== 0) {
+                                            finalBlock.push({ text: `Efectivo (Soles): S/ ${solesCash.toFixed(2)}`, margin: [0, 0, 0, 4] });
                                         }
-                                       
-                                        finalBlock.push({ text: `TOTAL A ENTREGAR: S/ ${entregableSoles.toFixed(2)}`, bold: true, margin: [0, 0, 0, 8] },
-                                            {
-                                                columns: [
-                                                    {
-                                                        stack: [
-                                                            { canvas: [{ type: 'line', x1: 250, y1: 0, x2: 100, y2: 0, lineWidth: 0.5 }], margin: [0, 10, 0, 6] },
-                                                            { text: 'Firma Supervisor', alignment: 'center', margin: [0, 0, 0, 0] }
-                                                        ],
-                                                        width: '50%'
-                                                    },
-                                                    {
-                                                        stack: [
-                                                            { canvas: [{ type: 'line', x1: 250, y1: 0, x2: 100, y2: 0, lineWidth: 0.5 }], margin: [0, 10, 0, 6] },
-                                                            { text: 'Firma Usuario', alignment: 'center', margin: [0, 0, 0, 0] }
-                                                        ],
-                                                        width: '50%'
-                                                    }
-                                                ],
-                                                columnGap: 40,
-                                                margin: [0, 40, 0, 10]
-                                            })
+
+                                        // Mostrar caja inicial solo si tiene valor
+                                        if (initialBox && Number(initialBox) !== 0) {
+                                            finalBlock.push({ text: `Caja Inicial (Soles): S/ ${initialBox.toFixed(2)}`, margin: [0, 0, 0, 4] });
+                                        }
+
+                                        // Mostrar egresos solo si hay gastos
+                                        if (billsVal && Number(billsVal) !== 0) {
+                                            finalBlock.push({ text: `Egresos (-): S/ ${billsVal.toFixed(2)}`, margin: [0, 0, 0, 4] });
+                                        }
+
+                                        // Siempre mostrar el TOTAL A ENTREGAR (puede ser 0 o negativo)
+                                        finalBlock.push({ text: `TOTAL A ENTREGAR: S/ ${entregableSoles.toFixed(2)}`, bold: true, margin: [0, 0, 0, 8] });
+
+                                        finalBlock.push({
+                                            columns: [
+                                                {
+                                                    stack: [
+                                                        { canvas: [{ type: 'line', x1: 250, y1: 0, x2: 100, y2: 0, lineWidth: 0.5 }], margin: [0, 10, 0, 6] },
+                                                        { text: 'Firma Supervisor', alignment: 'center', margin: [0, 0, 0, 0] }
+                                                    ],
+                                                    width: '50%'
+                                                },
+                                                {
+                                                    stack: [
+                                                        { canvas: [{ type: 'line', x1: 250, y1: 0, x2: 100, y2: 0, lineWidth: 0.5 }], margin: [0, 10, 0, 6] },
+                                                        { text: 'Firma Usuario', alignment: 'center', margin: [0, 0, 0, 0] }
+                                                    ],
+                                                    width: '50%'
+                                                }
+                                            ],
+                                            columnGap: 40,
+                                            margin: [0, 40, 0, 10]
+                                        });
 
                                         // insertar después de la tabla
                                         doc.content.splice(tIdx + 1, 0, ...finalBlock);
