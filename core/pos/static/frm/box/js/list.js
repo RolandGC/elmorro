@@ -310,7 +310,7 @@ function showDetails(idBox) {
         $tbl.find('tfoot').remove();
         $tbl.find('tbody').empty();
 
-        const cols = ['N°', 'Serie', 'Cliente', 'Fecha', 'Efectivo', 'Yape', 'Plin', 'Transferencia', 'Depósito', 'Total S/', 'Total $'];
+        const cols = ['N°', 'Serie', 'Fecha', 'Comentario (Nota Ped.)', 'Cliente', 'Efectivo', 'Yape', 'Plin', 'Transferencia', 'Depósito', 'Total S/', 'Total $'];
 
         let thead = '<thead><tr>';
         cols.forEach(c => { thead += `<th>${c}</th>`; });
@@ -452,8 +452,9 @@ function showDetails(idBox) {
                 return [
                     idx + 1,
                     s.serie || '-',
-                    clientName,
                     s.date_joined || '-',
+                    s.comment || '-',
+                    clientName,
                     formatCurrencyObj(perMethod['efectivo']),
                     formatCurrencyObj(perMethod['yape']),
                     formatCurrencyObj(perMethod['plin']),
@@ -511,14 +512,14 @@ function showDetails(idBox) {
                 const totalDolares = formatSingleCurrencyTotal(grandTotal, ['USD', 'DOL']);
 
                 const valueMap = {
-                    3: 'TOTALES',
-                    4: formatCurrencyObj(methodTotals['efectivo'], ''),
-                    5: formatCurrencyObj(methodTotals['yape'], ''),
-                    6: formatCurrencyObj(methodTotals['plin'], ''),
-                    7: formatCurrencyObj(methodTotals['transferencia'], ''),
-                    8: formatCurrencyObj(methodTotals['deposito'], ''),
-                    9: totalSoles,
-                    10: totalDolares,
+                    4: 'TOTALES',
+                    5: formatCurrencyObj(methodTotals['efectivo'], ''),
+                    6: formatCurrencyObj(methodTotals['yape'], ''),
+                    7: formatCurrencyObj(methodTotals['plin'], ''),
+                    8: formatCurrencyObj(methodTotals['transferencia'], ''),
+                    9: formatCurrencyObj(methodTotals['deposito'], ''),
+                    10: totalSoles,
+                    11: totalDolares,
                 };
 
                 const cells = [];
@@ -579,7 +580,20 @@ function showDetails(idBox) {
                             extend: 'pdfHtml5',
                             text: '<i class="fas fa-file-pdf"></i> PDF',
                             className: 'btn btn-danger btn-sm',
-                            title: `Reporte de Caja - ${box?.datetime_close || ''}`,
+                            // Construir nombre de usuario (preferir nombre y apellido, sino full_name, sino username)
+                            title: (function() {
+                                try {
+                                    const dt = box?.datetime_close || '';
+                                    let userName = '';
+                                    if (box && box.user) {
+                                        const u = box.user;
+                                        if (u.first_name && u.last_name) userName = `${u.first_name} ${u.last_name}`;
+                                        else if (u.full_name) userName = u.full_name;
+                                        else if (u.username) userName = u.username;
+                                    }
+                                    return `Reporte de Caja - ${dt} de ${userName}`;
+                                } catch (e) { return `Reporte de Caja - ${box?.datetime_close || ''}`; }
+                            })(),
                             orientation: 'landscape',
                             pageSize: 'A4',
                             exportOptions: { columns: ':visible' },
@@ -622,27 +636,40 @@ function showDetails(idBox) {
                                 const tIdx = doc.content.findIndex(c => c && c.table);
                                 if (tIdx >= 0) {
                                     const tableNode = doc.content[tIdx];
-                                    const colCount = tableNode.table.body?.[0]?.length || 11;
-                                    tableNode.table.body.push(buildPdfFooterRow(colCount));
-                                    tableNode.table.widths = ['auto', 'auto', '*', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto'];
-                                    tableNode.layout = {
-                                        hLineWidth: function (i, node) {
-                                            return 0.5; // grosor horizontal
-                                        },
-                                        vLineWidth: function (i, node) {
-                                            return 0.5; // grosor vertical
-                                        },
-                                        hLineColor: function (i, node) {
-                                            return '#cccccc'; // color gris claro
-                                        },
-                                        vLineColor: function (i, node) {
-                                            return '#cccccc'; // color gris claro
-                                        },
-                                        paddingLeft: function () { return 4; },
-                                        paddingRight: function () { return 4; },
-                                        paddingTop: function () { return 2; },
-                                        paddingBottom: function () { return 2; }
-                                    };
+                                    // Asegurarnos de que la tabla tenga body válido antes de manipularla
+                                    if (tableNode && tableNode.table && Array.isArray(tableNode.table.body) && tableNode.table.body.length > 0) {
+                                        const colCount = tableNode.table.body[0].length || 11;
+                                        tableNode.table.body.push(buildPdfFooterRow(colCount));
+
+                                        // Construir widths dinámicamente para evitar desajustes
+                                        const widths = [];
+                                        for (let i = 0; i < colCount; i++) {
+                                            if (i === 0 || i === 1) widths.push('auto');
+                                            else if (i === 2) widths.push('auto');
+                                            else if (i === 4) widths.push('*');
+                                            else widths.push('auto');
+                                        }
+                                        tableNode.table.widths = widths;
+                                        tableNode.layout = {
+                                            hLineWidth: function (i, node) {
+                                                return 0.5; // grosor horizontal
+                                            },
+                                            vLineWidth: function (i, node) {
+                                                return 0.5; // grosor vertical
+                                            },
+                                            hLineColor: function (i, node) {
+                                                return '#cccccc'; // color gris claro
+                                            },
+                                            vLineColor: function (i, node) {
+                                                return '#cccccc'; // color gris claro
+                                            },
+                                            paddingLeft: function () { return 4; },
+                                            paddingRight: function () { return 4; },
+                                            paddingTop: function () { return 2; },
+                                            paddingBottom: function () { return 2; }
+                                        };
+                                    }
+
                                     // --- Resumen final: efectivo (Soles) - gastos (bills) y línea de firma ---
                                     try {
                                         // calcular efectivo en soles (todas las monedas que no sean USD)
@@ -664,7 +691,7 @@ function showDetails(idBox) {
                                         var entregableSoles = initialBox + solesCash - billsVal;
 
                                         var finalBlock = [
-                                            { text: 'Resumen Final', style: 'subheader', margin: [0, 8, 0, 4] }
+                                            { text: 'RESUMEN FINAL', style: 'subheader', bold: true, margin: [0, 8, 0, 4] }
                                         ];
 
                                         // Mostrar efectivo solo si existe (evita mostrar 0.00 innecesario)
@@ -730,8 +757,9 @@ function showDetails(idBox) {
                     columns: [
                         { title: 'N°' },
                         { title: 'Serie' },
-                        { title: 'Cliente' },
                         { title: 'Fecha' },
+                        { title: 'Comentario (Nota Ped.)' },
+                        { title: 'Cliente' },
                         { title: 'Efectivo' },
                         { title: 'Yape' },
                         { title: 'Plin' },
