@@ -679,29 +679,47 @@ function showDetails(idBox) {
                                         Object.entries(cashObj).forEach(function(ent) {
                                             var code = ent[0];
                                             var info = ent[1];
-                                            if (String(code).toUpperCase() === 'USD') usdCash += info.total;
-                                            else solesCash += info.total;
+                                            // usar el helper parseNum para manejar comas y símbolos
+                                            var totalVal = parseNum(info.total);
+                                            var codeNorm = String(code || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+                                            // aceptar USD, DOL, DÓLAR, etc.
+                                            if (codeNorm.indexOf('USD') !== -1 || codeNorm.indexOf('DOL') !== -1) {
+                                                usdCash += totalVal;
+                                            } else {
+                                                solesCash += totalVal;
+                                            }
                                         });
                                         var billsVal = 0;
-                                        try { billsVal = parseFloat(box?.bills) || 0; } catch (e) { billsVal = 0; }
-                                        var initialBox = 0;
-                                        try { initialBox = parseFloat(box?.initial_box_soles) || 0; } catch (e) { initialBox = 0; }
+                                        try { billsVal = parseFloat(String(box?.bills).replace(/,/g, '')) || 0; } catch (e) { billsVal = 0; }
 
-                                        // Total entregable = caja inicial + efectivo recaudado - gastos
+                                        var initialBox = 0;
+                                        try { initialBox = parseFloat(String(box?.initial_box_soles).replace(/,/g, '')) || 0; } catch (e) { initialBox = 0; }
+
+                                        var initialBoxDolares = 0;
+                                        try { initialBoxDolares = parseFloat(String(box?.initial_box_dolares).replace(/,/g, '')) || 0; } catch (e) { initialBoxDolares = 0; }
+
+                                        // Total entregable = caja inicial + efectivo recaudado - gastos (soles)
                                         var entregableSoles = initialBox + solesCash - billsVal;
+                                        // Dólares: inicial + efectivo en USD (egresos en soles no se restan aquí)
+                                        console.log('roland', initialBoxDolares, 'usdCash', usdCash);
+                                        var entregableDolares = initialBoxDolares + usdCash;
 
                                         var finalBlock = [
                                             { text: 'RESUMEN FINAL', style: 'subheader', bold: true, margin: [0, 8, 0, 4] }
                                         ];
-
-                                        // Mostrar efectivo solo si existe (evita mostrar 0.00 innecesario)
-                                        if (solesCash && Number(solesCash) !== 0) {
-                                            finalBlock.push({ text: `Efectivo (Soles): S/ ${solesCash.toFixed(2)}`, margin: [0, 0, 0, 4] });
-                                        }
-
+                                        
                                         // Mostrar caja inicial solo si tiene valor
                                         if (initialBox && Number(initialBox) !== 0) {
                                             finalBlock.push({ text: `Caja Inicial (Soles): S/ ${initialBox.toFixed(2)}`, margin: [0, 0, 0, 4] });
+                                        }
+                                        
+                                        if (initialBoxDolares && Number(initialBoxDolares) !== 0) {
+                                            finalBlock.push({ text: `Caja Inicial (Dolares): $ ${initialBoxDolares.toFixed(2)}`, margin: [0, 0, 0, 4] });
+                                        }
+                                        
+                                        // Mostrar efectivo solo si existe (evita mostrar 0.00 innecesario)
+                                        if (solesCash && Number(solesCash) !== 0) {
+                                            finalBlock.push({ text: `Total Efectivo (Soles): S/ ${solesCash.toFixed(2)}`, margin: [0, 0, 0, 4] });
                                         }
 
                                         // Mostrar egresos solo si hay gastos
@@ -710,8 +728,11 @@ function showDetails(idBox) {
                                         }
 
                                         // Siempre mostrar el TOTAL A ENTREGAR (puede ser 0 o negativo)
-                                        finalBlock.push({ text: `TOTAL A ENTREGAR: S/ ${entregableSoles.toFixed(2)}`, bold: true, margin: [0, 0, 0, 8] });
+                                        finalBlock.push({ text: `TOTAL A ENTREGAR EN SOLES (efectivo): S/ ${entregableSoles.toFixed(2)}`, bold: true, margin: [0, 0, 0, 8] });
 
+                                        if (entregableDolares && Number(entregableDolares) !== 0) {
+                                            finalBlock.push({ text: `TOTAL A ENTREGAR EN DOLARES (efectivo): $ ${entregableDolares.toFixed(2)}`, bold: true, margin: [0, 0, 0, 4] });
+                                        }
                                         finalBlock.push({
                                             columns: [
                                                 {
