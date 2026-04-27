@@ -862,7 +862,7 @@ class Expenses(models.Model):
         """
         Calcula automáticamente el número de serie del gasto basado en:
         - La serie asignada al usuario que registra el gasto
-        - El contador secuencial de gastos para esa serie
+        - El último número emitido para esa serie
         Formato: {NombreSerie}-{número_4_dígitos}
         Ejemplo: GAS-0001
         """
@@ -870,15 +870,23 @@ class Expenses(models.Model):
             try:
                 user_expense_series = UserExpenseSeries.objects.get(user=self.user)
                 series_name = user_expense_series.expense_series.name
-                
-                # Contar cuántos gastos previos tiene este usuario con esta serie
-                expenses_count = Expenses.objects.filter(
+
+                # Tomar la última serie usada por este usuario para esa serie base
+                last_expense_serie = Expenses.objects.filter(
                     user=self.user,
                     expense_serie__startswith=f'{series_name}-'
-                ).count()
-                
-                # El siguiente número secuencial
-                next_number = expenses_count + 1
+                ).exclude(expense_serie__isnull=True).exclude(expense_serie='').order_by('-id').values_list('expense_serie', flat=True).first()
+
+                # Si no hay registros previos, arrancar en 0001
+                if last_expense_serie:
+                    try:
+                        last_number = int(str(last_expense_serie).rsplit('-', 1)[-1])
+                    except (TypeError, ValueError, IndexError):
+                        last_number = 0
+                    next_number = last_number + 1
+                else:
+                    next_number = 1
+
                 self.expense_serie = f'{series_name}-{next_number:04d}'
             except UserExpenseSeries.DoesNotExist:
                 # Si el usuario no tiene serie asignada, dejamos el campo vacío
