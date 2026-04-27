@@ -541,7 +541,7 @@ class Sale(models.Model):
         """
         Calcula automáticamente el número de serie de la venta basado en:
         - La serie asignada al empleado (usuario) que realiza la venta
-        - El contador secuencial de ventas para esa serie
+        - El último número emitido para esa serie
         Formato: {NombreSerie}-{número_4_dígitos}
         Ejemplo: PH-500-0001
         """
@@ -549,16 +549,23 @@ class Sale(models.Model):
             try:
                 user_series = UserSeries.objects.get(user=self.employee)
                 series_name = user_series.series.name
-                
-                # Contar cuántas ventas previas tiene este usuario con esta serie
-                # Usamos pk__lt para contar solo ventas guardadas anteriormente
-                sales_count = Sale.objects.filter(
+
+                # Tomar la última serie usada por este usuario para esa serie base
+                last_sale_serie = Sale.objects.filter(
                     employee=self.employee,
                     serie__startswith=f'{series_name}-'
-                ).count()
-                
-                # El siguiente número secuencial
-                next_number = sales_count + 1
+                ).exclude(serie__isnull=True).exclude(serie='').order_by('-id').values_list('serie', flat=True).first()
+
+                # Si no hay registros previos, arrancar en 0001
+                if last_sale_serie:
+                    try:
+                        last_number = int(str(last_sale_serie).rsplit('-', 1)[-1])
+                    except (TypeError, ValueError, IndexError):
+                        last_number = 0
+                    next_number = last_number + 1
+                else:
+                    next_number = 1
+
                 self.serie = f'{series_name}-{next_number:04d}'
             except UserSeries.DoesNotExist:
                 # Si el usuario no tiene serie asignada, dejamos el campo vacío
