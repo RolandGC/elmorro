@@ -310,7 +310,7 @@ function showDetails(idBox) {
         $tbl.find('tfoot').remove();
         $tbl.find('tbody').empty();
 
-        const cols = ['N°', 'Serie', 'Cliente', 'Fecha', 'Efectivo', 'Yape', 'Plin', 'Transferencia', 'Depósito', 'Total S/', 'Total $'];
+        const cols = ['N°', 'Serie', 'Fecha', 'Comentario (Nota Ped.)', 'Cliente', 'Efectivo', 'Yape', 'Plin', 'Transferencia', 'Depósito', 'Total S/', 'Total $'];
 
         let thead = '<thead><tr>';
         cols.forEach(c => { thead += `<th>${c}</th>`; });
@@ -452,8 +452,9 @@ function showDetails(idBox) {
                 return [
                     idx + 1,
                     s.serie || '-',
-                    clientName,
                     s.date_joined || '-',
+                    s.comment || '-',
+                    clientName,
                     formatCurrencyObj(perMethod['efectivo']),
                     formatCurrencyObj(perMethod['yape']),
                     formatCurrencyObj(perMethod['plin']),
@@ -511,14 +512,14 @@ function showDetails(idBox) {
                 const totalDolares = formatSingleCurrencyTotal(grandTotal, ['USD', 'DOL']);
 
                 const valueMap = {
-                    3: 'TOTALES',
-                    4: formatCurrencyObj(methodTotals['efectivo'], ''),
-                    5: formatCurrencyObj(methodTotals['yape'], ''),
-                    6: formatCurrencyObj(methodTotals['plin'], ''),
-                    7: formatCurrencyObj(methodTotals['transferencia'], ''),
-                    8: formatCurrencyObj(methodTotals['deposito'], ''),
-                    9: totalSoles,
-                    10: totalDolares,
+                    4: 'TOTALES',
+                    5: formatCurrencyObj(methodTotals['efectivo'], ''),
+                    6: formatCurrencyObj(methodTotals['yape'], ''),
+                    7: formatCurrencyObj(methodTotals['plin'], ''),
+                    8: formatCurrencyObj(methodTotals['transferencia'], ''),
+                    9: formatCurrencyObj(methodTotals['deposito'], ''),
+                    10: totalSoles,
+                    11: totalDolares,
                 };
 
                 const cells = [];
@@ -579,7 +580,20 @@ function showDetails(idBox) {
                             extend: 'pdfHtml5',
                             text: '<i class="fas fa-file-pdf"></i> PDF',
                             className: 'btn btn-danger btn-sm',
-                            title: `Reporte de Caja - ${box?.datetime_close || ''}`,
+                            // Construir nombre de usuario (preferir nombre y apellido, sino full_name, sino username)
+                            title: (function() {
+                                try {
+                                    const dt = box?.datetime_close || '';
+                                    let userName = '';
+                                    if (box && box.user) {
+                                        const u = box.user;
+                                        if (u.first_name && u.last_name) userName = `${u.first_name} ${u.last_name}`;
+                                        else if (u.full_name) userName = u.full_name;
+                                        else if (u.username) userName = u.username;
+                                    }
+                                    return `Reporte de Caja - ${dt} de ${userName}`;
+                                } catch (e) { return `Reporte de Caja - ${box?.datetime_close || ''}`; }
+                            })(),
                             orientation: 'landscape',
                             pageSize: 'A4',
                             exportOptions: { columns: ':visible' },
@@ -622,27 +636,40 @@ function showDetails(idBox) {
                                 const tIdx = doc.content.findIndex(c => c && c.table);
                                 if (tIdx >= 0) {
                                     const tableNode = doc.content[tIdx];
-                                    const colCount = tableNode.table.body?.[0]?.length || 11;
-                                    tableNode.table.body.push(buildPdfFooterRow(colCount));
-                                    tableNode.table.widths = ['auto', 'auto', '*', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto'];
-                                    tableNode.layout = {
-                                        hLineWidth: function (i, node) {
-                                            return 0.5; // grosor horizontal
-                                        },
-                                        vLineWidth: function (i, node) {
-                                            return 0.5; // grosor vertical
-                                        },
-                                        hLineColor: function (i, node) {
-                                            return '#cccccc'; // color gris claro
-                                        },
-                                        vLineColor: function (i, node) {
-                                            return '#cccccc'; // color gris claro
-                                        },
-                                        paddingLeft: function () { return 4; },
-                                        paddingRight: function () { return 4; },
-                                        paddingTop: function () { return 2; },
-                                        paddingBottom: function () { return 2; }
-                                    };
+                                    // Asegurarnos de que la tabla tenga body válido antes de manipularla
+                                    if (tableNode && tableNode.table && Array.isArray(tableNode.table.body) && tableNode.table.body.length > 0) {
+                                        const colCount = tableNode.table.body[0].length || 11;
+                                        tableNode.table.body.push(buildPdfFooterRow(colCount));
+
+                                        // Construir widths dinámicamente para evitar desajustes
+                                        const widths = [];
+                                        for (let i = 0; i < colCount; i++) {
+                                            if (i === 0 || i === 1) widths.push('auto');
+                                            else if (i === 2) widths.push('auto');
+                                            else if (i === 4) widths.push('*');
+                                            else widths.push('auto');
+                                        }
+                                        tableNode.table.widths = widths;
+                                        tableNode.layout = {
+                                            hLineWidth: function (i, node) {
+                                                return 0.5; // grosor horizontal
+                                            },
+                                            vLineWidth: function (i, node) {
+                                                return 0.5; // grosor vertical
+                                            },
+                                            hLineColor: function (i, node) {
+                                                return '#cccccc'; // color gris claro
+                                            },
+                                            vLineColor: function (i, node) {
+                                                return '#cccccc'; // color gris claro
+                                            },
+                                            paddingLeft: function () { return 4; },
+                                            paddingRight: function () { return 4; },
+                                            paddingTop: function () { return 2; },
+                                            paddingBottom: function () { return 2; }
+                                        };
+                                    }
+
                                     // --- Resumen final: efectivo (Soles) - gastos (bills) y línea de firma ---
                                     try {
                                         // calcular efectivo en soles (todas las monedas que no sean USD)
@@ -652,43 +679,80 @@ function showDetails(idBox) {
                                         Object.entries(cashObj).forEach(function(ent) {
                                             var code = ent[0];
                                             var info = ent[1];
-                                            if (String(code).toUpperCase() === 'USD') usdCash += info.total;
-                                            else solesCash += info.total;
+                                            // usar el helper parseNum para manejar comas y símbolos
+                                            var totalVal = parseNum(info.total);
+                                            var codeNorm = String(code || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+                                            // aceptar USD, DOL, DÓLAR, etc.
+                                            if (codeNorm.indexOf('USD') !== -1 || codeNorm.indexOf('DOL') !== -1) {
+                                                usdCash += totalVal;
+                                            } else {
+                                                solesCash += totalVal;
+                                            }
                                         });
                                         var billsVal = 0;
-                                        try { billsVal = parseFloat(box?.bills) || 0; } catch (e) { billsVal = 0; }
-                                        var entregableSoles = solesCash - billsVal;
+                                        try { billsVal = parseFloat(String(box?.bills).replace(/,/g, '')) || 0; } catch (e) { billsVal = 0; }
+
+                                        var initialBox = 0;
+                                        try { initialBox = parseFloat(String(box?.initial_box_soles).replace(/,/g, '')) || 0; } catch (e) { initialBox = 0; }
+
+                                        var initialBoxDolares = 0;
+                                        try { initialBoxDolares = parseFloat(String(box?.initial_box_dolares).replace(/,/g, '')) || 0; } catch (e) { initialBoxDolares = 0; }
+
+                                        // Total entregable = caja inicial + efectivo recaudado - gastos (soles)
+                                        var entregableSoles = initialBox + solesCash - billsVal;
+                                        // Dólares: inicial + efectivo en USD (egresos en soles no se restan aquí)
+                                        console.log('roland', initialBoxDolares, 'usdCash', usdCash);
+                                        var entregableDolares = initialBoxDolares + usdCash;
 
                                         var finalBlock = [
-                                            { text: 'Resumen Final', style: 'subheader', margin: [0, 8, 0, 4] },
-                                            { text: `Efectivo (Soles): S/ ${solesCash.toFixed(2)}`, margin: [0, 0, 0, 4] },
-                                            
+                                            { text: 'RESUMEN FINAL', style: 'subheader', bold: true, margin: [0, 8, 0, 4] }
                                         ];
-                                        if (usdCash > 0) {
-                                            finalBlock.push({ text: `Egresos: S/ ${billsVal.toFixed(2)}`, margin: [0, 0, 0, 4] },)
+                                        
+                                        // Mostrar caja inicial solo si tiene valor
+                                        if (initialBox && Number(initialBox) !== 0) {
+                                            finalBlock.push({ text: `Caja Inicial (Soles): S/ ${initialBox.toFixed(2)}`, margin: [0, 0, 0, 4] });
                                         }
-                                       
-                                        finalBlock.push({ text: `TOTAL A ENTREGAR: S/ ${entregableSoles.toFixed(2)}`, bold: true, margin: [0, 0, 0, 8] },
-                                            {
-                                                columns: [
-                                                    {
-                                                        stack: [
-                                                            { canvas: [{ type: 'line', x1: 250, y1: 0, x2: 100, y2: 0, lineWidth: 0.5 }], margin: [0, 10, 0, 6] },
-                                                            { text: 'Firma Supervisor', alignment: 'center', margin: [0, 0, 0, 0] }
-                                                        ],
-                                                        width: '50%'
-                                                    },
-                                                    {
-                                                        stack: [
-                                                            { canvas: [{ type: 'line', x1: 250, y1: 0, x2: 100, y2: 0, lineWidth: 0.5 }], margin: [0, 10, 0, 6] },
-                                                            { text: 'Firma Usuario', alignment: 'center', margin: [0, 0, 0, 0] }
-                                                        ],
-                                                        width: '50%'
-                                                    }
-                                                ],
-                                                columnGap: 40,
-                                                margin: [0, 40, 0, 10]
-                                            })
+                                        
+                                        if (initialBoxDolares && Number(initialBoxDolares) !== 0) {
+                                            finalBlock.push({ text: `Caja Inicial (Dolares): $ ${initialBoxDolares.toFixed(2)}`, margin: [0, 0, 0, 4] });
+                                        }
+                                        
+                                        // Mostrar efectivo solo si existe (evita mostrar 0.00 innecesario)
+                                        if (solesCash && Number(solesCash) !== 0) {
+                                            finalBlock.push({ text: `Total Efectivo (Soles): S/ ${solesCash.toFixed(2)}`, margin: [0, 0, 0, 4] });
+                                        }
+
+                                        // Mostrar egresos solo si hay gastos
+                                        if (billsVal && Number(billsVal) !== 0) {
+                                            finalBlock.push({ text: `Egresos (-): S/ ${billsVal.toFixed(2)}`, margin: [0, 0, 0, 4] });
+                                        }
+
+                                        // Siempre mostrar el TOTAL A ENTREGAR (puede ser 0 o negativo)
+                                        finalBlock.push({ text: `TOTAL A ENTREGAR EN SOLES (efectivo): S/ ${entregableSoles.toFixed(2)}`, bold: true, margin: [0, 0, 0, 8] });
+
+                                        if (entregableDolares && Number(entregableDolares) !== 0) {
+                                            finalBlock.push({ text: `TOTAL A ENTREGAR EN DOLARES (efectivo): $ ${entregableDolares.toFixed(2)}`, bold: true, margin: [0, 0, 0, 4] });
+                                        }
+                                        finalBlock.push({
+                                            columns: [
+                                                {
+                                                    stack: [
+                                                        { canvas: [{ type: 'line', x1: 250, y1: 0, x2: 100, y2: 0, lineWidth: 0.5 }], margin: [0, 10, 0, 6] },
+                                                        { text: 'Firma Supervisor', alignment: 'center', margin: [0, 0, 0, 0] }
+                                                    ],
+                                                    width: '50%'
+                                                },
+                                                {
+                                                    stack: [
+                                                        { canvas: [{ type: 'line', x1: 250, y1: 0, x2: 100, y2: 0, lineWidth: 0.5 }], margin: [0, 10, 0, 6] },
+                                                        { text: 'Firma Usuario', alignment: 'center', margin: [0, 0, 0, 0] }
+                                                    ],
+                                                    width: '50%'
+                                                }
+                                            ],
+                                            columnGap: 40,
+                                            margin: [0, 40, 0, 10]
+                                        });
 
                                         // insertar después de la tabla
                                         doc.content.splice(tIdx + 1, 0, ...finalBlock);
@@ -714,15 +778,16 @@ function showDetails(idBox) {
                     columns: [
                         { title: 'N°' },
                         { title: 'Serie' },
-                        { title: 'Cliente' },
                         { title: 'Fecha' },
+                        { title: 'Comentario (Nota Ped.)' },
+                        { title: 'Cliente' },
                         { title: 'Efectivo' },
                         { title: 'Yape' },
                         { title: 'Plin' },
                         { title: 'Transferencia' },
                         { title: 'Depósito' },
-                        { title: 'Total S/' },
-                        { title: 'Total $' },
+                        { title: 'Total Soles' },
+                        { title: 'Total Dólares' },
                     ],
 
                     // ── Footer HTML (sumatoria visible en pantalla) ───────────

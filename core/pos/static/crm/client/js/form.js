@@ -23,6 +23,10 @@ document.addEventListener('DOMContentLoaded', function (e) {
                         stringLength: {
                             min: 2,
                         },
+                        regexp: {
+                            regexp: /^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\-\_\(\)\. ]+$/,
+                            message: 'Solo se permiten letras, números, espacios y caracteres ( . _ - )'
+                        }
                     }
                 },
                 dni: {
@@ -184,7 +188,9 @@ $(function () {
     });
 
     $('input[name="full_name"]').keypress(function (e) {
-        return validate_form_text('letters', e, null);
+        var char = String.fromCharCode(e.which || e.keyCode);
+        var re = /^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\-\_\(\)\. ]+$/;
+        return re.test(char);
     });
 
     // $('input[name="dni"]').keypress(function (e) {

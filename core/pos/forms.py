@@ -633,11 +633,21 @@ class ClientForm(ModelForm):
         }
         exclude = ['user']
 
-    full_name = forms.CharField(widget=forms.TextInput(attrs={
-        'class': 'form-control',
-        'autocomplete': 'off',
-        'placeholder': 'Ingrese sus nombres completos'
-    }), label='Nombre completo o Razón Social', max_length=50)
+    full_name = forms.CharField(
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'autocomplete': 'off',
+            'placeholder': 'Ingrese sus nombres completos'
+        }), 
+        label='Nombre completo o Razón Social', 
+        max_length=50,
+        validators=[
+            RegexValidator(
+                regex=r'^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\-\_\(\)\. ]+$',
+                message='El nombre contiene caracteres no permitidos (solo letras, números, puntos, guiones y paréntesis).'
+            )
+        ]
+    )
 
     # alnum_validator = RegexValidator(r'^[A-Za-z0-9 ]+$', 'Sólo se permiten letras y números')
     dni = forms.CharField(widget=forms.TextInput(attrs={
