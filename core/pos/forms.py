@@ -318,9 +318,13 @@ class BoxForm(ModelForm):
             self.fields['datetime_close'].widget.attrs['readonly'] = 'readonly'
             if self.instance.datetime_close:
                 # Nos aseguramos que el HTML tenga instanciado el value formato iso
-                self.fields['datetime_close'].widget.attrs['value'] = self.instance.datetime_close.strftime('%Y-%m-%dT%H:%M')
+                self.fields['datetime_close'].widget.attrs['value'] = self.instance.datetime_close.strftime('%Y-%m-%dT%H:%M:%S')
         else:
-            self.fields['datetime_close'].widget.attrs['value'] = datetime.now().strftime('%Y-%m-%dT%H:%M')
+            now = datetime.now()
+            # Limpiar el valor de la instancia para que no sobreescriba
+            self.instance.datetime_close = None
+            self.initial['datetime_close'] = now
+            self.fields['datetime_close'].widget.attrs['value'] = now.strftime('%Y-%m-%dT%H:%M:%S')
 
         # Calcular valores iniciales dinámicamente
         if self.instance and self.user:
@@ -362,12 +366,16 @@ class BoxForm(ModelForm):
             'deposito_soles', 'deposito_dolares', 'yape', 'plin', 'bills','box_final_dolares', 'box_final_soles'
         ]
         widgets = {
-            'datetime_close': forms.DateTimeInput(format='%Y-%m-%d %H:%M', attrs={
-                'type': 'datetime-local',
-                #'class': 'p-2',
-                'style': 'padding: 0px 30px;',
-                'required': 'required'
-            }),
+            'datetime_close': forms.DateTimeInput(
+                format='%Y-%m-%dT%H:%M:%S',
+                attrs={
+                    'type': 'datetime-local',
+                    'step': '1',
+                    'style': 'padding: 0px 30px;',
+                    'required': 'required',
+                    'value': datetime.now().strftime('%Y-%m-%dT%H:%M:%S')  # 👈 Agrega esto
+                }
+            ),
             'desc': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': '3',
@@ -484,7 +492,8 @@ class BoxForm(ModelForm):
 
         total = SalePayment.objects.filter(
             sale__employee=self.user,
-            sale__date_joined__range=[fecha_inicio, fecha_fin],
+            sale__date_joined__gte=fecha_inicio,
+            sale__date_joined__lt=fecha_fin,
             payment_method__code='efectivo',
             currency__code__in=['PEN', 'SOL']
         ).aggregate(total=Sum('amount'))['total'] or 0
@@ -498,7 +507,8 @@ class BoxForm(ModelForm):
 
         total = SalePayment.objects.filter(
             sale__employee=self.user,
-            sale__date_joined__range=[fecha_inicio, fecha_fin],
+            sale__date_joined__gte=fecha_inicio,
+            sale__date_joined__lt=fecha_fin,
             payment_method__code='efectivo',
             currency__code__in=['USD', 'DÓLAR']
         ).aggregate(total=Sum('amount'))['total'] or 0
@@ -512,7 +522,8 @@ class BoxForm(ModelForm):
 
         total = SalePayment.objects.filter(
             sale__employee=self.user,
-            sale__date_joined__range=[fecha_inicio, fecha_fin],
+            sale__date_joined__gte=fecha_inicio,
+            sale__date_joined__lt=fecha_fin,
             payment_method__code='transferencia',
             currency__code__in=['PEN', 'SOL']
         ).aggregate(total=Sum('amount'))['total'] or 0
@@ -526,7 +537,8 @@ class BoxForm(ModelForm):
 
         total = SalePayment.objects.filter(
             sale__employee=self.user,
-            sale__date_joined__range=[fecha_inicio, fecha_fin],
+            sale__date_joined__gte=fecha_inicio,
+            sale__date_joined__lt=fecha_fin,
             payment_method__code='transferencia',
             currency__code__in=['USD', 'DÓLAR']
         ).aggregate(total=Sum('amount'))['total'] or 0
@@ -540,7 +552,8 @@ class BoxForm(ModelForm):
 
         total = SalePayment.objects.filter(
             sale__employee=self.user,
-            sale__date_joined__range=[fecha_inicio, fecha_fin],
+            sale__date_joined__gte=fecha_inicio,
+            sale__date_joined__lt=fecha_fin,
             payment_method__code='deposito',
             currency__code__in=['PEN', 'SOL']
         ).aggregate(total=Sum('amount'))['total'] or 0
@@ -554,7 +567,8 @@ class BoxForm(ModelForm):
 
         total = SalePayment.objects.filter(
             sale__employee=self.user,
-            sale__date_joined__range=[fecha_inicio, fecha_fin],
+            sale__date_joined__gte=fecha_inicio,
+            sale__date_joined__lt=fecha_fin,
             payment_method__code='deposito',
             currency__code__in=['USD', 'DÓLAR']
         ).aggregate(total=Sum('amount'))['total'] or 0
@@ -568,7 +582,8 @@ class BoxForm(ModelForm):
 
         total = SalePayment.objects.filter(
             sale__employee=self.user,
-            sale__date_joined__range=[fecha_inicio, fecha_fin],
+            sale__date_joined__gte=fecha_inicio,
+            sale__date_joined__lt=fecha_fin,
             payment_method__code='yape',
             currency__code__in=['PEN', 'SOL']
         ).aggregate(total=Sum('amount'))['total'] or 0
@@ -582,7 +597,8 @@ class BoxForm(ModelForm):
 
         total = SalePayment.objects.filter(
             sale__employee=self.user,
-            sale__date_joined__range=[fecha_inicio, fecha_fin],
+            sale__date_joined__gte=fecha_inicio,
+            sale__date_joined__lt=fecha_fin,
             payment_method__code='plin',
             currency__code__in=['PEN', 'SOL']
         ).aggregate(total=Sum('amount'))['total'] or 0
@@ -596,7 +612,8 @@ class BoxForm(ModelForm):
 
         total = Expenses.objects.filter(
             user=self.user,
-            date_joined__range=[fecha_inicio.date(), fecha_fin.date()]
+            date_joined__gte=fecha_inicio.date(),
+            date_joined__lt=fecha_fin.date()
         ).aggregate(total=Sum('valor'))['total'] or 0
 
         return float(total)

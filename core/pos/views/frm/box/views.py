@@ -303,8 +303,8 @@ class BoxPrintTicketView(LoginRequiredMixin, View):
                     # rango exclusivo en lower bound, inclusive en upper bound
                     pagos = SalePayment.objects.filter(
                         sale__employee=box.user,
-                        sale__date_joined__gt=prev_box.datetime_close,
-                        sale__date_joined__lte=box.datetime_close
+                        sale__date_joined__gte=prev_box.datetime_close,
+                        sale__date_joined__lt=box.datetime_close
                     )
                 else:
                     # desde inicio del día hasta el cierre (inclusive)
@@ -312,7 +312,7 @@ class BoxPrintTicketView(LoginRequiredMixin, View):
                     pagos = SalePayment.objects.filter(
                         sale__employee=box.user,
                         sale__date_joined__gte=fecha_inicio,
-                        sale__date_joined__lte=box.datetime_close
+                        sale__date_joined__lt=box.datetime_close
                     )
 
                 payments_by_currency = {}
@@ -346,16 +346,15 @@ class BoxPrintTicketView(LoginRequiredMixin, View):
                                 'total': 0
                             }
                         payments_non_cash_by_currency[currency_code]['total'] += float(payment.amount)
-                if payments_cash_by_currency['PEN']:
+                if payments_cash_by_currency.get('PEN'):
                     payments_cash_by_currency['PEN']['total'] = float(payments_cash_by_currency['PEN']['total']) - float(box.bills or 0)
                 
-                if payments_by_currency['PEN']:
+                if payments_by_currency.get('PEN'):
                     payments_by_currency['PEN']['total'] = float(payments_by_currency['PEN']['total']) - float(box.bills or 0)
 
                 context['payments_by_currency'] = payments_by_currency
                 context['payments_cash_by_currency'] = payments_cash_by_currency
                 context['payments_non_cash_by_currency'] = payments_non_cash_by_currency
-                print('printttt',payments_cash_by_currency)
                 
                 # If no payments found, fallback to box fields so template shows a summary
                 if not payments_by_currency:
@@ -426,8 +425,8 @@ class BoxSalesRangeView(LoginRequiredMixin, View):
                 # Hay cierre previo: tomar ventas entre ambos cierres
                 sales_qs = Sale.objects.filter(
                     employee=box.user,
-                    date_joined__gt=prev_box.datetime_close,
-                    date_joined__lte=box.datetime_close
+                    date_joined__gte=prev_box.datetime_close,
+                    date_joined__lt=box.datetime_close
                 )
             else:
                 # ✅ Sin cierre previo: tomar TODAS las ventas hasta este cierre
@@ -509,8 +508,8 @@ class BoxUpdateView(PermissionMixin, UpdateView):
             # Pagos entre cierre anterior y el datetime_close de esta caja
             pagos = SalePayment.objects.filter(
                 sale__employee=user,
-                sale__date_joined__gt=fecha_inicio,
-                sale__date_joined__lte=fecha_cierre
+                sale__date_joined__gte=fecha_inicio,
+                sale__date_joined__lt=fecha_cierre
             ).values(
                 'currency__code', 'currency__name', 'currency__symbol', 'payment_method__code'
             ).annotate(total=Sum('amount'))
@@ -563,7 +562,8 @@ class BoxUpdateView(PermissionMixin, UpdateView):
 
             total_gastos = Expenses.objects.filter(
                 user=user,
-                date_joined__range=[fecha_inicio.date(), fecha_cierre.date()]
+                date_joined__gte=fecha_inicio.date(),
+                date_joined__lt=fecha_cierre.date()
             ).aggregate(total=Sum('valor'))['total'] or 0
             data['bills'] = round(float(total_gastos), 2)
 

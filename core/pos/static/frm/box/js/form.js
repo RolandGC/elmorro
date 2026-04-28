@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const day = String(now.getDate()).padStart(2, '0');
         const hours = String(now.getHours()).padStart(2, '0');
         const minutes = String(now.getMinutes()).padStart(2, '0');
-        datetimeCloseInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+        //datetimeCloseInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
     }
 
     function getNumericValue(element) {
