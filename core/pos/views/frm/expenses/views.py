@@ -1,4 +1,5 @@
 import json
+from datetime import datetime, time
 
 from django.http import HttpResponse
 from django.urls import reverse_lazy
@@ -24,13 +25,15 @@ class ExpensesListView(PermissionMixin, FormView):
                 start_date = request.POST['start_date']
                 end_date = request.POST['end_date']
                 if len(start_date) and len(end_date):
-                    search = search.filter(date_joined__date__range=[start_date, end_date])
+                    start_datetime = datetime.strptime(start_date, '%Y-%m-%d')
+                    end_datetime = datetime.combine(datetime.strptime(end_date, '%Y-%m-%d').date(), time.max)
+                    search = search.filter(date_joined__gte=start_datetime, date_joined__lte=end_datetime)
                 for a in search:
                     data.append(a.toJSON())
             else:
                 data['error'] = 'No ha ingresado una opción'
         except Exception as e:
-            data['error'] = str(e)
+            data = {'error': str(e)}
         return HttpResponse(json.dumps(data), content_type='application/json')
 
     def get_context_data(self, **kwargs):
