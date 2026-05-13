@@ -24,7 +24,7 @@ class ExpensesListView(PermissionMixin, FormView):
                 start_date = request.POST['start_date']
                 end_date = request.POST['end_date']
                 if len(start_date) and len(end_date):
-                    search = search.filter(date_joined__range=[start_date, end_date])
+                    search = search.filter(date_joined__date__range=[start_date, end_date])
                 for a in search:
                     data.append(a.toJSON())
             else:
