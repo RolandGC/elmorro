@@ -612,8 +612,8 @@ class BoxForm(ModelForm):
 
         total = Expenses.objects.filter(
             user=self.user,
-            date_joined__gte=fecha_inicio.date(),
-            date_joined__lt=fecha_fin.date()
+            date_joined__gte=fecha_inicio,
+            date_joined__lt=fecha_fin
         ).aggregate(total=Sum('valor'))['total'] or 0
 
         return float(total)
