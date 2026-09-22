@@ -15,7 +15,7 @@
             // Exponer tasa de cambio desde el contexto de Django antes de cargar form.js
             window.companyExchangeRate = parseFloat('{{ exchange_rate|default:"1.00" }}') || 1.0;
         </script>
-    <script src="{% static 'crm/sale/admin/js/form.js' %}?v=8"></script>
+    <script src="{% static 'crm/sale/admin/js/form.js' %}?v=9"></script>
     <style>
         /* Estilos responsive para textarea y inputs */
         textarea {
@@ -205,7 +205,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="row mt-1">
+                                        <div class="row">
                                             <div class="col-lg-6 col-md-6">
                                                 <div class="form-group mb-2">
                                                     <label class="control-label">Monto:</label>
@@ -214,14 +214,14 @@
                                             </div>
                                             <div class="col-lg-6 col-md-6">
                                                 <div class="form-group mb-2">
-                                                    <label class="control-label">Equivalente (visual):</label>
+                                                    <label class="control-label">Monto equivalente:</label>
                                                     <div class="input-group">
                                                         <select class="form-control form-control-sm payment-eq-currency-select" style="max-width:120px;">
                                                             <option value="">---------</option>
                                                         </select>
                                                         <input type="number" step="0.01" min="0" class="form-control form-control-sm payment-amount-equiv" name="pay_amount_equiv">
                                                     </div>
-                                                    <small class="text-muted">Solo visual: al ingresar aquí se actualizará el Monto (guardado) según la tasa de cambio.</small>
+                                                    <small class="form-text text-muted mb-0">Equivalente en la moneda contraria (solo si hay Moneda Base).</small>
                                                 </div>
                                             </div>
                                         </div>
@@ -241,18 +241,28 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="col-lg-12 payment-optional-field" style="display: none;">
-                                    <div class="form-group">
-                                        <label>Fecha de Pago: <span class="text-danger">*</span></label>
-                                        <div class="input-group">
-                                                <input type="date"
-                                                    class="form-control form-control-sm payment-date"
-                                                    name="payment_date_joined"
-                                                    value="{{ today }}"
-                                                    required>
+                                        <div class="row">
+                                            <div class="col-lg-6 col-md-6 payment-optional-field" style="display: none;">
+                                                <div class="form-group mb-2">
+                                                    <label class="control-label">Tipo de Transferencia:</label>
+                                                    <select class="form-control form-control-sm payment-transfer-type" name="pay_transfer_type">
+                                                        <option value="">---------</option>
+                                                        <option value="cajero">CAJERO</option>
+                                                        <option value="ventanilla">VENTANILLA</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-6 col-md-6 payment-optional-field" style="display: none;">
+                                                <div class="form-group mb-2">
+                                                    <label class="control-label">Fecha de Pago: <span class="text-danger">*</span></label>
+                                                    <input type="date"
+                                                           class="form-control form-control-sm payment-date"
+                                                           name="payment_date_joined"
+                                                           value="{{ today }}"
+                                                           required>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                </div>
                                     </div>
                                 </div>
                             </template>
@@ -387,14 +397,14 @@
                                             <div class="row">
                                                 <div class="col-lg-6 col-md-6">
                                                     <div class="form-group">
-                                                        <label class="control-label">Operación:</label>
-                                                        {{ form.operation }}
+                                                        <label class="control-label">Monto de deuda:</label>
+                                                        {{ form.debt_amount }}
                                                     </div>
                                                 </div>
                                                 <div class="col-lg-6 col-md-6">
                                                     <div class="form-group">
-                                                        <label class="control-label">Tipo de Transferencia:</label>
-                                                        {{ form.transfer_type }}
+                                                        <label class="control-label">Fecha de despacho:</label>
+                                                        {{ form.dispatch_date }}
                                                     </div>
                                                 </div>
                                             </div>

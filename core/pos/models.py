@@ -452,8 +452,8 @@ class Sale(models.Model):
     base_currency = models.ForeignKey(Currency, on_delete=models.RESTRICT, null=True, blank=True, verbose_name="Moneda Base")
     order_note = models.CharField(max_length=255, null=True, blank=True, verbose_name='Nota de Pedido')
     freight_forwarder = models.CharField(max_length=150, null=True, blank=True, verbose_name='Fletero')
-    operation = models.CharField(max_length=100, null=True, blank=True, verbose_name='Operación')
-    transfer_type = models.CharField(max_length=20, choices=transfer_type, null=True, blank=True, verbose_name='Tipo de Transferencia')
+    debt_amount = models.DecimalField(max_digits=9, decimal_places=2, null=True, blank=True, verbose_name='Monto de Deuda')
+    dispatch_date = models.DateField(null=True, blank=True, verbose_name='Fecha de Despacho')
     comment = models.TextField(max_length=600, null=True, blank=True, verbose_name='Comentario')
 
     def __str__(self):
@@ -647,6 +647,8 @@ class SalePayment(models.Model):
     currency = models.ForeignKey(Currency, on_delete=models.PROTECT, verbose_name='Moneda')
     bank = models.ForeignKey(PaymentBank, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Banco')
     operation_number = models.CharField(max_length=50, null=True, blank=True, verbose_name='Nro de Operación')
+    transfer_type = models.CharField(max_length=20, choices=transfer_type, null=True, blank=True, verbose_name='Tipo de Transferencia')
+    equivalent_amount = models.DecimalField(max_digits=9, decimal_places=2, null=True, blank=True, verbose_name='Monto Equivalente')
     date_joined = models.DateField(default=date.today, verbose_name='Fecha del Pago')
 
     def __str__(self):

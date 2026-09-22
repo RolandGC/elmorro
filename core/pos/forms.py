@@ -800,13 +800,16 @@ class SaleForm(ModelForm):
                 'autocomplete': 'off',
                 'placeholder': 'Ingrese el fletero'
             }),
-            'operation': forms.TextInput(attrs={
+            'debt_amount': forms.NumberInput(attrs={
                 'class': 'form-control',
+                'step': '0.01',
+                'min': '0',
                 'autocomplete': 'off',
-                'placeholder': 'Ingrese la operación'
+                'placeholder': 'Ingrese el monto de deuda'
             }),
-            'transfer_type': forms.Select(attrs={
-                'class': 'form-control'
+            'dispatch_date': forms.DateInput(format='%Y-%m-%d', attrs={
+                'class': 'form-control',
+                'type': 'date'
             }),
         }
 

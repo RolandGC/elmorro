@@ -142,8 +142,16 @@ class SaleAdminCreateView(PermissionMixin, CreateView):
                     
                     sale.order_note = (request.POST.get('order_note') or '').strip() or None
                     sale.freight_forwarder = (request.POST.get('freight_forwarder') or '').strip() or None
-                    sale.operation = (request.POST.get('operation') or '').strip() or None
-                    sale.transfer_type = request.POST.get('transfer_type') or None
+                    debt_amount = request.POST.get('debt_amount', '')
+                    try:
+                        sale.debt_amount = float(debt_amount) if debt_amount not in ('', None) else None
+                    except (TypeError, ValueError):
+                        sale.debt_amount = None
+                    dispatch_date = request.POST.get('dispatch_date', '')
+                    try:
+                        sale.dispatch_date = datetime.strptime(dispatch_date, '%Y-%m-%d').date() if dispatch_date else None
+                    except (TypeError, ValueError):
+                        sale.dispatch_date = None
                     
                     # if date_joined was not provided or could not be parsed, use current datetime
                     if not getattr(sale, 'date_joined', None):
@@ -190,6 +198,14 @@ class SaleAdminCreateView(PermissionMixin, CreateView):
                                 sp.bank_id = int(bank_id)
                         
                         sp.operation_number = pay.get('operation_number', '')
+                        sp.transfer_type = pay.get('transfer_type') or None
+                        if sale.base_currency_id:
+                            equivalent_amount = pay.get('equivalent_amount', '')
+                            if equivalent_amount not in ('', None):
+                                try:
+                                    sp.equivalent_amount = float(equivalent_amount)
+                                except (TypeError, ValueError):
+                                    pass
                         
                         # Guardar la fecha de pago
                         date_joined = pay.get('date_joined', '')
@@ -360,8 +376,16 @@ class SaleAdminUpdateView(SaleAdminCreateView):
                     
                     sale.order_note = (request.POST.get('order_note') or '').strip() or None
                     sale.freight_forwarder = (request.POST.get('freight_forwarder') or '').strip() or None
-                    sale.operation = (request.POST.get('operation') or '').strip() or None
-                    sale.transfer_type = request.POST.get('transfer_type') or None
+                    debt_amount = request.POST.get('debt_amount', '')
+                    try:
+                        sale.debt_amount = float(debt_amount) if debt_amount not in ('', None) else None
+                    except (TypeError, ValueError):
+                        sale.debt_amount = None
+                    dispatch_date = request.POST.get('dispatch_date', '')
+                    try:
+                        sale.dispatch_date = datetime.strptime(dispatch_date, '%Y-%m-%d').date() if dispatch_date else None
+                    except (TypeError, ValueError):
+                        sale.dispatch_date = None
                     
                     sale.save()
 
@@ -411,6 +435,14 @@ class SaleAdminUpdateView(SaleAdminCreateView):
                                 sp.bank_id = int(bank_id)
                         
                         sp.operation_number = pay.get('operation_number', '')
+                        sp.transfer_type = pay.get('transfer_type') or None
+                        if sale.base_currency_id:
+                            equivalent_amount = pay.get('equivalent_amount', '')
+                            if equivalent_amount not in ('', None):
+                                try:
+                                    sp.equivalent_amount = float(equivalent_amount)
+                                except (TypeError, ValueError):
+                                    pass
                         
                         # Guardar la fecha de pago
                         date_joined = pay.get('date_joined', '')

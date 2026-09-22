@@ -547,6 +547,8 @@ document.addEventListener('DOMContentLoaded', function (e) {
                 var currency = block.find('.payment-currency-select').val();
                 var bank = block.find('.payment-bank-select').val();
                 var operation = block.find('.payment-operation').val();
+                var transfer_type = block.find('.payment-transfer-type').val();
+                var equivalent_amount = block.find('.payment-amount-equiv').val();
                 var date_joined = block.find('.payment-date').val();
                 if (method && currency && parseFloat(amount) > 0) {
                     paymentsArray.push({
@@ -555,6 +557,8 @@ document.addEventListener('DOMContentLoaded', function (e) {
                         currency: currency,
                         bank: bank || '',
                         operation_number: operation || '',
+                        transfer_type: transfer_type || '',
+                        equivalent_amount: equivalent_amount || '',
                         date_joined: date_joined || ''
                     });
                 }
@@ -1357,6 +1361,12 @@ $(function () {
                 if (payment.operation_number) {
                     block.find('.payment-operation').val(payment.operation_number);
                 }
+                if (payment.transfer_type) {
+                    block.find('.payment-transfer-type').val(payment.transfer_type);
+                }
+                if (payment.equivalent_amount !== undefined && payment.equivalent_amount !== null && payment.equivalent_amount !== '') {
+                    block.find('.payment-amount-equiv').val(payment.equivalent_amount);
+                }
                 // Cargar fecha de pago si viene en el pago (formato DD/MM/YYYY esperado desde toJSON)
                 if (payment.date_joined) {
                     var date = moment(payment.date_joined, ['DD/MM/YYYY', 'YYYY-MM-DD', moment.ISO_8601]);
@@ -1387,9 +1397,9 @@ $(function () {
         // Cargar campos adicionales (Más detalles)
         $('input[name="order_note"]').val(saleData.order_note || '');
         $('input[name="freight_forwarder"]').val(saleData.freight_forwarder || '');
-        $('input[name="operation"]').val(saleData.operation || '');
-        $('select[name="transfer_type"]').val(saleData.transfer_type || '');
-        if (saleData.order_note || saleData.freight_forwarder || saleData.operation || saleData.transfer_type) {
+        $('input[name="debt_amount"]').val(saleData.debt_amount || '');
+        $('input[name="dispatch_date"]').val(saleData.dispatch_date || '');
+        if (saleData.order_note || saleData.freight_forwarder || saleData.debt_amount || saleData.dispatch_date) {
             $('#moreSaleDetails').addClass('show');
             $('button[data-target="#moreSaleDetails"]').attr('aria-expanded', 'true');
         }
