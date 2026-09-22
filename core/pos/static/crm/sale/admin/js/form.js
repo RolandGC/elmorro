@@ -1384,6 +1384,16 @@ $(function () {
         // Cargar comentario
         $('textarea[name="comment"]').val(saleData.comment || '');
 
+        // Cargar campos adicionales (Más detalles)
+        $('input[name="order_note"]').val(saleData.order_note || '');
+        $('input[name="freight_forwarder"]').val(saleData.freight_forwarder || '');
+        $('input[name="operation"]').val(saleData.operation || '');
+        $('select[name="transfer_type"]').val(saleData.transfer_type || '');
+        if (saleData.order_note || saleData.freight_forwarder || saleData.operation || saleData.transfer_type) {
+            $('#moreSaleDetails').addClass('show');
+            $('button[data-target="#moreSaleDetails"]').attr('aria-expanded', 'true');
+        }
+
         // Cargar fecha (convertir de DD/MM/YYYY HH:MM a YYYY-MM-DDTHH:MM)
         if (saleData.date_joined) {
             var date = moment(saleData.date_joined, ['DD/MM/YYYY HH:mm', 'DD/MM/YYYY', 'YYYY-MM-DD', moment.ISO_8601]);

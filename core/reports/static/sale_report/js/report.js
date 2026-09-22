@@ -1,4 +1,5 @@
 var input_daterange;
+var input_client;
 var current_date;
 var tblReport;
 var columns = [];
@@ -20,6 +21,7 @@ function generateReport(all) {
         'action': 'search_report',
         'start_date': input_daterange.data('daterangepicker').startDate.format('YYYY-MM-DD'),
         'end_date': input_daterange.data('daterangepicker').endDate.format('YYYY-MM-DD'),
+        'client_id': input_client.val() || '',
     };
 
     if (all) {
@@ -186,6 +188,37 @@ $(function() {
         });
 
     $('.drp-buttons').hide();
+
+    input_client = $('select[name="client_id"]');
+    input_client.select2({
+        theme: 'bootstrap4',
+        language: 'es',
+        allowClear: true,
+        placeholder: 'Todos los clientes',
+        ajax: {
+            delay: 250,
+            type: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken
+            },
+            url: pathname,
+            data: function(params) {
+                return {
+                    term: params.term,
+                    action: 'search_clients'
+                };
+            },
+            processResults: function(data) {
+                return {
+                    results: data
+                };
+            },
+            cache: true
+        },
+        minimumInputLength: 0,
+    }).on('select2:select select2:clear', function() {
+        generateReport(false);
+    });
 
     initTable();
 

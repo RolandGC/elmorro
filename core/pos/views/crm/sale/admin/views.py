@@ -140,6 +140,11 @@ class SaleAdminCreateView(PermissionMixin, CreateView):
                     base_currency_id = request.POST.get('base_currency')
                     sale.base_currency_id = int(base_currency_id) if base_currency_id else None
                     
+                    sale.order_note = (request.POST.get('order_note') or '').strip() or None
+                    sale.freight_forwarder = (request.POST.get('freight_forwarder') or '').strip() or None
+                    sale.operation = (request.POST.get('operation') or '').strip() or None
+                    sale.transfer_type = request.POST.get('transfer_type') or None
+                    
                     # if date_joined was not provided or could not be parsed, use current datetime
                     if not getattr(sale, 'date_joined', None):
                         sale.date_joined = timezone.now()
@@ -352,6 +357,11 @@ class SaleAdminUpdateView(SaleAdminCreateView):
                     
                     base_currency_id = request.POST.get('base_currency')
                     sale.base_currency_id = int(base_currency_id) if base_currency_id else None
+                    
+                    sale.order_note = (request.POST.get('order_note') or '').strip() or None
+                    sale.freight_forwarder = (request.POST.get('freight_forwarder') or '').strip() or None
+                    sale.operation = (request.POST.get('operation') or '').strip() or None
+                    sale.transfer_type = request.POST.get('transfer_type') or None
                     
                     sale.save()
 

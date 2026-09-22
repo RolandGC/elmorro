@@ -21,3 +21,8 @@ unit = (
     ('Uni', 'Unidad'),
     ('kg', 'Kilogramo'),
 )
+
+transfer_type = (
+    ('cajero', 'CAJERO'),
+    ('ventanilla', 'VENTANILLA'),
+)

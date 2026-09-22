@@ -790,6 +790,24 @@ class SaleForm(ModelForm):
             'base_currency': forms.Select(attrs={
                 'class': 'form-control select2'
             }),
+            'order_note': forms.TextInput(attrs={
+                'class': 'form-control',
+                'autocomplete': 'off',
+                'placeholder': 'Ingrese la nota de pedido'
+            }),
+            'freight_forwarder': forms.TextInput(attrs={
+                'class': 'form-control',
+                'autocomplete': 'off',
+                'placeholder': 'Ingrese el fletero'
+            }),
+            'operation': forms.TextInput(attrs={
+                'class': 'form-control',
+                'autocomplete': 'off',
+                'placeholder': 'Ingrese la operación'
+            }),
+            'transfer_type': forms.Select(attrs={
+                'class': 'form-control'
+            }),
         }
 
     amount = forms.CharField(widget=forms.TextInput(attrs={

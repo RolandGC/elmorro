@@ -2,7 +2,11 @@
 {% load widget_tweaks %}
 {% load static %}
 {% block head_report %}
-  <script src="{% static 'sale_report/js/report.js' %}" type="text/javascript"></script>
+  <link rel="stylesheet" href="{% static 'lib/select2-4.0.13/css/select2.min.css' %}">
+  <link rel="stylesheet" href="{% static 'lib/select2-4.0.13/css/select2-bootstrap4.min.css' %}">
+  <script src="{% static 'lib/select2-4.0.13/js/select2.min.js' %}"></script>
+  <script src="{% static 'lib/select2-4.0.13/js/i18n/es.js' %}"></script>
+  <script src="{% static 'sale_report/js/report.js' %}?v=2" type="text/javascript"></script>
 {% endblock %}
 {% block content_report %}
   <div class="row">
@@ -16,6 +20,12 @@
             <button class="btn btn-warning btnSearchAll" type="button"><i class="fas fa-calendar-check"></i> Ver todas</button>
           </div>
         </div>
+      </div>
+    </div>
+    <div class="col-lg-5">
+      <div class="form-group">
+        <label>Filtrar por cliente (opcional):</label>
+        <select name="client_id" id="client_id" class="form-control select2" style="width: 100%;"></select>
       </div>
     </div>
   </div>

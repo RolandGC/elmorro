@@ -14,7 +14,7 @@ from django.forms import model_to_dict
 from django.utils import timezone
 
 from config import settings
-from core.pos.choices import payment_condition, voucher, unit
+from core.pos.choices import payment_condition, voucher, unit, transfer_type
 from core.user.models import User
 
 from datetime import datetime
@@ -450,6 +450,10 @@ class Sale(models.Model):
     amount_debited = models.DecimalField(max_digits=9, decimal_places=2, default=0.00)
     exchange_rate = models.DecimalField(default=3.50, decimal_places=4, max_digits=9, verbose_name='Tasa de Cambio')
     base_currency = models.ForeignKey(Currency, on_delete=models.RESTRICT, null=True, blank=True, verbose_name="Moneda Base")
+    order_note = models.CharField(max_length=255, null=True, blank=True, verbose_name='Nota de Pedido')
+    freight_forwarder = models.CharField(max_length=150, null=True, blank=True, verbose_name='Fletero')
+    operation = models.CharField(max_length=100, null=True, blank=True, verbose_name='Operación')
+    transfer_type = models.CharField(max_length=20, choices=transfer_type, null=True, blank=True, verbose_name='Tipo de Transferencia')
     comment = models.TextField(max_length=600, null=True, blank=True, verbose_name='Comentario')
 
     def __str__(self):
