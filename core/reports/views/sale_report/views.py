@@ -26,7 +26,7 @@ class SaleReportView(ModuleMixin, FormView):
         payments = SalePayment.objects.select_related(
             'sale', 'sale__client', 'sale__client__user',
             'payment_method', 'currency', 'bank'
-        ).filter(sale__employee=request.user)
+        ).all()
         if client_id:
             payments = payments.filter(sale__client_id=client_id)
         if start_date and end_date:
@@ -55,7 +55,7 @@ class SaleReportView(ModuleMixin, FormView):
                 'operation': p.operation_number or sale.operation or '',
                 'payment_method': p.payment_method.name if p.payment_method else '',
                 'transfer_type': sale.get_transfer_type_display() if sale.transfer_type else '',
-                'currency': (p.currency.code or p.currency.name) if p.currency else '',
+                'currency': p.currency.name if p.currency else '',
                 'monto_soles': monto_soles,
                 'exchange_rate': rate,
             })
@@ -130,7 +130,7 @@ class SaleReportView(ModuleMixin, FormView):
                 start_date = request.POST['start_date']
                 end_date = request.POST['end_date']
                 client_id = request.POST.get('client_id', '')
-                search = Sale.objects.filter(employee=request.user)
+                search = Sale.objects.all()
                 if client_id:
                     search = search.filter(client_id=client_id)
                 if len(start_date) and len(end_date):
