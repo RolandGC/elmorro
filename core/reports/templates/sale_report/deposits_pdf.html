@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Reporte de Depósitos</title>
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 10mm;
+        }
+
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 9px;
+            color: #000;
+        }
+
+        .title {
+            text-align: center;
+            font-size: 15px;
+            font-weight: bold;
+            margin: 0 0 2px 0;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 10px;
+            margin: 0 0 10px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border: 1px solid #000;
+            padding: 3px 4px;
+        }
+
+        th {
+            background-color: #2d4154;
+            color: #fff;
+            font-size: 9px;
+            text-align: center;
+        }
+
+        td.center {
+            text-align: center;
+        }
+
+        td.money {
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+    <div class="title">{{ company.name|default:"Reporte" }} - REPORTE DE DEPÓSITOS</div>
+    <div class="subtitle">
+        {% if reference %}Cliente: {{ reference }}<br>{% endif %}
+        Total de registros: {{ rows|length }}
+    </div>
+    <table>
+        <thead>
+        <tr>
+            <th>FECHAS</th>
+            <th>NOTA P.</th>
+            <th>FLETERO</th>
+            <th>FECHA</th>
+            <th>MONTO</th>
+            <th>BANCO</th>
+            <th>OPERACIÓN</th>
+            <th>FORMA</th>
+            <th>TIPO TRANSF.</th>
+            <th>MONEDA</th>
+            <th>MONTO S/</th>
+            <th>TIPO C.</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for row in rows %}
+            <tr>
+                <td class="center">{{ row.fechas }}</td>
+                <td>{{ row.order_note }}</td>
+                <td>{{ row.freight_forwarder }}</td>
+                <td class="center">{{ row.fecha }}</td>
+                <td class="money">{{ row.amount|floatformat:2 }}</td>
+                <td>{{ row.bank }}</td>
+                <td>{{ row.operation }}</td>
+                <td>{{ row.payment_method }}</td>
+                <td>{{ row.transfer_type }}</td>
+                <td class="center">{{ row.currency }}</td>
+                <td class="money">{{ row.monto_soles|floatformat:2 }}</td>
+                <td class="center">{{ row.exchange_rate|floatformat:2 }}</td>
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="12" class="center">No hay depósitos para los filtros seleccionados</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

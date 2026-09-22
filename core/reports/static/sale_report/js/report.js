@@ -107,6 +107,22 @@ function generateReport(all) {
                     });
 
                 }
+            },
+            {
+                text: 'Depósitos Excel <i class="fas fa-file-excel"></i>',
+                titleAttr: 'Exportar depósitos a Excel',
+                className: 'btn btn-success btn-flat btn-xs',
+                action: function(e, dt, node, config) {
+                    exportDeposits('excel');
+                }
+            },
+            {
+                text: 'Depósitos PDF <i class="fas fa-file-pdf"></i>',
+                titleAttr: 'Exportar depósitos a PDF',
+                className: 'btn btn-danger btn-flat btn-xs',
+                action: function(e, dt, node, config) {
+                    exportDeposits('pdf');
+                }
             }
         ],
         columns: [
@@ -170,6 +186,49 @@ function generateReport(all) {
         initComplete: function(settings, json) {
 
         },
+    });
+}
+
+function exportDeposits(format) {
+    var parameters = new FormData();
+    parameters.append('action', 'export_deposits_' + format);
+    parameters.append('start_date', input_daterange.data('daterangepicker').startDate.format('YYYY-MM-DD'));
+    parameters.append('end_date', input_daterange.data('daterangepicker').endDate.format('YYYY-MM-DD'));
+    parameters.append('client_id', input_client.val() || '');
+    var selectedClient = input_client.select2('data');
+    parameters.append('client_label', selectedClient.length ? selectedClient[0].text : '');
+
+    $.ajax({
+        url: pathname,
+        type: 'POST',
+        data: parameters,
+        processData: false,
+        contentType: false,
+        headers: {
+            'X-CSRFToken': csrftoken
+        },
+        xhrFields: {
+            responseType: 'blob'
+        },
+        success: function(blob) {
+            var url = URL.createObjectURL(blob);
+            if (format === 'excel') {
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = 'depositos_' + moment().format('YYYYMMDD') + '.xlsx';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            } else {
+                window.open(url, '_blank');
+            }
+            setTimeout(function() {
+                URL.revokeObjectURL(url);
+            }, 60000);
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            message_error(errorThrown + ' ' + textStatus);
+        }
     });
 }
 
