@@ -1,9 +1,10 @@
 var input_daterange;
 var input_client;
+var input_base_currency;
 var current_date;
 var tblReport;
 var columns = [];
-var currentFilters = { start_date: '', end_date: '', client_id: '' };
+var currentFilters = { start_date: '', end_date: '', client_id: '', base_currency_id: '' };
 
 function initTable() {
     tblReport = $('#tblReport').DataTable({
@@ -23,6 +24,7 @@ function generateReport(all) {
         'start_date': input_daterange.data('daterangepicker').startDate.format('YYYY-MM-DD'),
         'end_date': input_daterange.data('daterangepicker').endDate.format('YYYY-MM-DD'),
         'client_id': input_client.val() || '',
+        'base_currency_id': input_base_currency.val() || '',
     };
 
     if (all) {
@@ -36,6 +38,7 @@ function generateReport(all) {
         start_date: parameters['start_date'],
         end_date: parameters['end_date'],
         client_id: parameters['client_id'],
+        base_currency_id: parameters['base_currency_id'],
     };
 
     tblReport = $('#tblReport').DataTable({
@@ -204,6 +207,7 @@ function exportDeposits(format) {
     parameters.append('start_date', currentFilters.start_date);
     parameters.append('end_date', currentFilters.end_date);
     parameters.append('client_id', currentFilters.client_id);
+    parameters.append('base_currency_id', currentFilters.base_currency_id);
     var selectedClient = input_client.select2('data');
     parameters.append('client_label', selectedClient.length ? selectedClient[0].text : '');
 
@@ -284,6 +288,17 @@ $(function() {
             cache: true
         },
         minimumInputLength: 0,
+    }).on('select2:select select2:clear', function() {
+        generateReport(false);
+    });
+
+    input_base_currency = $('select[name="base_currency_id"]');
+    input_base_currency.select2({
+        theme: 'bootstrap4',
+        language: 'es',
+        allowClear: true,
+        placeholder: 'Todas las monedas',
+        minimumResultsForSearch: Infinity,
     }).on('select2:select select2:clear', function() {
         generateReport(false);
     });

@@ -15,7 +15,7 @@
             // Exponer tasa de cambio desde el contexto de Django antes de cargar form.js
             window.companyExchangeRate = parseFloat('{{ exchange_rate|default:"1.00" }}') || 1.0;
         </script>
-    <script src="{% static 'crm/sale/admin/js/form.js' %}?v=9"></script>
+    <script src="{% static 'crm/sale/admin/js/form.js' %}?v=11"></script>
     <style>
         /* Estilos responsive para textarea y inputs */
         textarea {
@@ -143,7 +143,7 @@
                             <div class="row">
                                 <div class="col-lg-6">
                                     <div class="form-group">
-                                        <label class="control-label">Moneda Base (opcional):</label>
+                                        <label class="control-label">Moneda Base: <span class="text-danger">*</span></label>
                                         {{ form.base_currency }}
                                     </div>
                                 </div>
@@ -252,7 +252,7 @@
                                                     </select>
                                                 </div>
                                             </div>
-                                            <div class="col-lg-6 col-md-6 payment-optional-field" style="display: none;">
+                                            <div class="col-lg-6 col-md-6 payment-date-field" style="display: none;">
                                                 <div class="form-group mb-2">
                                                     <label class="control-label">Fecha de Pago: <span class="text-danger">*</span></label>
                                                     <input type="date"
@@ -613,31 +613,27 @@
                 const paymentDateInput = paymentBlock.find('.payment-date');
                 const paymentBankSelect = paymentBlock.find('.payment-bank-select');
                 const paymentBankRequired = paymentBlock.find('.payment-bank-required');
-                const paymentDateContainer = paymentBlock.find('.payment-date-picker').closest('.payment-optional-field');
                 const paymentOperationInput = paymentBlock.find('.payment-operation');
                 const paymentMethodId = $(this).val();
+                const isCash = (paymentMethodId === '1' || paymentMethodId === 1 || paymentMethodId === 'efectivo');
 
-                // Si la forma de pago es id=1 (efectivo), limpiar y ocultar campos relacionados con banco
-                if (paymentMethodId === '1' || paymentMethodId === 1 || paymentMethodId === 'efectivo') {
-                    paymentDateInput.prop('required', false);
+                if (isCash) {
+                    // Efectivo: limpiar y ocultar campos relacionados con banco
                     paymentBankSelect.prop('required', false);
-                    // clear bank and operation when payment is cash
                     try {
                         paymentBankSelect.val('');
                         paymentBankSelect.trigger('change');
                     } catch (e) {}
                     try { paymentOperationInput.val(''); } catch (e) {}
-                    paymentBlock.find('.payment-date-picker').closest('.form-group').find('label').find('.text-danger').hide();
                     paymentBankRequired.hide();
-                    paymentDateContainer.hide();
                 } else {
-                    // Para cualquier otra forma de pago, hacer los campos requeridos y mostrarlos
-                    paymentDateInput.prop('required', true);
                     paymentBankSelect.prop('required', true);
-                    paymentBlock.find('.payment-date-picker').closest('.form-group').find('label').find('.text-danger').show();
                     paymentBankRequired.show();
-                    paymentDateContainer.show();
                 }
+
+                // La Fecha de Pago se muestra para cualquier forma de pago seleccionada
+                paymentDateInput.prop('required', !!paymentMethodId);
+
                 // actualizar resumen tras cambio
                 updatePaymentsSummary();
             });

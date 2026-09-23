@@ -6,7 +6,7 @@
   <link rel="stylesheet" href="{% static 'lib/select2-4.0.13/css/select2-bootstrap4.min.css' %}">
   <script src="{% static 'lib/select2-4.0.13/js/select2.min.js' %}"></script>
   <script src="{% static 'lib/select2-4.0.13/js/i18n/es.js' %}"></script>
-  <script src="{% static 'sale_report/js/report.js' %}?v=4" type="text/javascript"></script>
+  <script src="{% static 'sale_report/js/report.js' %}?v=5" type="text/javascript"></script>
 {% endblock %}
 {% block content_report %}
   <div class="row">
@@ -22,10 +22,21 @@
         </div>
       </div>
     </div>
-    <div class="col-lg-5">
+    <div class="col-lg-4">
       <div class="form-group">
         <label>Filtrar por cliente (opcional):</label>
         <select name="client_id" id="client_id" class="form-control select2" style="width: 100%;"></select>
+      </div>
+    </div>
+    <div class="col-lg-3">
+      <div class="form-group">
+        <label>Filtrar por moneda base (opcional):</label>
+        <select name="base_currency_id" id="base_currency_id" class="form-control select2" style="width: 100%;">
+          <option value="">Todas las monedas</option>
+          {% for c in base_currencies %}
+            <option value="{{ c.id }}">{{ c.name }}</option>
+          {% endfor %}
+        </select>
       </div>
     </div>
   </div>

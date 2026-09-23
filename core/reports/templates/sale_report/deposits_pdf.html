@@ -64,17 +64,19 @@
         <thead>
         <tr>
             <th>FECHAS</th>
+            <th>MONEDA BASE</th>
             <th>VIAJES</th>
             <th>NOTA P.</th>
             <th>FLETERO</th>
             <th>FECHA</th>
             <th>MONTO</th>
+            <th>MONEDA</th>
             <th>BANCO</th>
             <th>OPERACIÓN</th>
             <th>FORMA</th>
             <th>TIPO TRANSF.</th>
-            <th>MONEDA</th>
-            <th>MONTO S/</th>
+            <th>MONEDA EQ.</th>
+            <th>MONTO EQ.</th>
             <th>TIPO C.</th>
         </tr>
         </thead>
@@ -82,22 +84,24 @@
         {% for row in rows %}
             <tr>
                 <td class="center">{{ row.fechas }}</td>
+                <td class="center">{{ row.base_currency }}</td>
                 <td class="money">{% if row.debt_amount is not None %}{{ row.debt_amount|floatformat:2 }}{% endif %}</td>
                 <td>{{ row.order_note }}</td>
                 <td>{{ row.freight_forwarder }}</td>
                 <td class="center">{{ row.fecha }}</td>
-                <td class="money">{{ row.amount|floatformat:2 }}</td>
+                <td class="money">{% if row.amount is not None %}{{ row.amount|floatformat:2 }}{% endif %}</td>
+                <td class="center">{{ row.currency }}</td>
                 <td>{{ row.bank }}</td>
                 <td>{{ row.operation }}</td>
                 <td>{{ row.payment_method }}</td>
                 <td>{{ row.transfer_type }}</td>
-                <td class="center">{{ row.currency }}</td>
-                <td class="money">{{ row.monto_soles|floatformat:2 }}</td>
+                <td class="center">{{ row.equivalent_currency }}</td>
+                <td class="money">{% if row.equivalent_amount is not None %}{{ row.equivalent_amount|floatformat:2 }}{% endif %}</td>
                 <td class="center">{{ row.exchange_rate|floatformat:2 }}</td>
             </tr>
         {% empty %}
             <tr>
-                <td colspan="13" class="center">No hay depósitos para los filtros seleccionados</td>
+                <td colspan="15" class="center">No hay depósitos para los filtros seleccionados</td>
             </tr>
         {% endfor %}
         </tbody>

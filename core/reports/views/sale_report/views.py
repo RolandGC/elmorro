@@ -10,7 +10,7 @@ from django.template.loader import get_template
 from django.views.generic import FormView
 from weasyprint import HTML
 
-from core.pos.models import Sale, Client, SalePayment, Company
+from core.pos.models import Sale, Client, Company, Currency
 from core.reports.forms import ReportForm
 from core.security.mixins import ModuleMixin
 
@@ -23,53 +23,96 @@ class SaleReportView(ModuleMixin, FormView):
         start_date = request.POST.get('start_date', '')
         end_date = request.POST.get('end_date', '')
         client_id = request.POST.get('client_id', '')
-        payments = SalePayment.objects.select_related(
-            'sale', 'sale__client', 'sale__client__user',
-            'payment_method', 'currency', 'bank'
+        base_currency_id = request.POST.get('base_currency_id', '')
+        sales = Sale.objects.select_related(
+            'client', 'client__user', 'base_currency'
+        ).prefetch_related(
+            'payments', 'payments__payment_method', 'payments__currency', 'payments__bank'
         ).all()
         if client_id:
-            payments = payments.filter(sale__client_id=client_id)
+            sales = sales.filter(client_id=client_id)
+        if base_currency_id:
+            sales = sales.filter(base_currency_id=base_currency_id)
         if start_date and end_date:
             try:
                 end_date_obj = datetime.strptime(end_date, '%Y-%m-%d') + timedelta(days=1)
-                payments = payments.filter(sale__date_joined__range=[start_date, end_date_obj.date()])
+                sales = sales.filter(date_joined__range=[start_date, end_date_obj.date()])
             except Exception:
-                payments = payments.filter(sale__date_joined__range=[start_date, end_date])
-        return payments.order_by('sale__date_joined', 'sale_id', 'id')
+                sales = sales.filter(date_joined__range=[start_date, end_date])
+        return sales.order_by('date_joined', 'id')
+
+    def build_deposit_row(self, sale, p, pen, usd):
+        base_row = {
+            'fechas': sale.dispatch_date.strftime('%d/%m/%Y') if sale.dispatch_date else '',
+            'base_currency': sale.base_currency.name if sale.base_currency else '',
+            'debt_amount': float(sale.debt_amount) if sale.debt_amount is not None else None,
+            'order_note': sale.order_note or '',
+            'freight_forwarder': sale.freight_forwarder or '',
+            'exchange_rate': float(sale.exchange_rate or 0) or 1,
+        }
+        if p is None:
+            # Venta sin pagos: se conserva la fila con los campos de pago vacíos
+            base_row.update({
+                'fecha': '',
+                'amount': None,
+                'currency': '',
+                'bank': '',
+                'operation': '',
+                'payment_method': '',
+                'transfer_type': '',
+                'equivalent_currency': '',
+                'equivalent_amount': None,
+            })
+            return base_row
+
+        rate = base_row['exchange_rate']
+        amount = float(p.amount or 0)
+        currency_code = (p.currency.code or '').upper() if p.currency else ''
+        # Moneda equivalente = la contraria a la moneda del pago
+        if currency_code == 'PEN':
+            equivalent_currency = usd
+            computed_equivalent = amount / rate if rate else 0
+        else:
+            equivalent_currency = pen
+            computed_equivalent = amount * rate
+        # Reutiliza el monto equivalente ya persistido; si no existe, usa la conversión
+        if p.equivalent_amount is not None:
+            equivalent_amount = float(p.equivalent_amount)
+        else:
+            equivalent_amount = computed_equivalent
+        base_row.update({
+            'fecha': p.date_joined.strftime('%d/%m/%Y') if p.date_joined else '',
+            'amount': amount,
+            'currency': p.currency.name if p.currency else '',
+            'bank': p.bank.name if p.bank else '',
+            'operation': p.operation_number or '',
+            'payment_method': p.payment_method.name if p.payment_method else '',
+            'transfer_type': p.get_transfer_type_display() if p.transfer_type else '',
+            'equivalent_currency': equivalent_currency.name if equivalent_currency else '',
+            'equivalent_amount': equivalent_amount,
+        })
+        return base_row
 
     def build_deposits(self, request):
+        currencies = list(Currency.objects.all())
+        pen = next((c for c in currencies if (c.code or '').upper() == 'PEN'), None)
+        usd = next((c for c in currencies if (c.code or '').upper() == 'USD'), None)
         rows = []
-        for p in self.get_deposits_queryset(request):
-            sale = p.sale
-            rate = float(sale.exchange_rate or 0) or 1
-            amount = float(p.amount or 0)
-            currency_code = (p.currency.code or '').upper() if p.currency else ''
-            if p.equivalent_amount is not None:
-                monto_soles = float(p.equivalent_amount)
+        for sale in self.get_deposits_queryset(request):
+            payments = list(sale.payments.all())
+            if not payments:
+                rows.append(self.build_deposit_row(sale, None, pen, usd))
             else:
-                monto_soles = amount if currency_code == 'PEN' else amount * rate
-            rows.append({
-                'fechas': sale.dispatch_date.strftime('%d/%m/%Y') if sale.dispatch_date else '',
-                'debt_amount': float(sale.debt_amount) if sale.debt_amount is not None else None,
-                'order_note': sale.order_note or '',
-                'freight_forwarder': sale.freight_forwarder or '',
-                'fecha': p.date_joined.strftime('%d/%m/%Y') if p.date_joined else '',
-                'amount': amount,
-                'bank': p.bank.name if p.bank else '',
-                'operation': p.operation_number or '',
-                'payment_method': p.payment_method.name if p.payment_method else '',
-                'transfer_type': p.get_transfer_type_display() if p.transfer_type else '',
-                'currency': p.currency.name if p.currency else '',
-                'monto_soles': monto_soles,
-                'exchange_rate': rate,
-            })
+                for p in payments:
+                    rows.append(self.build_deposit_row(sale, p, pen, usd))
         return rows
 
     def export_deposits_excel(self, request):
         try:
             rows = self.build_deposits(request)
-            headers = ['FECHAS', 'VIAJES', 'NOTA P.', 'FLETERO', 'FECHA', 'MONTO', 'BANCO',
-                       'OPERACIÓN', 'FORMA', 'TIPO TRANSF.', 'MONEDA', 'MONTO S/', 'TIPO C.']
+            headers = ['FECHAS', 'MONEDA BASE', 'VIAJES', 'NOTA P.', 'FLETERO', 'FECHA', 'MONTO',
+                       'MONEDA', 'BANCO', 'OPERACIÓN', 'FORMA', 'TIPO TRANSF.', 'MONEDA EQ.',
+                       'MONTO EQ.', 'TIPO C.']
             output = BytesIO()
             workbook = xlsxwriter.Workbook(output, {'in_memory': True})
             worksheet = workbook.add_worksheet('Depósitos')
@@ -84,22 +127,30 @@ class SaleReportView(ModuleMixin, FormView):
                 worksheet.write(0, col, header, header_fmt)
             for r, row in enumerate(rows, start=1):
                 worksheet.write(r, 0, row['fechas'], center_fmt)
+                worksheet.write(r, 1, row['base_currency'], center_fmt)
                 if row['debt_amount'] is not None:
-                    worksheet.write_number(r, 1, row['debt_amount'], money_fmt)
+                    worksheet.write_number(r, 2, row['debt_amount'], money_fmt)
                 else:
-                    worksheet.write(r, 1, '', money_fmt)
-                worksheet.write(r, 2, row['order_note'], cell_fmt)
-                worksheet.write(r, 3, row['freight_forwarder'], cell_fmt)
-                worksheet.write(r, 4, row['fecha'], center_fmt)
-                worksheet.write_number(r, 5, row['amount'], money_fmt)
-                worksheet.write(r, 6, row['bank'], cell_fmt)
-                worksheet.write(r, 7, row['operation'], cell_fmt)
-                worksheet.write(r, 8, row['payment_method'], cell_fmt)
-                worksheet.write(r, 9, row['transfer_type'], cell_fmt)
-                worksheet.write(r, 10, row['currency'], center_fmt)
-                worksheet.write_number(r, 11, row['monto_soles'], money_fmt)
-                worksheet.write_number(r, 12, row['exchange_rate'], center_fmt)
-            widths = [12, 14, 18, 16, 12, 12, 14, 16, 14, 14, 10, 14, 10]
+                    worksheet.write(r, 2, '', money_fmt)
+                worksheet.write(r, 3, row['order_note'], cell_fmt)
+                worksheet.write(r, 4, row['freight_forwarder'], cell_fmt)
+                worksheet.write(r, 5, row['fecha'], center_fmt)
+                if row['amount'] is not None:
+                    worksheet.write_number(r, 6, row['amount'], money_fmt)
+                else:
+                    worksheet.write(r, 6, '', money_fmt)
+                worksheet.write(r, 7, row['currency'], center_fmt)
+                worksheet.write(r, 8, row['bank'], cell_fmt)
+                worksheet.write(r, 9, row['operation'], cell_fmt)
+                worksheet.write(r, 10, row['payment_method'], cell_fmt)
+                worksheet.write(r, 11, row['transfer_type'], cell_fmt)
+                worksheet.write(r, 12, row['equivalent_currency'], center_fmt)
+                if row['equivalent_amount'] is not None:
+                    worksheet.write_number(r, 13, row['equivalent_amount'], money_fmt)
+                else:
+                    worksheet.write(r, 13, '', money_fmt)
+                worksheet.write_number(r, 14, row['exchange_rate'], center_fmt)
+            widths = [12, 14, 14, 18, 16, 12, 12, 12, 14, 16, 14, 14, 12, 14, 10]
             for col, width in enumerate(widths):
                 worksheet.set_column(col, col, width)
             workbook.close()
@@ -138,9 +189,12 @@ class SaleReportView(ModuleMixin, FormView):
                 start_date = request.POST['start_date']
                 end_date = request.POST['end_date']
                 client_id = request.POST.get('client_id', '')
+                base_currency_id = request.POST.get('base_currency_id', '')
                 search = Sale.objects.all()
                 if client_id:
                     search = search.filter(client_id=client_id)
+                if base_currency_id:
+                    search = search.filter(base_currency_id=base_currency_id)
                 if len(start_date) and len(end_date):
                     try:
                         end_date_obj = datetime.strptime(end_date, '%Y-%m-%d')
@@ -178,4 +232,5 @@ class SaleReportView(ModuleMixin, FormView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Reporte de Cobranzas'
+        context['base_currencies'] = Currency.objects.filter(is_active=True)
         return context

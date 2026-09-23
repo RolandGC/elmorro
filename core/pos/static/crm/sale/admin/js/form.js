@@ -37,6 +37,21 @@ function safeToFixed(value, decimals = 2) {
     return num.toFixed(decimals);
 }
 
+// Muestra/oculta campos del bloque de pago según la forma de pago:
+// - Banco, N° Operación y Tipo de Transferencia: visibles para formas que
+//   requieren información bancaria (cualquiera distinta de Efectivo).
+// - Fecha de Pago: visible para cualquier forma de pago seleccionada
+//   (incluido Efectivo).
+function updatePaymentBlockFields(block) {
+    var methodId = block.find('.payment-method-select').val();
+    var hasMethod = methodId !== '' && methodId !== null && typeof methodId !== 'undefined';
+    var isCash = String(methodId) === '1';
+
+    block.find('.payment-optional-field').toggle(hasMethod && !isCash);
+    block.find('.payment-date-field').toggle(hasMethod);
+    block.find('.payment-date').prop('required', hasMethod);
+}
+
 $(document).ready(function() {
     $('.btnCollect').on('click', function() {
         lastClickedButtonId = $(this).attr('id');
@@ -438,6 +453,13 @@ document.addEventListener('DOMContentLoaded', function (e) {
                         },
                     }
                 },
+                base_currency: {
+                    validators: {
+                        notEmpty: {
+                            message: 'Seleccione una moneda base'
+                        },
+                    }
+                },
                 card_number: {
                     validators: {
                         notEmpty: {
@@ -689,6 +711,11 @@ $(function () {
     $('.select2').select2({
         theme: 'bootstrap4',
         language: "es",
+    });
+
+    // Revalidar Moneda Base (obligatoria) al cambiar
+    $('select[name="base_currency"]').on('change', function () {
+        try { fvSale.revalidateField('base_currency'); } catch (e) {}
     });
     // if(client_default) {
     //     client_default = JSON.parse(client_default)
@@ -1054,18 +1081,12 @@ $(function () {
             }
         });
         
-        // Listener para mostrar/ocultar campos de Banco y Nro Operación según forma de pago
+        // Mostrar/ocultar campos según la forma de pago seleccionada
         block.find('.payment-method-select').on('change', function () {
-            var selectedMethodId = $(this).val();
-            var optionalFields = block.find('.payment-optional-field');
-            
-            // Si es efectivo (id=1), ocultar campos de banco y operación
-            if (String(selectedMethodId) === '1') {
-                optionalFields.hide();
-            } else {
-                optionalFields.show();
-            }
+            updatePaymentBlockFields(block);
         });
+        // Estado inicial del bloque (sin forma de pago: todo oculto)
+        updatePaymentBlockFields(block);
 
         // Listener para el input visual equivalente: convierte a monto original y actualiza el campo guardado
         block.find('.payment-amount-equiv').on('input change', function () {
