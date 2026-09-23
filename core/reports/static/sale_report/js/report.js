@@ -3,6 +3,7 @@ var input_client;
 var current_date;
 var tblReport;
 var columns = [];
+var currentFilters = { start_date: '', end_date: '', client_id: '' };
 
 function initTable() {
     tblReport = $('#tblReport').DataTable({
@@ -28,6 +29,14 @@ function generateReport(all) {
         parameters['start_date'] = '';
         parameters['end_date'] = '';
     }
+
+    // Guardar los filtros que realmente se están mostrando en la tabla,
+    // para que la exportación de depósitos coincida con lo que se ve.
+    currentFilters = {
+        start_date: parameters['start_date'],
+        end_date: parameters['end_date'],
+        client_id: parameters['client_id'],
+    };
 
     tblReport = $('#tblReport').DataTable({
         destroy: true,
@@ -192,9 +201,9 @@ function generateReport(all) {
 function exportDeposits(format) {
     var parameters = new FormData();
     parameters.append('action', 'export_deposits_' + format);
-    parameters.append('start_date', input_daterange.data('daterangepicker').startDate.format('YYYY-MM-DD'));
-    parameters.append('end_date', input_daterange.data('daterangepicker').endDate.format('YYYY-MM-DD'));
-    parameters.append('client_id', input_client.val() || '');
+    parameters.append('start_date', currentFilters.start_date);
+    parameters.append('end_date', currentFilters.end_date);
+    parameters.append('client_id', currentFilters.client_id);
     var selectedClient = input_client.select2('data');
     parameters.append('client_label', selectedClient.length ? selectedClient[0].text : '');
 

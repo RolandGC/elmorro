@@ -64,6 +64,7 @@
         <thead>
         <tr>
             <th>FECHAS</th>
+            <th>VIAJES</th>
             <th>NOTA P.</th>
             <th>FLETERO</th>
             <th>FECHA</th>
@@ -81,6 +82,7 @@
         {% for row in rows %}
             <tr>
                 <td class="center">{{ row.fechas }}</td>
+                <td class="money">{% if row.debt_amount is not None %}{{ row.debt_amount|floatformat:2 }}{% endif %}</td>
                 <td>{{ row.order_note }}</td>
                 <td>{{ row.freight_forwarder }}</td>
                 <td class="center">{{ row.fecha }}</td>
@@ -95,7 +97,7 @@
             </tr>
         {% empty %}
             <tr>
-                <td colspan="12" class="center">No hay depósitos para los filtros seleccionados</td>
+                <td colspan="13" class="center">No hay depósitos para los filtros seleccionados</td>
             </tr>
         {% endfor %}
         </tbody>

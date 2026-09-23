@@ -44,9 +44,13 @@ class SaleReportView(ModuleMixin, FormView):
             rate = float(sale.exchange_rate or 0) or 1
             amount = float(p.amount or 0)
             currency_code = (p.currency.code or '').upper() if p.currency else ''
-            monto_soles = amount if currency_code == 'PEN' else amount * rate
+            if p.equivalent_amount is not None:
+                monto_soles = float(p.equivalent_amount)
+            else:
+                monto_soles = amount if currency_code == 'PEN' else amount * rate
             rows.append({
-                'fechas': sale.date_joined.strftime('%d/%m/%Y') if sale.date_joined else '',
+                'fechas': sale.dispatch_date.strftime('%d/%m/%Y') if sale.dispatch_date else '',
+                'debt_amount': float(sale.debt_amount) if sale.debt_amount is not None else None,
                 'order_note': sale.order_note or '',
                 'freight_forwarder': sale.freight_forwarder or '',
                 'fecha': p.date_joined.strftime('%d/%m/%Y') if p.date_joined else '',
@@ -64,7 +68,7 @@ class SaleReportView(ModuleMixin, FormView):
     def export_deposits_excel(self, request):
         try:
             rows = self.build_deposits(request)
-            headers = ['FECHAS', 'NOTA P.', 'FLETERO', 'FECHA', 'MONTO', 'BANCO',
+            headers = ['FECHAS', 'VIAJES', 'NOTA P.', 'FLETERO', 'FECHA', 'MONTO', 'BANCO',
                        'OPERACIÓN', 'FORMA', 'TIPO TRANSF.', 'MONEDA', 'MONTO S/', 'TIPO C.']
             output = BytesIO()
             workbook = xlsxwriter.Workbook(output, {'in_memory': True})
@@ -80,18 +84,22 @@ class SaleReportView(ModuleMixin, FormView):
                 worksheet.write(0, col, header, header_fmt)
             for r, row in enumerate(rows, start=1):
                 worksheet.write(r, 0, row['fechas'], center_fmt)
-                worksheet.write(r, 1, row['order_note'], cell_fmt)
-                worksheet.write(r, 2, row['freight_forwarder'], cell_fmt)
-                worksheet.write(r, 3, row['fecha'], center_fmt)
-                worksheet.write_number(r, 4, row['amount'], money_fmt)
-                worksheet.write(r, 5, row['bank'], cell_fmt)
-                worksheet.write(r, 6, row['operation'], cell_fmt)
-                worksheet.write(r, 7, row['payment_method'], cell_fmt)
-                worksheet.write(r, 8, row['transfer_type'], cell_fmt)
-                worksheet.write(r, 9, row['currency'], center_fmt)
-                worksheet.write_number(r, 10, row['monto_soles'], money_fmt)
-                worksheet.write_number(r, 11, row['exchange_rate'], center_fmt)
-            widths = [12, 18, 16, 12, 12, 14, 16, 14, 14, 10, 14, 10]
+                if row['debt_amount'] is not None:
+                    worksheet.write_number(r, 1, row['debt_amount'], money_fmt)
+                else:
+                    worksheet.write(r, 1, '', money_fmt)
+                worksheet.write(r, 2, row['order_note'], cell_fmt)
+                worksheet.write(r, 3, row['freight_forwarder'], cell_fmt)
+                worksheet.write(r, 4, row['fecha'], center_fmt)
+                worksheet.write_number(r, 5, row['amount'], money_fmt)
+                worksheet.write(r, 6, row['bank'], cell_fmt)
+                worksheet.write(r, 7, row['operation'], cell_fmt)
+                worksheet.write(r, 8, row['payment_method'], cell_fmt)
+                worksheet.write(r, 9, row['transfer_type'], cell_fmt)
+                worksheet.write(r, 10, row['currency'], center_fmt)
+                worksheet.write_number(r, 11, row['monto_soles'], money_fmt)
+                worksheet.write_number(r, 12, row['exchange_rate'], center_fmt)
+            widths = [12, 14, 18, 16, 12, 12, 14, 16, 14, 14, 10, 14, 10]
             for col, width in enumerate(widths):
                 worksheet.set_column(col, col, width)
             workbook.close()
