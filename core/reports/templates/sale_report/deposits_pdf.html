@@ -52,6 +52,15 @@
         td.money {
             text-align: right;
         }
+
+        tfoot tr.totals td {
+            background-color: #d9e1f2;
+            font-weight: bold;
+        }
+
+        tfoot td.total-label {
+            text-align: left;
+        }
     </style>
 </head>
 <body>
@@ -69,8 +78,8 @@
             <th>NOTA P.</th>
             <th>FLETERO</th>
             <th>FECHA</th>
-            <th>MONTO</th>
             <th>MONEDA</th>
+            <th>MONTO</th>
             <th>BANCO</th>
             <th>OPERACIÓN</th>
             <th>FORMA</th>
@@ -89,8 +98,8 @@
                 <td>{{ row.order_note }}</td>
                 <td>{{ row.freight_forwarder }}</td>
                 <td class="center">{{ row.fecha }}</td>
-                <td class="money">{% if row.amount is not None %}{{ row.amount|floatformat:2 }}{% endif %}</td>
                 <td class="center">{{ row.currency }}</td>
+                <td class="money">{% if row.amount is not None %}{{ row.amount|floatformat:2 }}{% endif %}</td>
                 <td>{{ row.bank }}</td>
                 <td>{{ row.operation }}</td>
                 <td>{{ row.payment_method }}</td>
@@ -105,6 +114,21 @@
             </tr>
         {% endfor %}
         </tbody>
+        <tfoot>
+        <tr class="totals">
+            <td colspan="2" class="total-label">TOTALES</td>
+            <td class="money">{{ total_viajes|floatformat:2 }}</td>
+            <td colspan="4"></td>
+            <td class="money">{{ total_monto|floatformat:2 }}</td>
+            <td colspan="7"></td>
+        </tr>
+        <tr class="totals">
+            <td colspan="2" class="total-label">TOTAL GENERAL</td>
+            <td colspan="5"></td>
+            <td class="money">{{ total_general|floatformat:2 }}</td>
+            <td colspan="7"></td>
+        </tr>
+        </tfoot>
     </table>
 </body>
 </html>

@@ -110,8 +110,8 @@ class SaleReportView(ModuleMixin, FormView):
     def export_deposits_excel(self, request):
         try:
             rows = self.build_deposits(request)
-            headers = ['FECHAS', 'MONEDA BASE', 'VIAJES', 'NOTA P.', 'FLETERO', 'FECHA', 'MONTO',
-                       'MONEDA', 'BANCO', 'OPERACIÓN', 'FORMA', 'TIPO TRANSF.', 'MONEDA EQ.',
+            headers = ['FECHAS', 'MONEDA BASE', 'VIAJES', 'NOTA P.', 'FLETERO', 'FECHA', 'MONEDA',
+                       'MONTO', 'BANCO', 'OPERACIÓN', 'FORMA', 'TIPO TRANSF.', 'MONEDA EQ.',
                        'MONTO EQ.', 'TIPO C.']
             output = BytesIO()
             workbook = xlsxwriter.Workbook(output, {'in_memory': True})
@@ -123,6 +123,13 @@ class SaleReportView(ModuleMixin, FormView):
             cell_fmt = workbook.add_format({'border': 1, 'align': 'left', 'valign': 'vcenter'})
             money_fmt = workbook.add_format({'border': 1, 'num_format': '#,##0.00'})
             center_fmt = workbook.add_format({'border': 1, 'align': 'center'})
+            total_label_fmt = workbook.add_format({
+                'bold': True, 'border': 1, 'align': 'left', 'valign': 'vcenter',
+                'bg_color': '#d9e1f2'
+            })
+            total_money_fmt = workbook.add_format({
+                'bold': True, 'border': 1, 'num_format': '#,##0.00', 'bg_color': '#d9e1f2'
+            })
             for col, header in enumerate(headers):
                 worksheet.write(0, col, header, header_fmt)
             for r, row in enumerate(rows, start=1):
@@ -135,11 +142,11 @@ class SaleReportView(ModuleMixin, FormView):
                 worksheet.write(r, 3, row['order_note'], cell_fmt)
                 worksheet.write(r, 4, row['freight_forwarder'], cell_fmt)
                 worksheet.write(r, 5, row['fecha'], center_fmt)
+                worksheet.write(r, 6, row['currency'], center_fmt)
                 if row['amount'] is not None:
-                    worksheet.write_number(r, 6, row['amount'], money_fmt)
+                    worksheet.write_number(r, 7, row['amount'], money_fmt)
                 else:
-                    worksheet.write(r, 6, '', money_fmt)
-                worksheet.write(r, 7, row['currency'], center_fmt)
+                    worksheet.write(r, 7, '', money_fmt)
                 worksheet.write(r, 8, row['bank'], cell_fmt)
                 worksheet.write(r, 9, row['operation'], cell_fmt)
                 worksheet.write(r, 10, row['payment_method'], cell_fmt)
@@ -150,6 +157,18 @@ class SaleReportView(ModuleMixin, FormView):
                 else:
                     worksheet.write(r, 13, '', money_fmt)
                 worksheet.write_number(r, 14, row['exchange_rate'], center_fmt)
+
+            # Totales al final del listado
+            total_viajes = sum((row['debt_amount'] or 0) for row in rows)
+            total_monto = sum((row['amount'] or 0) for row in rows)
+            total_general = total_viajes - total_monto
+            totals_row = len(rows) + 1
+            worksheet.write(totals_row, 0, 'TOTALES', total_label_fmt)
+            worksheet.write_number(totals_row, 2, total_viajes, total_money_fmt)
+            worksheet.write_number(totals_row, 7, total_monto, total_money_fmt)
+            worksheet.write(totals_row + 1, 0, 'TOTAL GENERAL', total_label_fmt)
+            worksheet.write_number(totals_row + 1, 7, total_general, total_money_fmt)
+
             widths = [12, 14, 14, 18, 16, 12, 12, 12, 14, 16, 14, 14, 12, 14, 10]
             for col, width in enumerate(widths):
                 worksheet.set_column(col, col, width)
@@ -167,11 +186,16 @@ class SaleReportView(ModuleMixin, FormView):
     def export_deposits_pdf(self, request):
         try:
             rows = self.build_deposits(request)
+            total_viajes = sum((row['debt_amount'] or 0) for row in rows)
+            total_monto = sum((row['amount'] or 0) for row in rows)
             template = get_template('sale_report/deposits_pdf.html')
             html = template.render({
                 'rows': rows,
                 'company': Company.objects.first(),
                 'reference': request.POST.get('client_label', ''),
+                'total_viajes': total_viajes,
+                'total_monto': total_monto,
+                'total_general': total_viajes - total_monto,
             })
             pdf = HTML(string=html, base_url=request.build_absolute_uri('/')).write_pdf()
             response = HttpResponse(pdf, content_type='application/pdf')
