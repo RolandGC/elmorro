@@ -41,81 +41,91 @@ class SaleReportView(ModuleMixin, FormView):
                 sales = sales.filter(date_joined__range=[start_date, end_date])
         return sales.order_by('date_joined', 'id')
 
-    def build_deposit_row(self, sale, p, pen, usd):
-        base_row = {
-            'fechas': sale.dispatch_date.strftime('%d/%m/%Y') if sale.dispatch_date else '',
-            'base_currency': sale.base_currency.name if sale.base_currency else '',
-            'debt_amount': float(sale.debt_amount) if sale.debt_amount is not None else None,
-            'order_note': sale.order_note or '',
-            'freight_forwarder': sale.freight_forwarder or '',
-            'exchange_rate': float(sale.exchange_rate or 0) or 1,
-        }
-        if p is None:
-            # Venta sin pagos: se conserva la fila con los campos de pago vacíos
-            base_row.update({
-                'fecha': '',
-                'amount': None,
-                'currency': '',
-                'bank': '',
-                'operation': '',
-                'payment_method': '',
-                'transfer_type': '',
-                'equivalent_currency': '',
-                'equivalent_amount': None,
-            })
-            return base_row
-
-        rate = base_row['exchange_rate']
+    def build_payment_row(self, sale, p, base_currency):
+        rate = float(sale.exchange_rate or 0) or 1
+        base_code = (base_currency.code or '').upper() if base_currency else ''
         amount = float(p.amount or 0)
-        currency_code = (p.currency.code or '').upper() if p.currency else ''
-        # Moneda equivalente = la contraria a la moneda del pago
-        if currency_code == 'PEN':
-            equivalent_currency = usd
-            computed_equivalent = amount / rate if rate else 0
+        # Monto normalizado a la moneda base (se convierte si el pago está en otra moneda)
+        if not base_currency or p.currency_id == base_currency.id:
+            converted = False
+            base_amount = amount
         else:
-            equivalent_currency = pen
-            computed_equivalent = amount * rate
-        # Reutiliza el monto equivalente ya persistido; si no existe, usa la conversión
-        if p.equivalent_amount is not None:
-            equivalent_amount = float(p.equivalent_amount)
-        else:
-            equivalent_amount = computed_equivalent
-        base_row.update({
+            converted = True
+            base_amount = amount * rate if base_code == 'PEN' else (amount / rate if rate else 0)
+        return {
             'fecha': p.date_joined.strftime('%d/%m/%Y') if p.date_joined else '',
-            'amount': amount,
             'currency': p.currency.name if p.currency else '',
+            'amount': amount,
+            'base_amount': base_amount,
+            'converted': converted,
             'bank': p.bank.name if p.bank else '',
             'operation': p.operation_number or '',
             'payment_method': p.payment_method.name if p.payment_method else '',
             'transfer_type': p.get_transfer_type_display() if p.transfer_type else '',
-            'equivalent_currency': equivalent_currency.name if equivalent_currency else '',
-            'equivalent_amount': equivalent_amount,
-        })
-        return base_row
+        }
 
-    def build_deposits(self, request):
-        currencies = list(Currency.objects.all())
-        pen = next((c for c in currencies if (c.code or '').upper() == 'PEN'), None)
-        usd = next((c for c in currencies if (c.code or '').upper() == 'USD'), None)
-        rows = []
+    def empty_payment_row(self):
+        return {
+            'fecha': '', 'currency': '', 'amount': None, 'base_amount': None, 'converted': False,
+            'bank': '', 'operation': '', 'payment_method': '', 'transfer_type': '',
+        }
+
+    def build_deposit_groups(self, request):
+        groups = []
         for sale in self.get_deposits_queryset(request):
+            base_currency = sale.base_currency
             payments = list(sale.payments.all())
-            if not payments:
-                rows.append(self.build_deposit_row(sale, None, pen, usd))
-            else:
-                for p in payments:
-                    rows.append(self.build_deposit_row(sale, p, pen, usd))
-        return rows
+            payment_rows = [self.build_payment_row(sale, p, base_currency) for p in payments]
+            if not payment_rows:
+                payment_rows = [self.empty_payment_row()]
+            groups.append({
+                'fechas': sale.dispatch_date.strftime('%d/%m/%Y') if sale.dispatch_date else '',
+                'base_currency': base_currency.name if base_currency else '',
+                'base_symbol': base_currency.symbol if base_currency else '',
+                'debt_amount': float(sale.debt_amount) if sale.debt_amount is not None else None,
+                'order_note': sale.order_note or '',
+                'freight_forwarder': sale.freight_forwarder or '',
+                'exchange_rate': float(sale.exchange_rate or 0) or 1,
+                'payments': payment_rows,
+            })
+        return groups
+
+    def report_base(self, request, groups):
+        """Moneda base del reporte: del filtro o, si no, del primer registro."""
+        base_currency_id = request.POST.get('base_currency_id', '')
+        if base_currency_id:
+            currency = Currency.objects.filter(pk=base_currency_id).first()
+            if currency:
+                return currency.name, currency.symbol
+        names = {g['base_currency'] for g in groups if g['base_currency']}
+        symbols = {g['base_symbol'] for g in groups if g['base_symbol']}
+        name = names.pop() if len(names) == 1 else ''
+        symbol = symbols.pop() if len(symbols) == 1 else ''
+        return name, symbol
+
+    def deposit_totals(self, groups):
+        # La deuda se suma una sola vez por venta (no por cada fila de pago)
+        total_viajes = sum((g['debt_amount'] or 0) for g in groups)
+        # Los montos ya están normalizados a la moneda base
+        total_monto = sum((p['base_amount'] or 0) for g in groups for p in g['payments'])
+        return {
+            'total_viajes': total_viajes,
+            'total_monto': total_monto,
+            'total_general': total_viajes - total_monto,
+        }
 
     def export_deposits_excel(self, request):
         try:
-            rows = self.build_deposits(request)
-            headers = ['FECHAS', 'MONEDA BASE', 'VIAJES', 'NOTA P.', 'FLETERO', 'FECHA', 'MONEDA',
-                       'MONTO', 'BANCO', 'OPERACIÓN', 'FORMA', 'TIPO TRANSF.', 'MONEDA EQ.',
-                       'MONTO EQ.', 'TIPO C.']
+            groups = self.build_deposit_groups(request)
+            totals = self.deposit_totals(groups)
+            base_name, base_symbol = self.report_base(request, groups)
+            sym = f' ({base_symbol})' if base_symbol else ''
+            headers = ['FECHAS', 'VIAJES' + sym, 'NOTA P.', 'FLETERO', 'FECHA', 'MONTO' + sym,
+                       'BANCO', 'OPERACIÓN', 'FORMA', 'TIPO TRANSF.', 'MONEDA', 'MONTO EQUIV.', 'TIPO C.']
             output = BytesIO()
             workbook = xlsxwriter.Workbook(output, {'in_memory': True})
             worksheet = workbook.add_worksheet('Depósitos')
+            title_fmt = workbook.add_format({'bold': True, 'font_size': 14, 'align': 'center', 'valign': 'vcenter'})
             header_fmt = workbook.add_format({
                 'bold': True, 'bg_color': '#2d4154', 'font_color': 'white',
                 'border': 1, 'align': 'center', 'valign': 'vcenter', 'text_wrap': True
@@ -123,6 +133,10 @@ class SaleReportView(ModuleMixin, FormView):
             cell_fmt = workbook.add_format({'border': 1, 'align': 'left', 'valign': 'vcenter'})
             money_fmt = workbook.add_format({'border': 1, 'num_format': '#,##0.00'})
             center_fmt = workbook.add_format({'border': 1, 'align': 'center'})
+            # Fila pagada en una moneda distinta a la base (fila resaltada)
+            conv_cell_fmt = workbook.add_format({'border': 1, 'align': 'left', 'valign': 'vcenter', 'bg_color': '#fff3b0'})
+            conv_money_fmt = workbook.add_format({'border': 1, 'num_format': '#,##0.00', 'bg_color': '#fff3b0'})
+            conv_center_fmt = workbook.add_format({'border': 1, 'align': 'center', 'bg_color': '#fff3b0'})
             total_label_fmt = workbook.add_format({
                 'bold': True, 'border': 1, 'align': 'left', 'valign': 'vcenter',
                 'bg_color': '#d9e1f2'
@@ -130,46 +144,69 @@ class SaleReportView(ModuleMixin, FormView):
             total_money_fmt = workbook.add_format({
                 'bold': True, 'border': 1, 'num_format': '#,##0.00', 'bg_color': '#d9e1f2'
             })
+
+            title = 'DEPÓSITOS' + (f' EN {base_name.upper()}' if base_name else '')
+            worksheet.merge_range(0, 0, 0, 12, title, title_fmt)
             for col, header in enumerate(headers):
-                worksheet.write(0, col, header, header_fmt)
-            for r, row in enumerate(rows, start=1):
-                worksheet.write(r, 0, row['fechas'], center_fmt)
-                worksheet.write(r, 1, row['base_currency'], center_fmt)
-                if row['debt_amount'] is not None:
-                    worksheet.write_number(r, 2, row['debt_amount'], money_fmt)
-                else:
-                    worksheet.write(r, 2, '', money_fmt)
-                worksheet.write(r, 3, row['order_note'], cell_fmt)
-                worksheet.write(r, 4, row['freight_forwarder'], cell_fmt)
-                worksheet.write(r, 5, row['fecha'], center_fmt)
-                worksheet.write(r, 6, row['currency'], center_fmt)
-                if row['amount'] is not None:
-                    worksheet.write_number(r, 7, row['amount'], money_fmt)
-                else:
-                    worksheet.write(r, 7, '', money_fmt)
-                worksheet.write(r, 8, row['bank'], cell_fmt)
-                worksheet.write(r, 9, row['operation'], cell_fmt)
-                worksheet.write(r, 10, row['payment_method'], cell_fmt)
-                worksheet.write(r, 11, row['transfer_type'], cell_fmt)
-                worksheet.write(r, 12, row['equivalent_currency'], center_fmt)
-                if row['equivalent_amount'] is not None:
-                    worksheet.write_number(r, 13, row['equivalent_amount'], money_fmt)
-                else:
-                    worksheet.write(r, 13, '', money_fmt)
-                worksheet.write_number(r, 14, row['exchange_rate'], center_fmt)
+                worksheet.write(1, col, header, header_fmt)
 
-            # Totales al final del listado
-            total_viajes = sum((row['debt_amount'] or 0) for row in rows)
-            total_monto = sum((row['amount'] or 0) for row in rows)
-            total_general = total_viajes - total_monto
-            totals_row = len(rows) + 1
-            worksheet.write(totals_row, 0, 'TOTALES', total_label_fmt)
-            worksheet.write_number(totals_row, 2, total_viajes, total_money_fmt)
-            worksheet.write_number(totals_row, 7, total_monto, total_money_fmt)
-            worksheet.write(totals_row + 1, 0, 'TOTAL GENERAL', total_label_fmt)
-            worksheet.write_number(totals_row + 1, 7, total_general, total_money_fmt)
+            row_idx = 2
+            for g in groups:
+                n = len(g['payments'])
+                first = row_idx
+                last = row_idx + n - 1
+                if n > 1:
+                    # Campos de la venta: combinados verticalmente (agrupación)
+                    worksheet.merge_range(first, 0, last, 0, g['fechas'], center_fmt)
+                    worksheet.merge_range(
+                        first, 1, last, 1,
+                        g['debt_amount'] if g['debt_amount'] is not None else '', money_fmt
+                    )
+                    worksheet.merge_range(first, 2, last, 2, g['order_note'], cell_fmt)
+                    worksheet.merge_range(first, 3, last, 3, g['freight_forwarder'], cell_fmt)
+                    worksheet.merge_range(first, 12, last, 12, g['exchange_rate'], center_fmt)
+                else:
+                    p0 = g['payments'][0]
+                    use_conv = p0['converted']
+                    worksheet.write(first, 0, g['fechas'], conv_center_fmt if use_conv else center_fmt)
+                    if g['debt_amount'] is not None:
+                        worksheet.write_number(first, 1, g['debt_amount'], conv_money_fmt if use_conv else money_fmt)
+                    else:
+                        worksheet.write(first, 1, '', conv_money_fmt if use_conv else money_fmt)
+                    worksheet.write(first, 2, g['order_note'], conv_cell_fmt if use_conv else cell_fmt)
+                    worksheet.write(first, 3, g['freight_forwarder'], conv_cell_fmt if use_conv else cell_fmt)
+                    worksheet.write_number(first, 12, g['exchange_rate'], conv_center_fmt if use_conv else center_fmt)
+                for i, p in enumerate(g['payments']):
+                    r = first + i
+                    conv = p['converted']
+                    worksheet.write(r, 4, p['fecha'], conv_center_fmt if conv else center_fmt)
+                    if p['base_amount'] is not None:
+                        worksheet.write_number(r, 5, p['base_amount'], conv_money_fmt if conv else money_fmt)
+                    else:
+                        worksheet.write(r, 5, '', conv_money_fmt if conv else money_fmt)
+                    worksheet.write(r, 6, p['bank'], conv_cell_fmt if conv else cell_fmt)
+                    worksheet.write(r, 7, p['operation'], conv_cell_fmt if conv else cell_fmt)
+                    worksheet.write(r, 8, p['payment_method'], conv_cell_fmt if conv else cell_fmt)
+                    worksheet.write(r, 9, p['transfer_type'], conv_cell_fmt if conv else cell_fmt)
+                    worksheet.write(r, 10, p['currency'], conv_center_fmt if conv else center_fmt)
+                    # MONTO EQUIV. = monto original solo si se pagó en otra moneda
+                    if conv and p['amount'] is not None:
+                        worksheet.write_number(r, 11, p['amount'], conv_money_fmt)
+                    else:
+                        worksheet.write(r, 11, '', money_fmt)
+                    if i > 0:
+                        worksheet.set_row(r, None, None, {'level': 1})
+                row_idx += n
 
-            widths = [12, 14, 14, 18, 16, 12, 12, 12, 14, 16, 14, 14, 12, 14, 10]
+            # Totales al final del listado (en la moneda base)
+            label = 'TOTALES' + (f' ({base_name})' if base_name else '')
+            worksheet.write(row_idx, 0, label, total_label_fmt)
+            worksheet.write_number(row_idx, 1, totals['total_viajes'], total_money_fmt)
+            worksheet.write_number(row_idx, 5, totals['total_monto'], total_money_fmt)
+            worksheet.write(row_idx + 1, 0, 'TOTAL GENERAL', total_label_fmt)
+            worksheet.write_number(row_idx + 1, 5, totals['total_general'], total_money_fmt)
+
+            widths = [12, 14, 18, 16, 12, 14, 14, 16, 14, 14, 14, 14, 10]
             for col, width in enumerate(widths):
                 worksheet.set_column(col, col, width)
             workbook.close()
@@ -185,17 +222,20 @@ class SaleReportView(ModuleMixin, FormView):
 
     def export_deposits_pdf(self, request):
         try:
-            rows = self.build_deposits(request)
-            total_viajes = sum((row['debt_amount'] or 0) for row in rows)
-            total_monto = sum((row['amount'] or 0) for row in rows)
+            groups = self.build_deposit_groups(request)
+            totals = self.deposit_totals(groups)
+            base_name, base_symbol = self.report_base(request, groups)
             template = get_template('sale_report/deposits_pdf.html')
             html = template.render({
-                'rows': rows,
+                'groups': groups,
                 'company': Company.objects.first(),
                 'reference': request.POST.get('client_label', ''),
-                'total_viajes': total_viajes,
-                'total_monto': total_monto,
-                'total_general': total_viajes - total_monto,
+                'total_records': sum(len(g['payments']) for g in groups),
+                'base_name': base_name,
+                'base_symbol': base_symbol,
+                'total_viajes': totals['total_viajes'],
+                'total_monto': totals['total_monto'],
+                'total_general': totals['total_general'],
             })
             pdf = HTML(string=html, base_url=request.build_absolute_uri('/')).write_pdf()
             response = HttpResponse(pdf, content_type='application/pdf')

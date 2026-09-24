@@ -61,70 +61,76 @@
         tfoot td.total-label {
             text-align: left;
         }
+
+        td.converted {
+            background-color: #fff3b0;
+        }
     </style>
 </head>
 <body>
-    <div class="title">{{ company.name|default:"Reporte" }} - REPORTE DE DEPÓSITOS</div>
+    <div class="title">{{ company.name|default:"Reporte" }} - DEPÓSITOS{% if base_name %} EN {{ base_name|upper }}{% endif %}</div>
     <div class="subtitle">
         {% if reference %}Cliente: {{ reference }}<br>{% endif %}
-        Total de registros: {{ rows|length }}
+        Total de registros: {{ total_records }}
     </div>
     <table>
         <thead>
         <tr>
             <th>FECHAS</th>
-            <th>MONEDA BASE</th>
-            <th>VIAJES</th>
+            <th>VIAJES{% if base_symbol %} ({{ base_symbol }}){% endif %}</th>
             <th>NOTA P.</th>
             <th>FLETERO</th>
             <th>FECHA</th>
-            <th>MONEDA</th>
-            <th>MONTO</th>
+            <th>MONTO{% if base_symbol %} ({{ base_symbol }}){% endif %}</th>
             <th>BANCO</th>
             <th>OPERACIÓN</th>
             <th>FORMA</th>
             <th>TIPO TRANSF.</th>
-            <th>MONEDA EQ.</th>
-            <th>MONTO EQ.</th>
+            <th>MONEDA</th>
+            <th>MONTO EQUIV.</th>
             <th>TIPO C.</th>
         </tr>
         </thead>
         <tbody>
-        {% for row in rows %}
+        {% for g in groups %}
+            {% for p in g.payments %}
             <tr>
-                <td class="center">{{ row.fechas }}</td>
-                <td class="center">{{ row.base_currency }}</td>
-                <td class="money">{% if row.debt_amount is not None %}{{ row.debt_amount|floatformat:2 }}{% endif %}</td>
-                <td>{{ row.order_note }}</td>
-                <td>{{ row.freight_forwarder }}</td>
-                <td class="center">{{ row.fecha }}</td>
-                <td class="center">{{ row.currency }}</td>
-                <td class="money">{% if row.amount is not None %}{{ row.amount|floatformat:2 }}{% endif %}</td>
-                <td>{{ row.bank }}</td>
-                <td>{{ row.operation }}</td>
-                <td>{{ row.payment_method }}</td>
-                <td>{{ row.transfer_type }}</td>
-                <td class="center">{{ row.equivalent_currency }}</td>
-                <td class="money">{% if row.equivalent_amount is not None %}{{ row.equivalent_amount|floatformat:2 }}{% endif %}</td>
-                <td class="center">{{ row.exchange_rate|floatformat:2 }}</td>
+                {% if forloop.first %}
+                <td rowspan="{{ g.payments|length }}" class="center">{{ g.fechas }}</td>
+                <td rowspan="{{ g.payments|length }}" class="money">{% if g.debt_amount is not None %}{{ g.debt_amount|floatformat:2 }}{% endif %}</td>
+                <td rowspan="{{ g.payments|length }}">{{ g.order_note }}</td>
+                <td rowspan="{{ g.payments|length }}">{{ g.freight_forwarder }}</td>
+                {% endif %}
+                <td class="center {% if p.converted %}converted{% endif %}">{{ p.fecha }}</td>
+                <td class="money {% if p.converted %}converted{% endif %}">{% if p.base_amount is not None %}{{ p.base_amount|floatformat:2 }}{% endif %}</td>
+                <td class="{% if p.converted %}converted{% endif %}">{{ p.bank }}</td>
+                <td class="{% if p.converted %}converted{% endif %}">{{ p.operation }}</td>
+                <td class="{% if p.converted %}converted{% endif %}">{{ p.payment_method }}</td>
+                <td class="{% if p.converted %}converted{% endif %}">{{ p.transfer_type }}</td>
+                <td class="center {% if p.converted %}converted{% endif %}">{{ p.currency }}</td>
+                <td class="money {% if p.converted %}converted{% endif %}">{% if p.converted and p.amount is not None %}{{ p.amount|floatformat:2 }}{% endif %}</td>
+                {% if forloop.first %}
+                <td rowspan="{{ g.payments|length }}" class="center">{{ g.exchange_rate|floatformat:2 }}</td>
+                {% endif %}
             </tr>
+            {% endfor %}
         {% empty %}
             <tr>
-                <td colspan="15" class="center">No hay depósitos para los filtros seleccionados</td>
+                <td colspan="13" class="center">No hay depósitos para los filtros seleccionados</td>
             </tr>
         {% endfor %}
         </tbody>
         <tfoot>
         <tr class="totals">
-            <td colspan="2" class="total-label">TOTALES</td>
+            <td class="total-label">TOTALES{% if base_name %} ({{ base_name }}){% endif %}</td>
             <td class="money">{{ total_viajes|floatformat:2 }}</td>
-            <td colspan="4"></td>
+            <td colspan="3"></td>
             <td class="money">{{ total_monto|floatformat:2 }}</td>
             <td colspan="7"></td>
         </tr>
         <tr class="totals">
-            <td colspan="2" class="total-label">TOTAL GENERAL</td>
-            <td colspan="5"></td>
+            <td class="total-label">TOTAL GENERAL</td>
+            <td colspan="4"></td>
             <td class="money">{{ total_general|floatformat:2 }}</td>
             <td colspan="7"></td>
         </tr>
