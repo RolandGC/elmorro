@@ -139,10 +139,11 @@ class SaleReportView(ModuleMixin, FormView):
             conv_center_fmt = workbook.add_format({'border': 1, 'align': 'center', 'bg_color': '#fff3b0'})
             total_label_fmt = workbook.add_format({
                 'bold': True, 'border': 1, 'align': 'left', 'valign': 'vcenter',
-                'bg_color': '#d9e1f2'
+                'bg_color': '#ffe699'
             })
             total_money_fmt = workbook.add_format({
-                'bold': True, 'border': 1, 'num_format': '#,##0.00', 'bg_color': '#d9e1f2'
+                'bold': True, 'border': 1, 'align': 'right', 'valign': 'vcenter',
+                'num_format': '#,##0.00', 'bg_color': '#ffe699'
             })
 
             title = 'DEPÓSITOS' + (f' EN {base_name.upper()}' if base_name else '')
@@ -198,13 +199,21 @@ class SaleReportView(ModuleMixin, FormView):
                         worksheet.set_row(r, None, None, {'level': 1})
                 row_idx += n
 
-            # Totales al final del listado (en la moneda base)
-            label = 'TOTALES' + (f' ({base_name})' if base_name else '')
-            worksheet.write(row_idx, 0, label, total_label_fmt)
-            worksheet.write_number(row_idx, 1, totals['total_viajes'], total_money_fmt)
+            # Separación visual entre los registros y el resumen de totales
+            row_idx += 1
+
+            # Resumen de totales (en la moneda base).
+            # Bloque derecho: total de montos, total de viajes y total a deber.
+            worksheet.write(row_idx, 4, 'TOTAL DEPOS.', total_label_fmt)
             worksheet.write_number(row_idx, 5, totals['total_monto'], total_money_fmt)
-            worksheet.write(row_idx + 1, 0, 'TOTAL GENERAL', total_label_fmt)
-            worksheet.write_number(row_idx + 1, 5, totals['total_general'], total_money_fmt)
+            worksheet.write(row_idx + 1, 4, 'TOTAL VIAJE', total_label_fmt)
+            worksheet.write_number(row_idx + 1, 5, totals['total_viajes'], total_money_fmt)
+            worksheet.write(row_idx + 2, 4, 'TOTAL DEBE', total_label_fmt)
+            worksheet.write_number(row_idx + 2, 5, totals['total_general'], total_money_fmt)
+
+            # Total de viajes (resumen izquierdo), alineado con el bloque derecho.
+            worksheet.write(row_idx + 2, 0, 'TOTAL VIAJES', total_label_fmt)
+            worksheet.write_number(row_idx + 2, 1, totals['total_viajes'], total_money_fmt)
 
             widths = [12, 14, 18, 16, 12, 14, 14, 16, 14, 14, 14, 14, 10]
             for col, width in enumerate(widths):
@@ -297,4 +306,6 @@ class SaleReportView(ModuleMixin, FormView):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Reporte de Cobranzas'
         context['base_currencies'] = Currency.objects.filter(is_active=True)
+        default_currency = Currency.objects.filter(is_active=True).first()
+        context['default_base_currency_id'] = default_currency.id if default_currency else ''
         return context

@@ -34,7 +34,7 @@
         <select name="base_currency_id" id="base_currency_id" class="form-control select2" style="width: 100%;">
           <option value="">Todas las monedas</option>
           {% for c in base_currencies %}
-            <option value="{{ c.id }}">{{ c.name }}</option>
+            <option value="{{ c.id }}" {% if c.id == default_base_currency_id %}selected{% endif %}>{{ c.name }}</option>
           {% endfor %}
         </select>
       </div>

@@ -53,8 +53,13 @@
             text-align: right;
         }
 
+        tfoot tr.spacer td {
+            border: none;
+            height: 8px;
+        }
+
         tfoot tr.totals td {
-            background-color: #d9e1f2;
+            background-color: #ffe699;
             font-weight: bold;
         }
 
@@ -121,17 +126,33 @@
         {% endfor %}
         </tbody>
         <tfoot>
+        <tr class="spacer">
+            <td colspan="13"></td>
+        </tr>
         <tr class="totals">
-            <td class="total-label">TOTALES{% if base_name %} ({{ base_name }}){% endif %}</td>
-            <td class="money">{{ total_viajes|floatformat:2 }}</td>
-            <td colspan="3"></td>
-            <td class="money">{{ total_monto|floatformat:2 }}</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td class="total-label">TOTAL DEPOS.</td>
+            <td class="money">{% if base_symbol %}{{ base_symbol }} {% endif %}{{ total_monto|floatformat:2 }}</td>
             <td colspan="7"></td>
         </tr>
         <tr class="totals">
-            <td class="total-label">TOTAL GENERAL</td>
-            <td colspan="4"></td>
-            <td class="money">{{ total_general|floatformat:2 }}</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td class="total-label">TOTAL VIAJE</td>
+            <td class="money">{% if base_symbol %}{{ base_symbol }} {% endif %}{{ total_viajes|floatformat:2 }}</td>
+            <td colspan="7"></td>
+        </tr>
+        <tr class="totals">
+            <td class="total-label">TOTAL VIAJES</td>
+            <td class="money">{% if base_symbol %}{{ base_symbol }} {% endif %}{{ total_viajes|floatformat:2 }}</td>
+            <td colspan="2"></td>
+            <td class="total-label">TOTAL DEBE</td>
+            <td class="money">{% if base_symbol %}{{ base_symbol }} {% endif %}{{ total_general|floatformat:2 }}</td>
             <td colspan="7"></td>
         </tr>
         </tfoot>
