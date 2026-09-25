@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Reporte de Depósitos</title>
+    <title>Reporte de Abonos</title>
     <style>
         @page {
             size: A4 landscape;
@@ -73,7 +73,7 @@
     </style>
 </head>
 <body>
-    <div class="title">{{ company.name|default:"Reporte" }} - DEPÓSITOS{% if base_name %} EN {{ base_name|upper }}{% endif %}</div>
+    <div class="title">{{ company.name|default:"Reporte" }} - ABONOS{% if base_name %} EN {{ base_name|upper }}{% endif %}</div>
     <div class="subtitle">
         {% if reference %}Cliente: {{ reference }}<br>{% endif %}
         Total de registros: {{ total_records }}
@@ -134,7 +134,7 @@
             <td></td>
             <td></td>
             <td></td>
-            <td class="total-label">TOTAL DEPOS.</td>
+            <td class="total-label">TOTAL ABONOS</td>
             <td class="money">{% if base_symbol %}{{ base_symbol }} {% endif %}{{ total_monto|floatformat:2 }}</td>
             <td colspan="7"></td>
         </tr>

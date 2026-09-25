@@ -146,7 +146,7 @@ class SaleReportView(ModuleMixin, FormView):
                 'num_format': '#,##0.00', 'bg_color': '#ffe699'
             })
 
-            title = 'DEPÓSITOS' + (f' EN {base_name.upper()}' if base_name else '')
+            title = 'ABONOS' + (f' EN {base_name.upper()}' if base_name else '')
             worksheet.merge_range(0, 0, 0, 12, title, title_fmt)
             for col, header in enumerate(headers):
                 worksheet.write(1, col, header, header_fmt)
@@ -204,7 +204,7 @@ class SaleReportView(ModuleMixin, FormView):
 
             # Resumen de totales (en la moneda base).
             # Bloque derecho: total de montos, total de viajes y total a deber.
-            worksheet.write(row_idx, 4, 'TOTAL DEPOS.', total_label_fmt)
+            worksheet.write(row_idx, 4, 'TOTAL ABONOS', total_label_fmt)
             worksheet.write_number(row_idx, 5, totals['total_monto'], total_money_fmt)
             worksheet.write(row_idx + 1, 4, 'TOTAL VIAJE', total_label_fmt)
             worksheet.write_number(row_idx + 1, 5, totals['total_viajes'], total_money_fmt)
