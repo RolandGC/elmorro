@@ -79,6 +79,7 @@ class SaleReportView(ModuleMixin, FormView):
             if not payment_rows:
                 payment_rows = [self.empty_payment_row()]
             groups.append({
+                'serie': sale.serie or '',
                 'fechas': sale.dispatch_date.strftime('%d/%m/%Y') if sale.dispatch_date else '',
                 'base_currency': base_currency.name if base_currency else '',
                 'base_symbol': base_currency.symbol if base_currency else '',
@@ -121,7 +122,8 @@ class SaleReportView(ModuleMixin, FormView):
             base_name, base_symbol = self.report_base(request, groups)
             sym = f' ({base_symbol})' if base_symbol else ''
             headers = ['FECHAS', 'VIAJES' + sym, 'NOTA P.', 'FLETERO', 'FECHA', 'MONTO' + sym,
-                       'BANCO', 'OPERACIÓN', 'FORMA', 'TIPO TRANSF.', 'MONEDA', 'MONTO EQUIV.', 'TIPO C.']
+                       'BANCO', 'OPERACIÓN', 'FORMA', 'TIPO TRANSF.', 'MONEDA', 'MONTO EQUIV.', 'TIPO C.',
+                       'N° SERIE']
             output = BytesIO()
             workbook = xlsxwriter.Workbook(output, {'in_memory': True})
             worksheet = workbook.add_worksheet('Depósitos')
@@ -147,7 +149,7 @@ class SaleReportView(ModuleMixin, FormView):
             })
 
             title = 'DEPÓSITOS' + (f' EN {base_name.upper()}' if base_name else '')
-            worksheet.merge_range(0, 0, 0, 12, title, title_fmt)
+            worksheet.merge_range(0, 0, 0, 13, title, title_fmt)
             for col, header in enumerate(headers):
                 worksheet.write(1, col, header, header_fmt)
 
@@ -166,6 +168,7 @@ class SaleReportView(ModuleMixin, FormView):
                     worksheet.merge_range(first, 2, last, 2, g['order_note'], cell_fmt)
                     worksheet.merge_range(first, 3, last, 3, g['freight_forwarder'], cell_fmt)
                     worksheet.merge_range(first, 12, last, 12, g['exchange_rate'], center_fmt)
+                    worksheet.merge_range(first, 13, last, 13, g['serie'], center_fmt)
                 else:
                     p0 = g['payments'][0]
                     use_conv = p0['converted']
@@ -177,6 +180,7 @@ class SaleReportView(ModuleMixin, FormView):
                     worksheet.write(first, 2, g['order_note'], conv_cell_fmt if use_conv else cell_fmt)
                     worksheet.write(first, 3, g['freight_forwarder'], conv_cell_fmt if use_conv else cell_fmt)
                     worksheet.write_number(first, 12, g['exchange_rate'], conv_center_fmt if use_conv else center_fmt)
+                    worksheet.write(first, 13, g['serie'], center_fmt)
                 for i, p in enumerate(g['payments']):
                     r = first + i
                     conv = p['converted']
@@ -215,7 +219,7 @@ class SaleReportView(ModuleMixin, FormView):
             worksheet.write(row_idx + 2, 0, 'TOTAL VIAJES', total_label_fmt)
             worksheet.write_number(row_idx + 2, 1, totals['total_viajes'], total_money_fmt)
 
-            widths = [12, 14, 18, 16, 12, 14, 14, 16, 14, 14, 14, 14, 10]
+            widths = [12, 14, 18, 16, 12, 14, 14, 16, 14, 14, 14, 14, 10, 18]
             for col, width in enumerate(widths):
                 worksheet.set_column(col, col, width)
             workbook.close()
