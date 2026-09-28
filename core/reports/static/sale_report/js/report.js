@@ -62,16 +62,16 @@ function generateReport(all) {
         searching: false,
         dom: 'Bfrtip',
         buttons: [{
-                text: 'Depósitos Excel <i class="fas fa-file-excel"></i>',
-                titleAttr: 'Exportar depósitos a Excel',
+                text: 'Abonos Excel <i class="fas fa-file-excel"></i>',
+                titleAttr: 'Exportar Abonos a Excel',
                 className: 'btn btn-success btn-flat btn-xs',
                 action: function(e, dt, node, config) {
                     exportDeposits('excel');
                 }
             },
             {
-                text: 'Depósitos PDF <i class="fas fa-file-pdf"></i>',
-                titleAttr: 'Exportar depósitos a PDF',
+                text: 'Abonos PDF <i class="fas fa-file-pdf"></i>',
+                titleAttr: 'Exportar Abonos a PDF',
                 className: 'btn btn-danger btn-flat btn-xs',
                 action: function(e, dt, node, config) {
                     exportDeposits('pdf');
