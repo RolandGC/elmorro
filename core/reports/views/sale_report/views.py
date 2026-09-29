@@ -123,7 +123,7 @@ class SaleReportView(ModuleMixin, FormView):
             sym = f' ({base_symbol})' if base_symbol else ''
             headers = ['FECHAS', 'VIAJES' + sym, 'NOTA P.', 'FLETERO', 'FECHA', 'MONTO' + sym,
                        'BANCO', 'OPERACIÓN', 'FORMA', 'TIPO TRANSF.', 'MONEDA', 'MONTO EQUIV.', 'TIPO C.',
-                       'N° SERIE']
+                       'RECIBO']
             output = BytesIO()
             workbook = xlsxwriter.Workbook(output, {'in_memory': True})
             worksheet = workbook.add_worksheet('Depósitos')
