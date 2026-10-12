@@ -88,8 +88,10 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/3.2.2/ref/settings/#databases
+# PostgreSQL por defecto (configurable via variables de entorno).
+# Ver config/db.py. Para revertir a SQLite: export DB_ENGINE=sqlite
 
-DATABASES = db.SQLITE
+DATABASES = db.DATABASES
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2.2/ref/settings/#auth-password-validators
