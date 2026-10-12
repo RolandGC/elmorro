@@ -50,6 +50,13 @@ LAST_SALES = [
         'cliente_dni': '20600798333',
         'comment': '',
     },
+    {
+        'serie': '011-0378',
+        'fecha': '08/10/2026 11:58',
+        'total': 7500.00,
+        'cliente_dni': 'M20250029',
+        'comment': '',
+    },
     
 ]
 
