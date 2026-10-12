@@ -43,6 +43,14 @@ LAST_SALES = [
         'cliente_dni': '20600798333',
         'comment': '',
     },
+    {
+        'serie': '020-0301',
+        'fecha': '10/10/2026 12:37',
+        'total': 2265.43,
+        'cliente_dni': '20600798333',
+        'comment': '',
+    },
+    
 ]
 
 DATE_FORMATS = (
