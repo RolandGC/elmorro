@@ -6,7 +6,7 @@
   <link rel="stylesheet" href="{% static 'lib/select2-4.0.13/css/select2-bootstrap4.min.css' %}">
   <script src="{% static 'lib/select2-4.0.13/js/select2.min.js' %}"></script>
   <script src="{% static 'lib/select2-4.0.13/js/i18n/es.js' %}"></script>
-  <script src="{% static 'sale_report/js/report.js' %}?v=5" type="text/javascript"></script>
+  <script src="{% static 'sale_report/js/report.js' %}?v=6" type="text/javascript"></script>
 {% endblock %}
 {% block content_report %}
   <div class="row">
@@ -34,6 +34,19 @@
         <select name="base_currency_id" id="base_currency_id" class="form-control select2" style="width: 100%;">
           {% for c in base_currencies %}
             <option value="{{ c.id }}" {% if c.id == default_base_currency_id %}selected{% endif %}>{{ c.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-lg-3">
+      <div class="form-group">
+        <label>Filtrar por serie (opcional):</label>
+        <select name="serie" id="serie" class="form-control select2" style="width: 100%;">
+          <option value="">Todas las series</option>
+          {% for s in series %}
+            <option value="{{ s.name }}">{{ s.name }}</option>
           {% endfor %}
         </select>
       </div>

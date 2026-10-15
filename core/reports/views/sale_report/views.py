@@ -10,7 +10,7 @@ from django.template.loader import get_template
 from django.views.generic import FormView
 from weasyprint import HTML
 
-from core.pos.models import Sale, Client, Company, Currency
+from core.pos.models import Sale, Client, Company, Currency, Series
 from core.reports.forms import ReportForm
 from core.security.mixins import ModuleMixin
 
@@ -24,6 +24,7 @@ class SaleReportView(ModuleMixin, FormView):
         end_date = request.POST.get('end_date', '')
         client_id = request.POST.get('client_id', '')
         base_currency_id = request.POST.get('base_currency_id', '')
+        serie = request.POST.get('serie', '')
         sales = Sale.objects.select_related(
             'client', 'client__user', 'base_currency'
         ).prefetch_related(
@@ -33,6 +34,8 @@ class SaleReportView(ModuleMixin, FormView):
             sales = sales.filter(client_id=client_id)
         if base_currency_id:
             sales = sales.filter(base_currency_id=base_currency_id)
+        if serie:
+            sales = sales.filter(serie__startswith=f'{serie}-')
         if start_date and end_date:
             try:
                 end_date_obj = datetime.strptime(end_date, '%Y-%m-%d') + timedelta(days=1)
@@ -267,11 +270,14 @@ class SaleReportView(ModuleMixin, FormView):
                 end_date = request.POST['end_date']
                 client_id = request.POST.get('client_id', '')
                 base_currency_id = request.POST.get('base_currency_id', '')
+                serie = request.POST.get('serie', '')
                 search = Sale.objects.all()
                 if client_id:
                     search = search.filter(client_id=client_id)
                 if base_currency_id:
                     search = search.filter(base_currency_id=base_currency_id)
+                if serie:
+                    search = search.filter(serie__startswith=f'{serie}-')
                 if len(start_date) and len(end_date):
                     try:
                         end_date_obj = datetime.strptime(end_date, '%Y-%m-%d')
@@ -312,4 +318,5 @@ class SaleReportView(ModuleMixin, FormView):
         context['base_currencies'] = Currency.objects.filter(is_active=True)
         default_currency = Currency.objects.filter(is_active=True).first()
         context['default_base_currency_id'] = default_currency.id if default_currency else ''
+        context['series'] = Series.objects.all().order_by('name')
         return context

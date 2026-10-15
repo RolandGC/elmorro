@@ -1,10 +1,11 @@
 var input_daterange;
 var input_client;
 var input_base_currency;
+var input_serie;
 var current_date;
 var tblReport;
 var columns = [];
-var currentFilters = { start_date: '', end_date: '', client_id: '', base_currency_id: '' };
+var currentFilters = { start_date: '', end_date: '', client_id: '', base_currency_id: '', serie: '' };
 
 function initTable() {
     tblReport = $('#tblReport').DataTable({
@@ -25,6 +26,7 @@ function generateReport(all) {
         'end_date': input_daterange.data('daterangepicker').endDate.format('YYYY-MM-DD'),
         'client_id': input_client.val() || '',
         'base_currency_id': input_base_currency.val() || '',
+        'serie': input_serie.val() || '',
     };
 
     if (all) {
@@ -39,6 +41,7 @@ function generateReport(all) {
         end_date: parameters['end_date'],
         client_id: parameters['client_id'],
         base_currency_id: parameters['base_currency_id'],
+        serie: parameters['serie'],
     };
 
     tblReport = $('#tblReport').DataTable({
@@ -149,6 +152,7 @@ function exportDeposits(format) {
     parameters.append('end_date', currentFilters.end_date);
     parameters.append('client_id', currentFilters.client_id);
     parameters.append('base_currency_id', currentFilters.base_currency_id);
+    parameters.append('serie', currentFilters.serie);
     var selectedClient = input_client.select2('data');
     parameters.append('client_label', selectedClient.length ? selectedClient[0].text : '');
 
@@ -240,6 +244,16 @@ $(function() {
         allowClear: false,
         minimumResultsForSearch: Infinity,
     }).on('select2:select', function() {
+        generateReport(false);
+    });
+
+    input_serie = $('select[name="serie"]');
+    input_serie.select2({
+        theme: 'bootstrap4',
+        language: 'es',
+        allowClear: true,
+        placeholder: 'Todas las series',
+    }).on('select2:select select2:clear', function() {
         generateReport(false);
     });
 
