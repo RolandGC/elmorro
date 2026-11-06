@@ -18,18 +18,34 @@ SQLITE = {
 POSTGRESQL = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': _env('DB_NAME', 'cajaelmorro'),
-        'USER': _env('DB_USER', 'postgres'),
-        'PASSWORD': _env('DB_PASSWORD', 'posgres'),
-        'HOST': _env('DB_HOST', '127.0.0.1'),
-        'PORT': _env('DB_PORT', '5432'),
-        'CONN_MAX_AGE': int(_env('DB_CONN_MAX_AGE', '60')),
+        'NAME': 'elmorro',
+        'USER': 'elmorro',
+        'PASSWORD': 'ZhOUuZw3R1XelEgH',
+        'HOST': '127.0.0.1',
+        'PORT': '5432',
+        'CONN_MAX_AGE': 60,
         'ATOMIC_REQUESTS': True,
         'OPTIONS': {
-            'connect_timeout': int(_env('DB_CONNECT_TIMEOUT', '10')),
+            'connect_timeout': 10,
         },
     }
 }
+
+# POSTGRESQL = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': _env('DB_NAME', 'cajaelmorro'),
+#         'USER': _env('DB_USER', 'postgres'),
+#         'PASSWORD': _env('DB_PASSWORD', 'posgres'),
+#         'HOST': _env('DB_HOST', '127.0.0.1'),
+#         'PORT': _env('DB_PORT', '5432'),
+#         'CONN_MAX_AGE': int(_env('DB_CONN_MAX_AGE', '60')),
+#         'ATOMIC_REQUESTS': True,
+#         'OPTIONS': {
+#             'connect_timeout': int(_env('DB_CONNECT_TIMEOUT', '10')),
+#         },
+#     }
+# }
 
 # mysqlclient
 
