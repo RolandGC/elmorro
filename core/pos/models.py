@@ -1003,6 +1003,15 @@ class Devolution(models.Model):
 
 class Box(models.Model):
     user = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name='Usuario', related_name='boxes', null=True, blank=True)
+    receiver = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        verbose_name='Usuario que recibe',
+        related_name='boxes_received',
+        null=True,
+        blank=True,
+        help_text='Usuario responsable de recibir el dinero o valores al cierre de caja'
+    )
     date_joined = models.DateField(default=timezone.now) 
     date_close = models.DateField(verbose_name='Fecha de Cierre', null=True, blank=True)
     hours_close = models.TimeField(default=current_time, verbose_name='Hora de Cierre', null=True, blank=True)
@@ -1059,6 +1068,7 @@ class Box(models.Model):
         item['box_final_soles'] = format(self.box_final_soles or 0, '.2f')
         item['box_final_dolares'] = format(self.box_final_dolares or 0, '.2f')
         item['user'] = self.user.toJSON() if self.user else None
+        item['receiver'] = self.receiver.toJSON() if self.receiver else None
         
         # Campo opciones para DataTables (se renderiza en JavaScript)
         item['options'] = ''

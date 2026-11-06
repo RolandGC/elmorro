@@ -42,6 +42,7 @@ function getData(all) {
             { data: "box_final_dolares" },
             { data: "bills" },
             { data: "desc" },
+            { data: "receiver.full_name" },
             { data: "options" },
         ],
         columnDefs: [{
@@ -95,6 +96,13 @@ function getData(all) {
             },
             {
                 targets: [7],
+                class: 'text-center',
+                render: function(data, type, row) {
+                    return data || 'No registrado'
+                }
+            },
+            {
+                targets: [8],
                 class: 'text-center',
                 orderable: false,
                 render: function(data, type, row) {
@@ -358,6 +366,10 @@ function showDetails(idBox) {
             <div class="col-md-6">
                 <p class="mb-1"><strong>Cierre actual:</strong> ${box ? (box.datetime_close || '-') : '-'}</p>
                 <p class="mb-1"><strong>Cierre previo:</strong> ${prev ? (prev.datetime_close || '-') : 'Sin cierre previo'}</p>
+            </div>
+            <div class="col-md-6">
+                <p class="mb-1"><strong>Usuario que entrega:</strong> ${box?.user?.full_name || '-'}</p>
+                <p class="mb-1"><strong>Usuario que recibe:</strong> ${box?.receiver?.full_name || 'No registrado'}</p>
             </div>
         </div>`;
 
@@ -816,6 +828,17 @@ function showDetails(idBox) {
                                         if (entregableDolares && Number(entregableDolares) !== 0) {
                                             finalBlock.push({ text: `TOTAL A ENTREGAR EN DOLARES (efectivo): $ ${entregableDolares.toFixed(2)}`, bold: true, margin: [0, 0, 0, 4] });
                                         }
+
+                                        // Trazabilidad de la entrega y recepción del dinero
+                                        finalBlock.push({
+                                            stack: [
+                                                { text: `Usuario que entrega: ${box?.user?.full_name || '-'}` },
+                                                { text: `Usuario que recibe: ${box?.receiver?.full_name || 'No registrado'}` }
+                                            ],
+                                            fontSize: 8,
+                                            margin: [0, 0, 0, 6]
+                                        });
+
                                         finalBlock.push({
                                             columns: [
                                                 {

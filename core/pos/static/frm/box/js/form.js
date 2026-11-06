@@ -2,6 +2,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('frmForm');
     const csrftoken = getCookie('csrftoken');
 
+    // Selector de usuario que recibe la caja
+    if (window.jQuery && $.fn.select2) {
+        $('.select2').select2({
+            theme: 'bootstrap4',
+            language: 'es',
+            width: '100%',
+            placeholder: 'Seleccione el usuario que recibe',
+            allowClear: true
+        });
+    }
+
     // Campos de Caja Inicial (Soles y Dólares) - EDITABLES
     const initialBoxSoles = document.querySelector('#id_initial_box_soles');
     const initialBoxDolares = document.querySelector('#id_initial_box_dolares');
@@ -157,6 +168,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 validators: {
                     notEmpty: {
                         message: 'La fecha y hora de cierre son obligatorias'
+                    }
+                }
+            },
+            receiver: {
+                validators: {
+                    notEmpty: {
+                        message: 'Debe seleccionar el usuario que recibe la caja'
                     }
                 }
             },

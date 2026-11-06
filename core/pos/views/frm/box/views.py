@@ -18,7 +18,20 @@ logger = logging.getLogger(__name__)
 
 from core.pos.forms import BoxForm, Box, BoxFormListView
 from core.pos.models import Company, Sale, SalePayment, Expenses
+from core.user.models import User
 
+
+def get_receiver_from_post(request):
+    """Obtiene y valida el usuario que recibe la caja desde el formulario."""
+    receiver_id = (request.POST.get('receiver') or '').strip()
+    if not receiver_id:
+        raise ValueError('Debe seleccionar el usuario que recibe la caja')
+    receiver = User.objects.filter(
+        pk=receiver_id, is_active=True
+    ).exclude(groups__name='Cliente').first()
+    if receiver is None:
+        raise ValueError('El usuario que recibe la caja no es válido')
+    return receiver
 
 
 class BoxListView(PermissionMixin, FormView):
@@ -32,7 +45,7 @@ class BoxListView(PermissionMixin, FormView):
         try:
             if action == 'search':
                 data = []
-                search = Box.objects.all()
+                search = Box.objects.select_related('user', 'receiver').all()
                 if not request.user.groups.filter(name__in=['Supervisor', 'Administrador']).exists():
                     search = search.filter(user=request.user)
                 start_date = request.POST['start_date']
@@ -208,6 +221,7 @@ class BoxCreateView(PermissionMixin, CreateView):
                 from datetime import datetime
                 box = Box()
                 box.user = request.user
+                box.receiver = get_receiver_from_post(request)
                 
                 # Obtener datetime_close del POST
                 datetime_str = request.POST.get('datetime_close', '')
@@ -276,7 +290,7 @@ class BoxPrintTicketView(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         try:
-            box = Box.objects.get(pk=self.kwargs['pk'])
+            box = Box.objects.select_related('user', 'receiver').get(pk=self.kwargs['pk'])
             company = Company.objects.first()
             context = {
                 'box': box,
@@ -413,7 +427,7 @@ class BoxSalesRangeView(LoginRequiredMixin, View):
         data = {}
         try:
             pk = kwargs.get('pk')
-            box = Box.objects.get(pk=pk)
+            box = Box.objects.select_related('user', 'receiver').get(pk=pk)
         except Box.DoesNotExist:
             return JsonResponse({'error': 'Box no encontrado'}, status=404)
 
@@ -618,6 +632,7 @@ class BoxUpdateView(PermissionMixin, UpdateView):
             elif action == 'edit':
                 from datetime import datetime
                 box = self.get_object()
+                box.receiver = get_receiver_from_post(request)
 
                 datetime_str = request.POST.get('datetime_close', '')
                 if datetime_str:

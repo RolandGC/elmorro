@@ -203,7 +203,7 @@
       <div class="info-section border-dotted">
         <p>
           <b>Usuario:</b> {{ box.user.full_name }}<br />
-          <b>Entrega a:</b> {{ box.user.full_name }}
+          <b>Recibido por:</b> {{ box.receiver.full_name|default:'No registrado' }}
         </p>
         <p>
           <b>Fecha y Hora Cierre:</b> {% if box.datetime_close %}

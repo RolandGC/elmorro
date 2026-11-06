@@ -5,6 +5,8 @@ from django.contrib.auth.models import Group
 from django.db.models import Sum
 from datetime import datetime, date
 
+from core.user.models import User
+
 from .models import *
 
 
@@ -313,6 +315,13 @@ class BoxForm(ModelForm):
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
 
+        # Usuarios que pueden recibir la caja: activos y que no sean clientes.
+        self.fields['receiver'].queryset = User.objects.filter(
+            is_active=True
+        ).exclude(groups__name='Cliente').distinct().order_by('full_name')
+        self.fields['receiver'].empty_label = 'Seleccione el usuario que recibe'
+        self.fields['receiver'].required = True
+
         # Configurar la fecha actual al crear (o la guardada al editar)
         if self.instance and self.instance.pk:
             self.fields['datetime_close'].widget.attrs['readonly'] = 'readonly'
@@ -362,10 +371,14 @@ class BoxForm(ModelForm):
     class Meta:
         model = Box
         fields = [
-            'datetime_close', 'desc', 'initial_box_soles', 'initial_box_dolares', 'efectivo_soles', 'efectivo_dolares','transferencia_soles', 'transferencia_dolares',
+            'datetime_close', 'receiver', 'desc', 'initial_box_soles', 'initial_box_dolares', 'efectivo_soles', 'efectivo_dolares','transferencia_soles', 'transferencia_dolares',
             'deposito_soles', 'deposito_dolares', 'yape', 'plin', 'bills','box_final_dolares', 'box_final_soles'
         ]
         widgets = {
+            'receiver': forms.Select(attrs={
+                'class': 'form-control select2',
+                'style': 'width: 100%;'
+            }),
             'datetime_close': forms.DateTimeInput(
                 format='%Y-%m-%dT%H:%M:%S',
                 attrs={
