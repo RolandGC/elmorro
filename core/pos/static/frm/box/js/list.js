@@ -337,6 +337,7 @@ function showDetails(idBox) {
             const box = data.box || null;
             const prev = data.previous_box || null;
             const sales = Array.isArray(data.sales) ? data.sales : [];
+            const expenses = Array.isArray(data.expenses) ? data.expenses : [];
 
             // ── Helper: parsear número ────────────────────────────────────────
             const parseNum = v => {
@@ -344,6 +345,12 @@ function showDetails(idBox) {
                 const n = parseFloat(String(v).replace(/,/g, '').replace(/[^0-9.\-]/g, ''));
                 return isNaN(n) ? 0 : n;
             };
+
+            // Total de egresos: se toma del backend para que coincida exactamente
+            // con el importe restado en el resumen financiero del PDF.
+            const expensesTotal = (data.expenses_total !== undefined && data.expenses_total !== null)
+                ? parseNum(data.expenses_total)
+                : expenses.reduce((acc, item) => acc + parseNum(item.amount), 0);
 
             // ── Resumen de caja ───────────────────────────────────────────────
             boxInfo.innerHTML = `
@@ -550,7 +557,7 @@ function showDetails(idBox) {
                             extend: 'excelHtml5',
                             text: '<i class="fas fa-file-excel"></i> Excel',
                             className: 'btn btn-success btn-sm',
-                            title: `Reporte de Caja - ${box?.datetime_close || ''}`,
+                            title: `Cierre de Caja - ${box?.datetime_close || ''}`,
                             exportOptions: { columns: ':visible' },
                             customize: function (xlsx) {
                                 try {
@@ -591,8 +598,8 @@ function showDetails(idBox) {
                                         else if (u.full_name) userName = u.full_name;
                                         else if (u.username) userName = u.username;
                                     }
-                                    return `Reporte de Caja - ${dt} de ${userName}`;
-                                } catch (e) { return `Reporte de Caja - ${box?.datetime_close || ''}`; }
+                                    return `Cierre de Caja - ${dt} de ${userName}`;
+                                } catch (e) { return `Cierre de Caja - ${box?.datetime_close || ''}`; }
                             })(),
                             orientation: 'landscape',
                             pageSize: 'A4',
@@ -670,6 +677,81 @@ function showDetails(idBox) {
                                         };
                                     }
 
+                                    // ── Detalle de egresos del período ─────────────────
+                                    const expensesBlock = expenses.length ? (function buildPdfExpensesBlock() {
+                                        const headerCell = (text, alignment) => ({
+                                            text: text,
+                                            bold: true,
+                                            color: '#ffffff',
+                                            fillColor: '#343a40',
+                                            fontSize: 8,
+                                            alignment: alignment || 'center'
+                                        });
+
+                                        const body = [[
+                                            headerCell('N°'),
+                                            headerCell('Serie'),
+                                            headerCell('Fecha'),
+                                            headerCell('Comentario', 'left'),
+                                            headerCell('Tipo de egreso'),
+                                            headerCell('Monto', 'right')
+                                        ]];
+
+                                        expenses.forEach(function (expense, idx) {
+                                            body.push([
+                                                { text: idx + 1, alignment: 'center', fontSize: 7 },
+                                                { text: expense.serie || '-', alignment: 'center', fontSize: 7 },
+                                                { text: expense.date || '-', alignment: 'center', fontSize: 7 },
+                                                { text: expense.comment || '-', alignment: 'left', fontSize: 7 },
+                                                { text: expense.type || '-', alignment: 'center', fontSize: 7 },
+                                                { text: `S/ ${parseNum(expense.amount).toFixed(2)}`, alignment: 'right', fontSize: 7 }
+                                            ]);
+                                        });
+
+                                        body.push([
+                                            {
+                                                text: 'TOTAL GENERAL',
+                                                colSpan: 5,
+                                                alignment: 'right',
+                                                bold: true,
+                                                fillColor: '#ffe699',
+                                                fontSize: 8
+                                            },
+                                            {}, {}, {}, {},
+                                            {
+                                                text: `S/ ${expensesTotal.toFixed(2)}`,
+                                                alignment: 'right',
+                                                bold: true,
+                                                fillColor: '#ffe699',
+                                                fontSize: 8
+                                            }
+                                        ]);
+
+                                        return [
+                                            { text: 'DETALLE DE EGRESOS', bold: true, fontSize: 10, margin: [0, 12, 0, 5] },
+                                            {
+                                                table: {
+                                                    headerRows: 1,
+                                                    widths: ['auto', 'auto', 'auto', '*', 'auto', 'auto'],
+                                                    body: body
+                                                },
+                                                layout: {
+                                                    hLineWidth: function () { return 0.5; },
+                                                    vLineWidth: function () { return 0.5; },
+                                                    hLineColor: function () { return '#cccccc'; },
+                                                    vLineColor: function () { return '#cccccc'; },
+                                                    paddingLeft: function () { return 4; },
+                                                    paddingRight: function () { return 4; },
+                                                    paddingTop: function () { return 2; },
+                                                    paddingBottom: function () { return 2; }
+                                                }
+                                            }
+                                        ];
+                                    })() : [];
+
+                                    // La sección de egresos va debajo de la tabla de ingresos.
+                                    doc.content.splice(tIdx + 1, 0, ...expensesBlock);
+
                                     // --- Resumen final: efectivo (Soles) - gastos (bills) y línea de firma ---
                                     try {
                                         // calcular efectivo en soles (todas las monedas que no sean USD)
@@ -689,8 +771,9 @@ function showDetails(idBox) {
                                                 solesCash += totalVal;
                                             }
                                         });
-                                        var billsVal = 0;
-                                        try { billsVal = parseFloat(String(box?.bills).replace(/,/g, '')) || 0; } catch (e) { billsVal = 0; }
+                                        // Se usa el total de la tabla de egresos para mantener
+                                        // consistencia con el importe restado en el resumen.
+                                        var billsVal = expensesTotal;
 
                                         var initialBox = 0;
                                         try { initialBox = parseFloat(String(box?.initial_box_soles).replace(/,/g, '')) || 0; } catch (e) { initialBox = 0; }
@@ -754,8 +837,8 @@ function showDetails(idBox) {
                                             margin: [0, 40, 0, 10]
                                         });
 
-                                        // insertar después de la tabla
-                                        doc.content.splice(tIdx + 1, 0, ...finalBlock);
+                                        // Insertar después de la tabla de ingresos y de la sección de egresos
+                                        doc.content.splice(tIdx + 1 + expensesBlock.length, 0, ...finalBlock);
                                     } catch (e) {
                                         console.warn('No se pudo generar resumen final en PDF', e);
                                     }

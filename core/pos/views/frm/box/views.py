@@ -1,4 +1,6 @@
 import json
+from datetime import datetime
+
 from django.core.serializers.json import DjangoJSONEncoder
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.http import JsonResponse, HttpResponse, HttpResponseRedirect
@@ -15,7 +17,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from core.pos.forms import BoxForm, Box, BoxFormListView
-from core.pos.models import Company, Sale, SalePayment
+from core.pos.models import Company, Sale, SalePayment, Expenses
 
 
 
@@ -437,10 +439,43 @@ class BoxSalesRangeView(LoginRequiredMixin, View):
 
             sales = [s.toJSON() for s in sales_qs.order_by('date_joined')]
 
+            # Egresos del mismo período del cierre. Se usa el mismo criterio que
+            # BoxForm.get_fecha_inicio()/get_fecha_fin() para que el total coincida
+            # con el importe de egresos (bills) mostrado en el resumen financiero.
+            expenses_end = box.datetime_close or datetime.now()
+            if prev_box and prev_box.datetime_close:
+                expenses_start = prev_box.datetime_close
+            else:
+                first_payment = SalePayment.objects.filter(
+                    sale__employee=box.user
+                ).select_related('sale').order_by('sale__date_joined').first()
+                expenses_start = first_payment.sale.date_joined if first_payment else datetime.min
+
+            expenses = []
+            expenses_total = 0.0
+            expenses_qs = Expenses.objects.filter(
+                user=box.user,
+                date_joined__gte=expenses_start,
+                date_joined__lt=expenses_end
+            ).select_related('typeexpense').order_by('date_joined', 'id')
+            for expense in expenses_qs:
+                amount = float(expense.valor or 0)
+                expenses_total += amount
+                expenses.append({
+                    'id': expense.id,
+                    'serie': expense.expense_serie or '',
+                    'date': expense.date_joined.strftime('%d/%m/%Y') if expense.date_joined else '',
+                    'comment': expense.get_desc(),
+                    'type': expense.typeexpense.name if expense.typeexpense else '',
+                    'amount': amount,
+                })
+
             data = {
                 'box': box.toJSON(),
                 'previous_box': prev_box.toJSON() if prev_box else None,
                 'sales': sales,
+                'expenses': expenses,
+                'expenses_total': round(expenses_total, 2),
             }
         except Exception as e:
             data = {'error': str(e)}

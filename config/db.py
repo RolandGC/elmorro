@@ -18,9 +18,9 @@ SQLITE = {
 POSTGRESQL = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': _env('DB_NAME', 'elmorro'),
-        'USER': _env('DB_USER', 'elmorro'),
-        'PASSWORD': _env('DB_PASSWORD', ''),
+        'NAME': _env('DB_NAME', 'cajaelmorro'),
+        'USER': _env('DB_USER', 'postgres'),
+        'PASSWORD': _env('DB_PASSWORD', 'posgres'),
         'HOST': _env('DB_HOST', '127.0.0.1'),
         'PORT': _env('DB_PORT', '5432'),
         'CONN_MAX_AGE': int(_env('DB_CONN_MAX_AGE', '60')),

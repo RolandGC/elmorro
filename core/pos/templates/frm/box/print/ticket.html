@@ -141,7 +141,7 @@
         text-align: center;
         margin-top: 3px;
         padding-top: 3px;
-        border-top: 1px dotted black;
+        border-top: 1px solid black;
         line-height: 1.2;
       }
       .text-center {
@@ -174,6 +174,15 @@
         width: 100%;
         box-sizing: border-box;
       }
+      .signatures {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 2px 0;
+            font-size: 13px;
+            margin-top: 2px;
+            font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
+      }
     </style>
   </head>
   <body>
@@ -186,7 +195,6 @@
       <h1 class="name-company">{{ company.name }}</h1>
       <p class="desc-company">
         {{ company.address }}<br />
-        Teléfono: {{ company.phone }}<br />
         Celular: {{ company.mobile }}<br />
       </p>
 
@@ -194,7 +202,8 @@
 
       <div class="info-section border-dotted">
         <p>
-          <b>Usuario:</b> {{ box.user.full_name }}
+          <b>Usuario:</b> {{ box.user.full_name }}<br />
+          <b>Entrega a:</b> {{ box.user.full_name }}
         </p>
         <p>
           <b>Fecha y Hora Cierre:</b> {% if box.datetime_close %}
@@ -331,11 +340,25 @@
       {% endif %}
 
       <div class="footer-text">
-        <p style="margin: 2px 0;">Generado automáticamente</p>
-        <p style="margin: 2px 0; font-size: 7px;">{{ box.datetime_close|localtime|date:'d/m/Y H:i:s' }}</p>
+        <!-- <p style="margin: 2px 0;">Generado automáticamente</p>
+        <p style="margin: 2px 0; font-size: 7px;">{{ box.datetime_close|localtime|date:'d/m/Y H:i:s' }}</p> -->
+      </div>
+      <br>
+      <br>
+      <br>
+
+      <div class="signatures">
+        <div class="signature">
+          --------------------------<br>
+          Firma del Usuario<br>
+        </div>
+        <div class="signature">
+          -------------------------<br>
+          Recibido por<br>
+        </div>
       </div>
 
-      <div class="stamp">CIERRE REGISTRADO</div>
+      <!-- <div class="stamp">CIERRE REGISTRADO</div> -->
     </div>
   </body>
 </html>
