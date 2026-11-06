@@ -42,7 +42,7 @@ function getData(all) {
             { data: "box_final_dolares" },
             { data: "bills" },
             { data: "desc" },
-            { data: "receiver.full_name" },
+            /* { data: "receiver.full_name" }, */
             { data: "options" },
         ],
         columnDefs: [{
@@ -94,15 +94,15 @@ function getData(all) {
                     return data || '-'
                 }
             },
-            {
+            /* {
                 targets: [7],
                 class: 'text-center',
                 render: function(data, type, row) {
                     return data || 'No registrado'
                 }
-            },
+            }, */
             {
-                targets: [8],
+                targets: [7],
                 class: 'text-center',
                 orderable: false,
                 render: function(data, type, row) {
@@ -491,6 +491,132 @@ function showDetails(idBox) {
                 .join('');
             boxTotals.innerHTML = `<div class="mb-3"><strong>Totales por moneda:</strong> ${totalsHtml || '-'}</div>`;
 
+            // ── Cuadro resumen por banco y moneda (solo exportaciones) ────────
+            const bankSummary = data.bank_summary || null;
+            const bankCurrencies = Array.isArray(bankSummary?.currencies) ? bankSummary.currencies : [];
+            const bankRows = Array.isArray(bankSummary?.rows) ? bankSummary.rows : [];
+            const hasBankSummary = bankCurrencies.length > 0 && bankRows.length > 0;
+
+            const formatBankAmount = (symbol, value) =>
+                `${symbol || ''} ${parseNum(value).toFixed(2)}`;
+
+            const xmlEscape = value => String(value === null || value === undefined ? '' : value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&apos;');
+
+            // Convierte un índice 0-based a letra de columna Excel (A, B, ... AA)
+            function colLetter(index) {
+                let letter = '';
+                let n = index + 1;
+                while (n > 0) {
+                    const rem = (n - 1) % 26;
+                    letter = String.fromCharCode(65 + rem) + letter;
+                    n = Math.floor((n - 1) / 26);
+                }
+                return letter;
+            }
+
+            // Crea estilos numéricos con formato de moneda en el XLSX generado.
+            // Devuelve un mapa símbolo → índice de estilo. Si falla, {}.
+            function createCurrencyStyles(xlsx, symbols) {
+                try {
+                    if (!xlsx.xl) return {};
+
+                    // Según la versión de Buttons, styles.xml puede ser un nodo
+                    // DOM (xlsx.xl['styles.xml']) o un string anidado.
+                    const usesFlatKey = xlsx.xl['styles.xml'] !== undefined;
+                    const holder = usesFlatKey
+                        ? xlsx.xl['styles.xml']
+                        : (xlsx.xl.styles && xlsx.xl.styles['styles.xml']);
+                    if (!holder) return {};
+
+                    const isDomNode = typeof holder !== 'string';
+                    let xml = isDomNode
+                        ? new XMLSerializer().serializeToString(holder)
+                        : holder;
+                    const uniqueSymbols = [];
+                    symbols.forEach(s => {
+                        const sym = s || '';
+                        if (!uniqueSymbols.includes(sym)) uniqueSymbols.push(sym);
+                    });
+                    if (!uniqueSymbols.length) return {};
+
+                    // Siguiente numFmtId libre (los personalizados empiezan en 164)
+                    let maxId = 163;
+                    (xml.match(/numFmtId="(\d+)"/g) || []).forEach(m => {
+                        const value = parseInt((m.match(/\d+/) || ['0'])[0], 10);
+                        if (value > maxId) maxId = value;
+                    });
+
+                    const formats = uniqueSymbols.map(sym => {
+                        const id = ++maxId;
+                        const code = `&quot;${xmlEscape(sym)}&quot; #,##0.00`;
+                        return { sym, id, xml: `<numFmt numFmtId="${id}" formatCode="${code}"/>` };
+                    });
+                    const formatsXml = formats.map(f => f.xml).join('');
+
+                    const paired = xml.match(/<numFmts[^>]*>[\s\S]*?<\/numFmts>/);
+                    const selfClosing = xml.match(/<numFmts[^>]*\/>/);
+                    if (paired) {
+                        const inner = paired[0]
+                            .replace(/^<numFmts[^>]*>/, '')
+                            .replace(/<\/numFmts>$/, '');
+                        const count = (paired[0].match(/<numFmt\s/g) || []).length + formats.length;
+                        xml = xml.replace(
+                            paired[0],
+                            () => `<numFmts count="${count}">${inner}${formatsXml}</numFmts>`
+                        );
+                    } else if (selfClosing) {
+                        xml = xml.replace(
+                            selfClosing[0],
+                            () => `<numFmts count="${formats.length}">${formatsXml}</numFmts>`
+                        );
+                    } else {
+                        xml = xml.replace(
+                            /(<styleSheet[^>]*>)/,
+                            (match, openingTag) =>
+                                `${openingTag}<numFmts count="${formats.length}">${formatsXml}</numFmts>`
+                        );
+                    }
+
+                    const xfsBlock = xml.match(/<cellXfs[^>]*>[\s\S]*?<\/cellXfs>/);
+                    if (!xfsBlock) return {};
+                    const opening = xfsBlock[0].match(/^<cellXfs[^>]*>/)[0];
+                    const firstIndex = (xfsBlock[0].match(/<xf\s/g) || []).length;
+                    const newXfs = formats.map(f =>
+                        `<xf numFmtId="${f.id}" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>`
+                    ).join('');
+                    const newOpening = opening.replace(
+                        /count="\d+"/,
+                        `count="${firstIndex + formats.length}"`
+                    );
+                    const newBlock = xfsBlock[0]
+                        .replace(opening, newOpening)
+                        .replace('</cellXfs>', `${newXfs}</cellXfs>`);
+                    xml = xml.replace(xfsBlock[0], newBlock);
+
+                    if (isDomNode) {
+                        const parsed = new DOMParser().parseFromString(xml, 'text/xml');
+                        if (usesFlatKey) xlsx.xl['styles.xml'] = parsed;
+                        else xlsx.xl.styles['styles.xml'] = parsed;
+                    } else if (usesFlatKey) {
+                        xlsx.xl['styles.xml'] = xml;
+                    } else {
+                        xlsx.xl.styles['styles.xml'] = xml;
+                    }
+
+                    const styleMap = {};
+                    formats.forEach((f, i) => { styleMap[f.sym] = firstIndex + i; });
+                    return styleMap;
+                } catch (e) {
+                    console.warn('No se pudo crear el formato de moneda para Excel', e);
+                    return {};
+                }
+            }
+
             // ── Textos resumen para exports ───────────────────────────────────
             const resumenMethodsText = methodKeys
                 .map(k => `${methodLabels[k]}: ${formatCurrencyObj(methodTotals[k], 'S/0.00')}`)
@@ -574,20 +700,105 @@ function showDetails(idBox) {
                             customize: function (xlsx) {
                                 try {
                                     const sheet = xlsx.xl.worksheets['sheet1.xml'];
-                                    const downrows = 5;
+                                    const preRows = [];
+                                    let rowNumber = 1;
+
+                                    // ── Cuadro resumen por banco y moneda ──────────────
+                                    if (hasBankSummary) {
+                                        const styleMap = createCurrencyStyles(
+                                            xlsx,
+                                            bankCurrencies.map(c => c.symbol || '')
+                                        );
+
+                                        const moneyCell = (col, row, symbol, value) => {
+                                            const amount = parseNum(value);
+                                            const style = styleMap[symbol];
+                                            if (style !== undefined) {
+                                                return `<c r="${col}${row}" s="${style}"><v>${amount.toFixed(2)}</v></c>`;
+                                            }
+                                            return `<c t="inlineStr" r="${col}${row}"><is><t>${xmlEscape(formatBankAmount(symbol, amount))}</t></is></c>`;
+                                        };
+
+                                        preRows.push(
+                                            `<row r="${rowNumber}"><c t="inlineStr" s="2" r="A${rowNumber}"><is><t>RESUMEN POR BANCO Y MONEDA</t></is></c></row>`
+                                        );
+                                        rowNumber++;
+
+                                        const headerCells = [
+                                            `<c t="inlineStr" s="2" r="A${rowNumber}"><is><t>Banco</t></is></c>`
+                                        ];
+                                        bankCurrencies.forEach((currency, idx) => {
+                                            const col = colLetter(idx + 1);
+                                            const label = `${currency.code || ''}${currency.symbol ? ` (${currency.symbol})` : ''}`;
+                                            headerCells.push(
+                                                `<c t="inlineStr" s="2" r="${col}${rowNumber}"><is><t>${xmlEscape(label)}</t></is></c>`
+                                            );
+                                        });
+                                        preRows.push(`<row r="${rowNumber}">${headerCells.join('')}</row>`);
+                                        rowNumber++;
+
+                                        bankRows.forEach(row => {
+                                            const amounts = row.amounts || {};
+                                            const cells = [
+                                                `<c t="inlineStr" r="A${rowNumber}"><is><t>${xmlEscape(row.bank || 'Efectivo')}</t></is></c>`
+                                            ];
+                                            bankCurrencies.forEach((currency, idx) => {
+                                                cells.push(moneyCell(
+                                                    colLetter(idx + 1),
+                                                    rowNumber,
+                                                    currency.symbol || '',
+                                                    amounts[currency.code]
+                                                ));
+                                            });
+                                            preRows.push(`<row r="${rowNumber}">${cells.join('')}</row>`);
+                                            rowNumber++;
+                                        });
+
+                                        const columnTotals = bankSummary.column_totals || {};
+                                        const totalCells = [
+                                            `<c t="inlineStr" s="2" r="A${rowNumber}"><is><t>TOTAL GENERAL</t></is></c>`
+                                        ];
+                                        bankCurrencies.forEach((currency, idx) => {
+                                            totalCells.push(moneyCell(
+                                                colLetter(idx + 1),
+                                                rowNumber,
+                                                currency.symbol || '',
+                                                columnTotals[currency.code]
+                                            ));
+                                        });
+                                        preRows.push(`<row r="${rowNumber}">${totalCells.join('')}</row>`);
+                                        rowNumber++;
+
+                                        // Fila en blanco separadora
+                                        preRows.push(
+                                            `<row r="${rowNumber}"><c t="inlineStr" r="A${rowNumber}"><is><t></t></is></c></row>`
+                                        );
+                                        rowNumber++;
+                                    }
+
+                                    // ── Resumen existente (sin cambios) ────────────────
+                                    const legacySummary = [
+                                        `Resumen por Métodos: ${resumenMethodsText}`,
+                                        `Efectivo: ${resumenEfectivoText}`,
+                                        `Bancos / Digital: ${resumenBancosText}`,
+                                        '',
+                                        ''
+                                    ];
+                                    legacySummary.forEach(text => {
+                                        preRows.push(
+                                            `<row r="${rowNumber}"><c t="inlineStr" r="A${rowNumber}"><is><t>${xmlEscape(text)}</t></is></c></row>`
+                                        );
+                                        rowNumber++;
+                                    });
+
+                                    const downrows = preRows.length;
                                     $('row', sheet).each(function () {
                                         $(this).attr('r', parseInt($(this).attr('r')) + downrows);
                                     });
                                     $('row c', sheet).each(function () {
                                         $(this).attr('r', $(this).attr('r').replace(/(\d+)/g, m => parseInt(m) + downrows));
                                     });
-                                    const summary =
-                                        `<row r="1"><c t="inlineStr" r="A1"><is><t>Resumen por Métodos: ${resumenMethodsText}</t></is></c></row>` +
-                                        `<row r="2"><c t="inlineStr" r="A2"><is><t>Efectivo: ${resumenEfectivoText}</t></is></c></row>` +
-                                        `<row r="3"><c t="inlineStr" r="A3"><is><t>Bancos / Digital: ${resumenBancosText}</t></is></c></row>` +
-                                        `<row r="4"><c t="inlineStr" r="A4"><is><t></t></is></c></row>` +
-                                        `<row r="5"><c t="inlineStr" r="A5"><is><t></t></is></c></row>`;
-                                    $(sheet).find('sheetData').prepend(summary);
+                                    $(sheet).find('sheetData').prepend(preRows.join(''));
                                 } catch (e) {
                                     console.warn('Excel customize failed', e);
                                 }
@@ -610,8 +821,8 @@ function showDetails(idBox) {
                                         else if (u.full_name) userName = u.full_name;
                                         else if (u.username) userName = u.username;
                                     }
-                                    return `Cierre de Caja - ${dt} de ${userName}`;
-                                } catch (e) { return `Cierre de Caja - ${box?.datetime_close || ''}`; }
+                                    return `CIERRE DE CAJA ${dt} DE ${userName}`;
+                                } catch (e) { return `CIERRE DE CAJA - ${box?.datetime_close || ''}`; }
                             })(),
                             orientation: 'landscape',
                             pageSize: 'A4',
@@ -764,6 +975,84 @@ function showDetails(idBox) {
                                     // La sección de egresos va debajo de la tabla de ingresos.
                                     doc.content.splice(tIdx + 1, 0, ...expensesBlock);
 
+                                    // ── Cuadro resumen por banco y moneda ──────────────
+                                    const bankBlock = hasBankSummary ? (function buildPdfBankBlock() {
+                                        const headerCell = (text, alignment) => ({
+                                            text: text,
+                                            bold: true,
+                                            color: '#ffffff',
+                                            fillColor: '#343a40',
+                                            fontSize: 8,
+                                            alignment: alignment || 'center'
+                                        });
+
+                                        const body = [[
+                                            headerCell('Banco', 'left'),
+                                            ...bankCurrencies.map(c => headerCell(
+                                                `${c.code || ''}${c.symbol ? ` (${c.symbol})` : ''}`,
+                                                'right'
+                                            ))
+                                        ]];
+
+                                        bankRows.forEach(function (row) {
+                                            const amounts = row.amounts || {};
+                                            body.push([
+                                                { text: row.bank || 'Efectivo', fontSize: 7 },
+                                                ...bankCurrencies.map(c => ({
+                                                    text: formatBankAmount(c.symbol, amounts[c.code]),
+                                                    alignment: 'right',
+                                                    fontSize: 7
+                                                }))
+                                            ]);
+                                        });
+
+                                        const columnTotals = bankSummary.column_totals || {};
+                                        body.push([
+                                            {
+                                                text: 'TOTAL GENERAL',
+                                                bold: true,
+                                                fillColor: '#d4edda',
+                                                fontSize: 8
+                                            },
+                                            ...bankCurrencies.map(c => ({
+                                                text: formatBankAmount(c.symbol, columnTotals[c.code]),
+                                                alignment: 'right',
+                                                bold: true,
+                                                fillColor: '#d4edda',
+                                                fontSize: 8
+                                            }))
+                                        ]);
+
+                                        return [
+                                            {
+                                                text: 'RESUMEN POR BANCO Y MONEDA (INGRESOS)',
+                                                bold: true,
+                                                fontSize: 10,
+                                                margin: [0, 12, 0, 5]
+                                            },
+                                            {
+                                                table: {
+                                                    headerRows: 1,
+                                                    widths: ['*', ...bankCurrencies.map(() => 'auto')],
+                                                    body: body
+                                                },
+                                                layout: {
+                                                    hLineWidth: function () { return 0.5; },
+                                                    vLineWidth: function () { return 0.5; },
+                                                    hLineColor: function () { return '#cccccc'; },
+                                                    vLineColor: function () { return '#cccccc'; },
+                                                    paddingLeft: function () { return 4; },
+                                                    paddingRight: function () { return 4; },
+                                                    paddingTop: function () { return 2; },
+                                                    paddingBottom: function () { return 2; }
+                                                }
+                                            }
+                                        ];
+                                    })() : [];
+
+                                    // El resumen bancario va después de la tabla de ingresos y egresos.
+                                    doc.content.splice(tIdx + 1 + expensesBlock.length, 0, ...bankBlock);
+
                                     // --- Resumen final: efectivo (Soles) - gastos (bills) y línea de firma ---
                                     try {
                                         // calcular efectivo en soles (todas las monedas que no sean USD)
@@ -844,14 +1133,14 @@ function showDetails(idBox) {
                                                 {
                                                     stack: [
                                                         { canvas: [{ type: 'line', x1: 250, y1: 0, x2: 100, y2: 0, lineWidth: 0.5 }], margin: [0, 10, 0, 6] },
-                                                        { text: 'Firma Supervisor', alignment: 'center', margin: [0, 0, 0, 0] }
+                                                        { text: 'Firma usuario', alignment: 'center', margin: [0, 0, 0, 0] }
                                                     ],
                                                     width: '50%'
                                                 },
                                                 {
                                                     stack: [
                                                         { canvas: [{ type: 'line', x1: 250, y1: 0, x2: 100, y2: 0, lineWidth: 0.5 }], margin: [0, 10, 0, 6] },
-                                                        { text: 'Firma Usuario', alignment: 'center', margin: [0, 0, 0, 0] }
+                                                        { text: 'Recibido por', alignment: 'center', margin: [0, 0, 0, 0] }
                                                     ],
                                                     width: '50%'
                                                 }
@@ -860,20 +1149,19 @@ function showDetails(idBox) {
                                             margin: [0, 40, 0, 10]
                                         });
 
-                                        // Insertar después de la tabla de ingresos y de la sección de egresos
-                                        doc.content.splice(tIdx + 1 + expensesBlock.length, 0, ...finalBlock);
+                                        // Insertar después de la tabla de ingresos, egresos y resumen bancario
+                                        doc.content.splice(tIdx + 1 + expensesBlock.length + bankBlock.length, 0, ...finalBlock);
                                     } catch (e) {
                                         console.warn('No se pudo generar resumen final en PDF', e);
                                     }
                                 }
 
                                 doc.styles = doc.styles || {};
-                                doc.styles.tableHeader = {
-                                    ...(doc.styles.tableHeader || {}),
-                                    fillColor: '#343a40',
-                                    color: '#ffffff',
-                                    fontSize: 8,
-                                    bold: true
+                                doc.styles.title = {
+                                  ...(doc.styles.title || {}),
+                                  bold: true,
+                                  fontSize: 11,
+                                  font: "Roboto",
                                 };
                                 doc.defaultStyle = doc.defaultStyle || {};
                                 doc.defaultStyle.fontSize = 7;

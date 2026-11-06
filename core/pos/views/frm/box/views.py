@@ -1,5 +1,6 @@
 import json
 from datetime import datetime
+from decimal import Decimal
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
@@ -453,6 +454,67 @@ class BoxSalesRangeView(LoginRequiredMixin, View):
 
             sales = [s.toJSON() for s in sales_qs.order_by('date_joined')]
 
+            # ── Resumen consolidado por banco y moneda ────────────────────────
+            # Solo lectura: se agrupan los pagos de las ventas que pertenecen a
+            # este cierre. No altera cálculos ni registros existentes.
+            bank_rows = {}
+            bank_currencies = {}
+            bank_column_totals = {}
+            bank_payments = SalePayment.objects.filter(
+                sale__in=sales_qs
+            ).select_related('bank', 'currency')
+
+            for payment in bank_payments:
+                if not payment.currency:
+                    continue
+                code = payment.currency.code
+                amount = payment.amount or Decimal('0')
+                bank_id = payment.bank_id
+                row_key = bank_id if bank_id is not None else 0
+                bank_name = payment.bank.name if payment.bank else 'Efectivo'
+
+                bank_currencies[code] = {
+                    'code': code,
+                    'name': payment.currency.name,
+                    'symbol': payment.currency.symbol,
+                }
+
+                if row_key not in bank_rows:
+                    bank_rows[row_key] = {
+                        'bank_id': bank_id,
+                        'bank': bank_name,
+                        'without_bank': bank_id is None,
+                        'amounts': {},
+                    }
+                row = bank_rows[row_key]
+                row['amounts'][code] = row['amounts'].get(code, Decimal('0')) + amount
+                bank_column_totals[code] = bank_column_totals.get(code, Decimal('0')) + amount
+
+            # Convertir los acumulados Decimal a números JSON (2 decimales)
+            for row in bank_rows.values():
+                row['amounts'] = {
+                    code: float(round(total, 2))
+                    for code, total in row['amounts'].items()
+                }
+            bank_column_totals = {
+                code: float(round(total, 2))
+                for code, total in bank_column_totals.items()
+            }
+
+            def _currency_order(currency):
+                code = str(currency.get('code') or '').upper()
+                priority = 0 if code in ('PEN', 'SOL') else 1 if code in ('USD', 'DOL') else 2
+                return priority, code
+
+            bank_summary = {
+                'currencies': sorted(bank_currencies.values(), key=_currency_order),
+                'rows': sorted(
+                    bank_rows.values(),
+                    key=lambda row: (row['without_bank'], str(row['bank'] or '').lower())
+                ),
+                'column_totals': bank_column_totals,
+            }
+
             # Egresos del mismo período del cierre. Se usa el mismo criterio que
             # BoxForm.get_fecha_inicio()/get_fecha_fin() para que el total coincida
             # con el importe de egresos (bills) mostrado en el resumen financiero.
@@ -490,6 +552,7 @@ class BoxSalesRangeView(LoginRequiredMixin, View):
                 'sales': sales,
                 'expenses': expenses,
                 'expenses_total': round(expenses_total, 2),
+                'bank_summary': bank_summary,
             }
         except Exception as e:
             data = {'error': str(e)}

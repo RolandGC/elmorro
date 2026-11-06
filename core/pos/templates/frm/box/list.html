@@ -10,7 +10,7 @@
     <script src="{% static 'lib/datatables-1.10.25/plugins/pdfmake-0.1.36/pdfmake.min.js' %}" type="text/javascript"></script>
     <script src="{% static 'lib/datatables-1.10.25/plugins/pdfmake-0.1.36/vfs_fonts.js' %}" type="text/javascript"></script>
     <script src="{% static 'lib/datatables-1.10.25/plugins/buttons-1.7.1/js/buttons.html5.min.js' %}" type="text/javascript"></script>
-    <script src="{% static 'frm/box/js/list.js' %}"></script>
+    <script src="{% static 'frm/box/js/list.js' %}?v=1.2"></script>
 {% endblock %}
 {% block columns %}
       <th>Nro</th>
@@ -20,7 +20,7 @@
       <th>Total Dólares</th>
       <th>Egresos</th>
       <th>Descripción</th>
-      <th>Usuario que recibe</th>
+      <!-- <th>Usuario que recibe</th> -->
       <th class="text-center">Opciones</th>
 {% endblock %}
 {% block content_list_before %}
